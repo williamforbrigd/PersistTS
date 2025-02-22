@@ -372,11 +372,16 @@ class ArrayList<T> implements List<T> {
 
     splice(start: number, deleteCount?: number): List<T>;
     splice(start: number, deleteCount: number, ...items: T[]): List<T>;
-    splice(start: number, deleteCount: number=0, ...items: T[]): List<T> {
+    splice(start: number, deleteCount?: number, ...items: T[]): List<T> {
         const newItems = this.items.slice();
-        newItems.splice(start, deleteCount, ...items);
-        return new ArrayList(newItems);
+        if (deleteCount === undefined) {
+            newItems.splice(start);
+        } else {
+            newItems.splice(start, deleteCount, ...items);
+        }
+        return new ArrayList<T>(newItems);
     }
+
 
     unshift(...items: T[]): List<T> {
         const newItems = this.items.slice();

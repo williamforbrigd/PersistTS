@@ -251,6 +251,7 @@ describe("ArrayList", () => {
         const result = arr.sort((a: number, b: number) => a - b);
         expect(result.toString()).toBe('[1, 2, 3]');
     })
+
     test('splice', () => {
         const arr = new ArrayList<number>([1, 2, 3]);
 
@@ -264,12 +265,13 @@ describe("ArrayList", () => {
 
         // Remove 2 elements at index 1 and insert 6
         result = arr.splice(1, 2, 6);
-        //expect(result.toString()).toBe('[1, 6, 3]');
+        expect(result.toString()).toBe('[1, 6]');
 
         // Remove all elements from index 0
         result = arr.splice(0);
-        //expect(result.toString()).toBe('[]');
+        expect(result.toString()).toBe('[]');
     });
+
     test('unshift', () => {
         const result= arr.unshift(4, 5,6);
         expect(result.toString()).toBe('[4, 5, 6, 1, 2, 3]');
