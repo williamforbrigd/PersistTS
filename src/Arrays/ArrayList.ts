@@ -122,6 +122,12 @@ class ArrayList<T> implements List<T> {
         return true;
     }
 
+    toArray(): T[];
+    toArray(generator: (size: number) => T[]): T[];
+    toArray(generator?: (size: number) => T[]): T[] {
+        return generator ? generator(this.size()) : this.items.slice();
+    }
+
     copyTo(array: T[], arrayIndex: number): void {
         if (arrayIndex < 0 || arrayIndex > array.length) {
             throw new RangeError("Array index out of bounds");
@@ -311,6 +317,11 @@ class ArrayList<T> implements List<T> {
 
     removeLast(): List<T> {
         return this.removeAt(this.length - 1);
+    }
+
+    removeIf(filter: (item: T) => boolean): List<T> {
+        const newItems = this.items.filter(item => !filter(item));
+        return new ArrayList(newItems);
     }
 
     replaceAll(items: Iterable<T>): List<T> {

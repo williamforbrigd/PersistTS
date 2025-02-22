@@ -3,7 +3,7 @@ export default interface Collection<T> extends Iterable<T>  {
 
     size(): number;
     isEmpty(): boolean;
-    contains(o: Object): boolean;
+    contains(o: T): boolean;
     toArray(): T[];
     toArray(generator: (size: number) => T[]): T[];
     add(e: T): Collection<T>;

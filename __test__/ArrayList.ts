@@ -206,6 +206,10 @@ describe("ArrayList", () => {
          const result = arr.removeAt(1);
           expect(result.toString()).toBe('[1, 3]');
     });
+    test('removeIf()', () => {
+       const result = arr.removeIf(x => x === 2);
+        expect(result.toString()).toBe('[1, 3]');
+    });
     test('replaceAll', () => {
         const result = arr.replaceAll([4, 5, 6]);
         expect(result.toString()).toBe('[4, 5, 6]');
@@ -311,5 +315,15 @@ describe("ArrayList", () => {
         const arr3 = ArrayList.from([4,5,6]);
         const result2 = arr.equals(arr3);
         expect(result2).toBe(false);
+    });
+
+    test('toArray()', () => {
+       const result = arr.toArray();
+        expect(result).toEqual([1, 2, 3]);
+    });
+
+    test('toArray(generator: (size: number) => T[])', () => {
+        const result = arr.toArray(size => new Array(size).fill(0));
+        expect(result).toEqual([0, 0, 0]);
     });
 });

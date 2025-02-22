@@ -2,18 +2,12 @@ import Collection from "./Collection";
 import {Comparator} from "./Comparator";
 import SequencedCollection from "./SequencedCollection";
 
-interface List<T>  {
+interface List<T> extends SequencedCollection<T>  {
     readonly length: number;
 
-    //from<T>(items: Iterable<T>): List<T>;
-    [Symbol.iterator](): Iterator<T>;
     FIFO(): boolean;
     [index: number]: T | undefined; // this is the get method
-    get(index: number): T | undefined;
     set(index: number, item: T): List<T>;
-    //count(): number;
-    size(): number;
-    isEmpty(): boolean;
     isReadOnly(): boolean;
 
     // add
@@ -31,27 +25,12 @@ interface List<T>  {
     removeAll(items: Iterable<T>): List<T>;
     removeAt(index: number): List<T>;
 
-    //retainAll(items: Iterable<T>): List<T>;
     replaceAll(items: Iterable<T>): List<T>;
     sort(comparator: Comparator<T>): List<T>;
-    clear(): List<T>;
-    contains(item: T): boolean;
-    containsAll(items: Iterable<T>): boolean;
     copyTo(array: T[], arrayIndex: number): void;
     indexOf(item: T): number;
     lastIndexOf(item: T): number;
-    getFirst(): T | undefined;
-    getLast(): T | undefined;
-    addFirst(item: T): List<T>;
-    addLast(item: T): List<T>;
-    removeFirst(): List<T>;
-    removeLast(): List<T>;
-    reversed(): List<T>;
     findAll(filter: (item: T) => boolean): List<T>;
-
-    // TODO: these are the map functions from C5
-    //map<V>(map: (item: T) => V): List<V>;
-    //map<V>(map: (item: T) => V, equalityComparer: IEqualityComparer<T>): List<V>;
 
     // List view methods and fields
     /*
@@ -62,8 +41,8 @@ interface List<T>  {
     offset: number; // offset for this list view or 0 for an underlying list
      */
 
-    // functional methods from immutable.js
 
+    // functional methods from immutable.js
     concat<C extends T>(...valuesOrCollections: Array<Iterable<C> | C>): List<T | C>;
     merge<C extends T>(...collections: Array<Iterable<C>>): List<T | C>;
 
@@ -141,23 +120,11 @@ interface List<T>  {
     every(callback: (value: T, index: number, array: List<T>) => unknown, thisArg?: any): boolean;
     some(callback: (value: T, index: number, array: List<T>) => unknown, thisArg?: any): boolean;
     forEach(callback: (value: T, index: number, array: List<T>) => void, thisArg?: any): void;
-    //map<U>(callback: (value: T, index: number, array: List<T>) => U, thisArg?: any): List<U>;
-    /*
-    filter<S extends T>(
-        callback: (value: T, index: number, array: List<T>) => value is S,
-        thisArg?: any
-    ): List<S>;
-    filter(callback: (value: T, index: number, array: List<T>) => unknown, thisArg?: any): List<T>;
-     */
     reduce(callback: (previousValue: T, currentValue: T, currentIndex: number, array: List<T>) => T): T;
     reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, array: List<T>) => U, initialValue: U): U;
     reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, array: List<T>) => T): T;
     reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, array: List<T>) => T, initialValue: T): T;
     reduceRight<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, array: List<T>) => U, initialValue: U): U;
-
-    hashCode(): number;
-    equals(o: Object): boolean;
-    toString(): string;
 }
 
 export interface ListConstructor {
