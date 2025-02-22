@@ -1,0 +1,36 @@
+# Node.js
+node_modules/
+
+# Build output
+dist/
+build/
+lib/
+
+# TypeScript specific
+*.tsbuildinfo
+
+# Debugger and IDE files
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS-specific files
+.DS_Store  # macOS
+Thumbs.db  # Windows
+
+# Package lock or yarn lock files (only ignore if you’re not using them)
+package-lock.json
+yarn.lock
+
+# TypeScript compiler cache
+*.tsbuildinfo
