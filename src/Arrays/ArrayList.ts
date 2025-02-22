@@ -3,10 +3,10 @@ import {Comparator} from "../Interfaces/Comparator";
 import HashCode from "../Hashing/HashCode";
 
 class ArrayList<T> implements List<T> {
-    readonly items: Array<T>;
+    readonly items: T[];
     readonly length: number;
 
-    constructor(items: ArrayList<T> | Array<T> = []) {
+    constructor(items: ArrayList<T> | T[] = []) {
         //this.items = items;
         this.items = items instanceof ArrayList ? items.items : items;
         this.length = this.items.length;
@@ -25,6 +25,10 @@ class ArrayList<T> implements List<T> {
 
     static from<T>(items: Iterable<T> | T[]): List<T> {
         return new ArrayList(Array.from(items));
+    }
+
+    static of<T>(...items: T[]): List<T> {
+        return new ArrayList(items);
     }
 
     static isList = true;
@@ -459,6 +463,7 @@ class ArrayList<T> implements List<T> {
 
     toString(): string {
         return `[${this.items.map(item => Array.isArray(item) ? `[${item.join(', ')}]` : item).join(', ')}]`;
+        //return `[${this.items.join(', ')}]`;
     }
 }
 

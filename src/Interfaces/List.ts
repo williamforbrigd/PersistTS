@@ -137,6 +137,7 @@ export interface ListConstructor {
     isList(arg: any): arg is List<any>;
     readonly prototype: any[];
 
+    of<T>(...items: T[]): List<T>;
     from<T>(items: Iterable<T>): List<T>;
 }
 
