@@ -7,72 +7,30 @@ import Collection from "../Interfaces/Collection";
 export default abstract class AbstractList<T> extends AbstractCollection<T> implements List<T> {
     [index: number]: T | undefined;
 
-    protected constructor() {
-        super();
+    FIFO(): boolean {
+        return true;
     }
 
-    FIFO(): boolean {
+    isReadOnly(): boolean {
         return false;
     }
 
     abstract add(item: T): List<T>;
     abstract add(index: number, item: T): List<T>;
-    abstract add(pointer: List<T>, item: T): List<T>; // insert item at end of compatible view
     abstract addAll(items: Iterable<T>): List<T>;
     abstract addAll(index: number, items: Iterable<T>): List<T>;
-    abstract addFirst(e: T): List<T>;
-    abstract addLast(e: T): SequencedCollection<T>;
 
     abstract remove(item: T): List<T>;
-    abstract remove(): List<T>;
-    abstract removeFirst(): List<T>;
-    abstract removeLast(): List<T>;
-    abstract removeAll(items: Iterable<T>): List<T>;
-    abstract removeAt(index: number): List<T>;
-    abstract removeAt(index: number): List<T>;
+    abstract remove(index: number): List<T>;
 
-    abstract concat<C extends T>(...valuesOrCollections: Array<Iterable<C> | C>): List<T | C>;
+    abstract set(index: number, item: T): List<T>;
+
+    abstract replaceAll(items: Iterable<T>): List<T>;
 
     copyTo(array: T[], arrayIndex: number): void {
-        let index = arrayIndex;
-        for (const item of this) {
-            array[index++] = item;
-        }
-    }
-
-    every<S extends T>(callback: (value: T, index: number, array: List<T>) => value is S, thisArg?: any): this is List<S>;
-    every(callback: (value: T, index: number, array: List<T>) => unknown, thisArg?: any): boolean;
-    every(callback: (value: T, index: number, array: List<T>) => unknown, thisArg?: any): any {
-        let i=0;
-        for (const item of this) {
-            if (!callback.call(thisArg, item, i++, this)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    abstract filter<F extends T>(predicate: (value: T, index: number, iter: this) => value is F, context?: any): List<F>;
-    abstract filter(predicate: (value: T, index: number, iter: this) => unknown, context?: any): this;
-    abstract filter(predicate: (value: T, index: number, iter: this) => unknown, context?: any): any;
-
-    abstract findAll(filter: (item: T) => boolean): List<T>;
-
-    abstract flatMap<M>(mapper: (value: T, key: number, iter: this) => Iterable<M>, context?: any): List<M>;
-
-    forEach(callback: (value: T, index: number, array: List<T>) => void, thisArg?: any): void {
-        let i=0;
-        for (const item of this) {
-            callback.call(thisArg, item, i++, this);
-        }
-    }
-
-    getFirst(): T | undefined {
-        return this.get(0);
-    }
-
-    getLast(): T | undefined {
-        return this.get(this.size() - 1);
+       for (const item of this) {
+            array[arrayIndex++] = item;
+       }
     }
 
     indexOf(item: T): number {
@@ -86,81 +44,43 @@ export default abstract class AbstractList<T> extends AbstractCollection<T> impl
         return -1;
     }
 
-    abstract isReadOnly(): boolean;
-
-    join(separator?: string): string {
-        return Array.from(this).join(separator ?? ",");
-    }
-
     lastIndexOf(item: T): number {
-        let i=this.size();
-        for (const value of this.reversed()) {
-            i--;
+        let i=0;
+        let index = -1;
+        for (const value of this) {
             if (value === item) {
-                return i;
+                index = i;
             }
+            i++;
         }
-        return -1;
+        return index;
     }
-
-    abstract map<M>(mapper: (value: T, key: number, iter: this) => M, context?: any): List<M>;
-
-    abstract merge<C extends T>(...collections: Array<Iterable<C>>): List<T | C>;
-
-    abstract partition<F extends T, C>(predicate: (this: C, value: T, index: number, iter: this) => value is F, context?: C): [List<T>, List<F>];
-    abstract partition<C>(predicate: (this: C, value: T, index: number, iter: this) => unknown, context?: C): [this, this];
-    abstract partition<C>(predicate: (this: C, value: T, index: number, iter: this) => unknown, context?: C): any;
-
-    abstract reduce(callback: (previousValue: T, currentValue: T, currentIndex: number, array: List<T>) => T): T;
-    abstract reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, array: List<T>) => U, initialValue: U): U;
-    abstract reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, array: List<T>) => U, initialValue?: U): U;
-    
-
-    abstract reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, array: List<T>) => T): T;
-    abstract reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, array: List<T>) => T, initialValue: T): T;
-    abstract reduceRight<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, array: List<T>) => U, initialValue: U): U;
-
-
-    abstract replaceAll(items: Iterable<T>): List<T>;
 
     abstract reversed(): SequencedCollection<T>;
 
-    abstract set(index: number, item: T): List<T>;
+    abstract addFirst(e: T): SequencedCollection<T>;
 
-    abstract shift(): List<T>;
+    abstract addLast(e: T): SequencedCollection<T>;
 
-    abstract slice(start?: number, end?: number): List<T>;
-
-    some(callback: (value: T, index: number, array: List<T>) => unknown, thisArg?: any): boolean {
-        let i=0;
-        for (const item of this) {
-            if (callback.call(thisArg, item, i++, this)) {
-                return true;
-            }
-        }
-        return false;
+    getFirst(): T | undefined {
+        return this.get(0);
     }
 
-    abstract sort(comparator: Comparator<T>): List<T>;
+    getLast(): T | undefined {
+        return this.get(this.size() - 1);
+    }
 
-    abstract splice(start: number, deleteCount?: number): List<T>;
-    abstract splice(start: number, deleteCount: number, ...items: T[]): List<T>;
-    abstract splice(start: number, deleteCount?: number, ...items: T[]): List<T>;
+    abstract removeFirst(): SequencedCollection<T>;
 
-    abstract unshift(...items: T[]): List<T>;
+    abstract removeLast(): SequencedCollection<T>;
 
-    abstract zip<U>(other: Collection<U>): List<[T, U]>;
-    abstract zip<U, V>(other: Collection<U>, other2: Collection<V>): List<[T, U, V]>;
-    abstract zip(...collections: Array<Collection<unknown>>): List<unknown>;
-    abstract zip<U, V>(...other: (Collection<U> | Collection<unknown> | Collection<V>)[]): any;
 
-    abstract zipAll<U>(other: Collection<U>): List<[T, U]>;
-    abstract zipAll<U, V>(other: Collection<U>, other2: Collection<V>): List<[T, U, V]>;
-    abstract zipAll(...collections: Array<Collection<unknown>>): List<unknown>;
-    abstract zipAll<U, V>(...other: (Collection<U> | Collection<unknown> | Collection<V>)[]): any;
+    // HOFs only relevant to List
+    abstract splice(start: number, deleteCount?: number): Collection<T>;
+    abstract splice(start: number, deleteCount: number, ...items: T[]): Collection<T>;
 
-    abstract zipWith<U, Z>(zipper: (value: T, otherValue: U) => Z, otherCollection: Collection<U>): List<Z>;
-    abstract zipWith<U, V, Z>(zipper: (value: T, otherValue: U, thirdValue: V) => Z, otherCollection: Collection<U>, thirdCollection: Collection<V>): List<Z>;
-    abstract zipWith<Z>(zipper: (...values: unknown[]) => Z, ...collections: Array<Collection<unknown>>): List<Z>;
-    abstract zipWith<U, V, Z>(zipper: any, ...otherCollection: (Collection<U> | Collection<unknown> | Collection<V>)[]): List<Z>;
+    abstract slice(start?: number, end?: number): Collection<T>;
+
+    abstract shift(): Collection<T>;
+    abstract unshift(...items: T[]): Collection<T>;
 }

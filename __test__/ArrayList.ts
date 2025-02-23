@@ -259,6 +259,11 @@ describe("ArrayList", () => {
         const result = arr.sort((a: number, b: number) => a - b);
         expect(result).toStrictEqual(new ArrayList([1, 2, 3]));
     });
+    test('sortedBy', () => {
+        const arr = new ArrayList<number>([3, 1, 2]);
+        const result = arr.sortedBy(x => x);
+        expect(result).toStrictEqual(new ArrayList([1, 2, 3]));
+    });
 
     test('splice', () => {
         const arr = new ArrayList<number>([1, 2, 3]);
@@ -338,4 +343,17 @@ describe("ArrayList", () => {
         const result = arr.toArray(size => new Array(size).fill(0));
         expect(result).toEqual([0, 0, 0]);
     });
+    test('find()', () => {
+        const result = arr.find(x => x === 2);
+        expect(result).toBe(2);
+
+        const result2 = arr.find(x => x === 4);
+        expect(result2).toBe(undefined);
+    });
+    test('distinct()', () => {
+        const newArr = new ArrayList([1, 2, 2, 3, 3, 3]);
+        const result = newArr.distinct();
+        expect(result).toStrictEqual(new ArrayList([1, 2, 3]));
+    });
 });
+
