@@ -1,12 +1,14 @@
 import List, {ListInput} from "../Interfaces/List";
 import {Comparator} from "../Interfaces/Comparator";
 import HashCode from "../Hashing/HashCode";
+import AbstractList from "../AbstractClasses/AbstractList";
 
-class ArrayList<T> implements List<T> {
+class ArrayList<T> extends AbstractList<T> implements List<T> {
     readonly items: T[];
     readonly length: number;
 
     constructor(items: ArrayList<T> | T[] = []) {
+        super();
         //this.items = items;
         this.items = items instanceof ArrayList ? items.items : items;
         this.length = this.items.length;
@@ -21,6 +23,10 @@ class ArrayList<T> implements List<T> {
                 return (target as any)[prop]; // default property access
             }
         });
+    }
+
+    newEmptyList(): List<T> {
+        return new ArrayList<T>();
     }
 
     static from<T>(items: Iterable<T> | T[]): List<T> {
@@ -114,16 +120,11 @@ class ArrayList<T> implements List<T> {
     }
 
     contains(item: T): boolean {
-        return this.items.includes(item);
+        return super.contains(item);
     }
 
     containsAll(items: Iterable<T>): boolean {
-        for (const item of items) {
-            if (!this.contains(item)) {
-                return false;
-            }
-        }
-        return true;
+        return super.containsAll(items);
     }
 
     toArray(): T[];
@@ -133,23 +134,13 @@ class ArrayList<T> implements List<T> {
     }
 
     copyTo(array: T[], arrayIndex: number): void {
-        if (arrayIndex < 0 || arrayIndex > array.length) {
-            throw new RangeError("Array index out of bounds");
-        }
-        for (let i = 0; i < this.items.length; i++) {
-            array[arrayIndex + i] = this.items[i];
-        }
+        return super.copyTo(array, arrayIndex);
     }
 
     every<S extends T>(callback: (value: T, index: number, array: List<T>) => value is S, thisArg?: any): this is List<S>;
     every(callback: (value: T, index: number, array: List<T>) => unknown, thisArg?: any): boolean;
     every(callback: (value: T, index: number, array: List<T>) => unknown, thisArg?: any): any {
-        for (let i = 0; i < this.items.length; i++) {
-            if (!callback.call(thisArg, this.items[i], i, this)) {
-                return false;
-            }
-        }
-        return true;
+        return super.every(callback, thisArg);
     }
 
     filter<F extends T>(predicate: (value: T, index: number, iter: this) => value is F, context?: any): List<F>;
@@ -174,25 +165,23 @@ class ArrayList<T> implements List<T> {
     }
 
     forEach(callback: (value: T, index: number, array: List<T>) => void, thisArg?: any): void {
-        for (let i = 0; i < this.size(); i++) {
-            callback.call(thisArg, this.items[i], i, this);
-        }
+        super.forEach(callback, thisArg);
     }
 
     getFirst(): T | undefined {
-        return this.get(0);
+        return super.getFirst();
     }
 
     getLast(): T | undefined {
-        return this.get(this.length - 1);
+        return super.getLast();
     }
 
     indexOf(item: T): number {
-        return this.items.indexOf(item);
+        return super.indexOf(item);
     }
 
     isEmpty(): boolean {
-        return this.size() == 0;
+        return super.isEmpty();
     }
 
     isReadOnly(): boolean {
@@ -200,11 +189,11 @@ class ArrayList<T> implements List<T> {
     }
 
     join(separator?: string): string {
-        return this.items.join(separator);
+        return super.join(separator);
     }
 
     lastIndexOf(item: T): number {
-        return this.items.lastIndexOf(item);
+        return super.lastIndexOf(item);
     }
 
     map<M>(mapper: (value: T, key: number, iter: this) => M, context?: any): List<M> {
@@ -242,18 +231,20 @@ class ArrayList<T> implements List<T> {
         let startIndex: number;
 
         if (initialValue === undefined) {
-            if (this.items.length === 0) {
+            if (this.size() === 0) {
                 throw new TypeError("Reduce of empty array with no initial value");
             }
-            accumulator = this.items[0] as unknown as U;
+            accumulator = this.getFirst() as unknown as U;
             startIndex = 1;
         } else {
             accumulator = initialValue;
             startIndex = 0;
         }
 
-        for (let i = startIndex; i < this.items.length; i++) {
-            accumulator = callback(accumulator, this.items[i], i, this);
+        let i = startIndex;
+        for (const item of this) {
+            accumulator = callback(accumulator, item, i, this);
+            i++;
         }
         return accumulator;
     }
@@ -366,7 +357,7 @@ class ArrayList<T> implements List<T> {
     }
 
     some(callback: (value: T, index: number, array: List<T>) => unknown, thisArg?: any): boolean {
-        return this.filter((item, index) => callback.call(thisArg, item, index, this)).length > 0;
+        return super.some(callback, thisArg);
     }
 
     sort(comparator: Comparator<T>): List<T> {
@@ -463,7 +454,6 @@ class ArrayList<T> implements List<T> {
 
     toString(): string {
         return `[${this.items.map(item => Array.isArray(item) ? `[${item.join(', ')}]` : item).join(', ')}]`;
-        //return `[${this.items.join(', ')}]`;
     }
 }
 

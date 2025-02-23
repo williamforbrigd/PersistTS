@@ -7,6 +7,16 @@ describe("ArrayList", () => {
         arr = new ArrayList<number>([1, 2, 3]);
     });
 
+    test('contains', () => {
+        const result = arr.contains(2);
+        expect(result).toBe(true);
+    });
+
+    test('containsAll', () => {
+        const result = arr.containsAll([1, 2]);
+        expect(result).toBe(true);
+    });
+
     test('should initialize with given items', () => {
         expect(arr.length).toBe(3);
         expect(arr).toStrictEqual(new ArrayList([1, 2, 3]));
@@ -23,6 +33,9 @@ describe("ArrayList", () => {
 
         const allAboveTwo = arr.every(x => x > 2);
         expect(allAboveTwo).toBe(false);
+
+        const allNumbers = arr.every(x => typeof x === 'number');
+        expect(allNumbers).toBe(true);
     });
 
     test('should use thisArg correctly in map', () => {

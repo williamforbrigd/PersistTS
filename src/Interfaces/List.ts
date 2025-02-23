@@ -3,8 +3,6 @@ import {Comparator} from "./Comparator";
 import SequencedCollection from "./SequencedCollection";
 
 interface List<T> extends SequencedCollection<T>  {
-    readonly length: number;
-
     FIFO(): boolean;
     [index: number]: T | undefined; // this is the get method
     set(index: number, item: T): List<T>;

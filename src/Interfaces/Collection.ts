@@ -24,6 +24,5 @@ export default interface Collection<T> extends Iterable<T>  {
     //stream(): Stream<T>;
     //parallelStream(): Stream<T>;
 
-    get<NSV>(index: number, notSetValue: NSV): T | NSV;
     get(index: number): T | undefined;
 }
