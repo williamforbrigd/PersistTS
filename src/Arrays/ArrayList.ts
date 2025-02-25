@@ -30,8 +30,8 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         return new ArrayList(Array.from(items));
     }
 
-    static of<T>(...items: T[]): ArrayList<T> {
-        return new ArrayList(items);
+    static of<T>(items: Iterable<T>): ArrayList<T> {
+        return new ArrayList<T>(Array.from(items));
     }
 
     static isList = true;
@@ -419,7 +419,10 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         const maxLength = Math.max(this.size(), ...other.map(c => Array.isArray(c) ? c.length : c.size()));
         const newItems = [];
         for (let i = 0; i < maxLength; i++) {
-            newItems.push([this.items[i], ...other.map(c => Array.isArray(c) ? c[i] : c.get(i))]);
+            const firstValue = i < this.size() ? this.get(i) : undefined;
+            const secondValue = other.map(c => Array.isArray(c) ? (i < c.length ? c[i] : undefined) : (i < c.size() ? c.get(i) : undefined));
+            const zipped = [firstValue, ...secondValue];
+            newItems.push(zipped);
         }
         return new ArrayList<unknown>(newItems);
     }

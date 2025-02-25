@@ -1,4 +1,5 @@
 import ArrayList from "../src/Arrays/ArrayList";
+import LinkedList from "../src/LinkedLists/LinkedList";
 
 describe("ArrayList", () => {
     let arr: ArrayList<number>;
@@ -294,9 +295,21 @@ describe("ArrayList", () => {
         expect(result2).toStrictEqual(new ArrayList([[1, 4], [2, 5], [3, 6]]));
     });
 
+    test('zip() with ArrayList and LinkedList', () => {
+        const result = ArrayList.of([1,2,3]).zip(LinkedList.of([4,5,6]));
+        expect(result).toStrictEqual(new ArrayList([[1, 4], [2, 5], [3, 6]]));
+    });
+
     test('zipAll()', () => {
         const result = arr.zipAll([4, 5, 6], [7, 8, 9]);
         expect(result).toStrictEqual(new ArrayList([[1, 4, 7], [2, 5, 8], [3, 6, 9]]));
+    });
+
+    test('zipAll() with LinkedList that has a different size', () => {
+        const arrayList = new ArrayList([21, 213, 213, 22, 6,7,8,9,10]);
+        const linkedList = LinkedList.of([4, 5, 6]);
+        const zipped = arrayList.zipAll(linkedList);
+        expect(zipped).toStrictEqual(new ArrayList([[21, 4], [213, 5], [213, 6], [22, undefined], [6, undefined], [7, undefined], [8, undefined], [9, undefined], [10, undefined]]));
     });
 
     test('zipWith()', () => {

@@ -174,6 +174,7 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
 
     abstract reduce(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
     abstract reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;
+    abstract reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;
     abstract reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
     abstract reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T, initialValue: T): T;
     abstract reduceRight<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;

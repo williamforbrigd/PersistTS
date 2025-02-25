@@ -1,5 +1,4 @@
 import Collection from "./Collection";
-import {Comparator} from "./Comparator";
 import SequencedCollection from "./SequencedCollection";
 
 interface List<T> extends SequencedCollection<T>  {
@@ -61,7 +60,7 @@ interface List<T> extends SequencedCollection<T>  {
 
 // declare const List: ListConstructor;
 
-export type ListInput<T> = List<T> | T[] | Array<T> | Collection<T>;
+export type ListInput<T> = T[] | Array<T> | Collection<T>;
 
 //function List<T>(collection?: Iterable<T> | ArrayLike<T>): List<T>;
 
