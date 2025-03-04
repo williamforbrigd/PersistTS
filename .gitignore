@@ -34,3 +34,6 @@ yarn.lock
 
 # TypeScript compiler cache
 *.tsbuildinfo
+
+# .DS_Store
+.DS_Store
