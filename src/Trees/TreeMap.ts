@@ -742,56 +742,51 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return acc;
     }
 
-    /*
+    isCustomMap(obj: any): obj is Map<any, any> {
+        return obj && typeof obj.set === "function" && typeof obj.entries === "function";
+    }
+
     merge<KC, VC>(
-        ...collections: Array<Iterable<[KC, VC]>>
-    ): TreeMap<K | KC, V | VC>;
-    merge<C>(
-        ...collections: Array<{ [key: string]: C }>
-    ): TreeMap<K | string, V | C>;
-    merge(
-        ...collections: Array<Iterable<[any, any]> | { [key: string]: any }>
-    ): TreeMap<any, any> {
-        let newTree = new TreeMap<any, any>(null, this.comparer as Comparer<any>);
+        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+    ): TreeMap<K | KC, Exclude<V, VC> | VC>;
+    // merge<C>(
+    //     ...collections: Array<{ [key: string]: C }>
+    // ): TreeMap<K | string, Exclude<V, C> | C>;
+    merge<KC, VC>(other: Map<KC, VC>): TreeMap<K | KC, V | VC>;
+    merge(...collections: any[]): TreeMap<any, any> {
+        let newTree = this as TreeMap<any, any>;
 
-        // Add current TreeMap entries to the new TreeMap
-        for (const entry of this) {
-            newTree = newTree.set(entry.key, entry.value);
-        }
-
-        // Process each collection
         for (const collection of collections) {
-            if (Symbol.iterator in Object(collection)) {
-                // Handle iterable collections
-                for (const [key, value] of collection as Iterable<[any, any]>) {
+            if (Array.isArray(collection)) {
+                for (const {key, value} of collection) {
                     newTree = newTree.set(key, value);
                 }
             } else {
-                // Handle object collections
-                for (const key in collection) {
-                    if (collection.hasOwnProperty(key)) {
-                        newTree = newTree.set(key, collection[key]);
-                    }
+                for (const {key, value} of collection.entries()) {
+                    newTree = newTree.set(key, value);
                 }
             }
         }
 
         return newTree;
     }
-     */
-    /*
-    merge<KC, VC>(otherTreeMap: Map<KC, VC>): Map<K | KC, V | VC> {
-        let newTree = new TreeMap<K | KC, V | VC>(this.root, this.comparer as Comparer<K | KC>);
 
-        // Add other TreeMap entries to the new TreeMap
-        for (const entry of otherTreeMap) {
-            newTree = newTree.set(entry.key, entry.value);
+    concat<KC, VC>(
+            ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+    ): TreeMap<K | KC, Exclude<V, VC> | VC> {
+        let newTree = this as TreeMap<any, any>;
+
+        for (const collection of collections) {
+            for (const {key, value} of collection) {
+                newTree = newTree.set(key, value);
+            }
         }
-
         return newTree;
     }
+    // concat<C>(
+    //     ...collections: Array<{ [key: string]: C }>
+    // ): TreeMap<K | string, Exclude<V, C> | C>;
 
-     */
 
 
     /*

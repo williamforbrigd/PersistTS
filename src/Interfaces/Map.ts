@@ -101,22 +101,29 @@ export default interface Map<K, V> extends MapIterator<KeyValuePair<K, V>> {
     reduceRight<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
 
     // HOFs from immutable.js
-    /*
+    // merge<KC, VC>(
+    //     ...collections: Array<Iterable<[KC, VC]>>
+    // ): Map<K | KC, Exclude<V, VC> | VC>;
+    // merge<C>(
+    //     ...collections: Array<{ [key: string]: C }>
+    // ): Map<K | string, Exclude<V, C> | C>;
+    // merge<KC, VC>(other: Map<KC, VC>): Map<K | KC, V | VC>;
     merge<KC, VC>(
-        ...collections: Array<Iterable<[KC, VC]>>
+            ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
     ): Map<K | KC, Exclude<V, VC> | VC>;
-    merge<C>(
-        ...collections: Array<{ [key: string]: C }>
-    ): Map<K | string, Exclude<V, C> | C>;
-     */
-    //merge<KC, VC>(other: Map<KC, VC>): Map<K | KC, V | VC>;
-/*
+    merge<KC, VC>(other: Map<KC, VC>): Map<K | KC, V | VC>;
+
+
+
     concat<KC, VC>(
-        ...collections: Array<Iterable<[KC, VC]>>
+        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
     ): Map<K | KC, Exclude<V, VC> | VC>;
-    concat<C>(
-        ...collections: Array<{ [key: string]: C }>
-    ): Map<K | string, Exclude<V, C> | C>;
+    // concat<C>(
+    //     ...collections: Array<{ [key: string]: C }>
+    // ): Map<K | string, Exclude<V, C> | C>;
+    
+
+    /*
 
     mergeWith<KC, VC, VCC>(
         merger: (oldVal: V, newVal: VC, key: K) => VCC,

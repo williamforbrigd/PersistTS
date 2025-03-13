@@ -116,16 +116,12 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
 
     abstract containsSpeed(): Speed;
 
-    /*
     abstract merge<KC, VC>(
-        ...collections: Array<Iterable<[KC, VC]>>
+        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
     ): Map<K | KC, Exclude<V, VC> | VC>;
-    abstract merge<C>(
-        ...collections: Array<{ [key: string]: C }>
-    ): Map<K | string, Exclude<V, C> | C>;
+    abstract merge<KC, VC>(other: Map<KC, VC>): Map<K | KC, V | VC>;
 
-
-     */
-    //abstract merge<KC, VC>(other: Map<KC, VC>): Map<K | KC, V | VC>;
-
+    abstract concat<KC, VC>(
+        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+    ): Map<K | KC, Exclude<V, VC> | VC>;
 }

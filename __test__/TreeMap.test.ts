@@ -406,4 +406,40 @@ describe("TreeMap", () => {
         const pred3 = treeMap.predecessor(40);
         expect(pred3?.key).toBe(30);
     });
+
+    test('merge() with other treeMap', () => {
+        const otherTreeMap = new TreeMap<number, string>(null, compare)
+            .set(666, "666")
+            .set(555, "555");
+        const expectedSize = arrDistinct.length + 2;
+        const result = treeMap.merge(otherTreeMap);
+        expect(result.size()).toBe(expectedSize);
+        expect(result.has(50)).toBeTruthy();
+        expect(result.has(666)).toBeTruthy();
+        expect(result.has(555)).toBeTruthy();
+        expect(result.findMax()?.key).toBe(666);
+    })
+
+    test('merge() with other iterable', () => {
+        const iterable = [{key: 666, value: "666"}, {key: 555, value: "555"}];
+        const expectedSize = arrDistinct.length + 2;
+        const result = treeMap.merge(iterable);
+        expect(result.size()).toBe(expectedSize);
+        expect(result.has(50)).toBeTruthy();
+        expect(result.has(666)).toBeTruthy();
+        expect(result.has(555)).toBeTruthy();
+        expect(result.findMax()?.key).toBe(666);
+    })
+
+    test('concat() with an iterable', () => {
+        const iterable = [{key: 666, value: "666"}, {key: 555, value: "555"}];
+        const expectedSize = arrDistinct.length + 2;
+        const result = treeMap.concat(iterable);
+        expect(result.size()).toBe(expectedSize);
+        expect(result.has(50)).toBeTruthy();
+        expect(result.has(666)).toBeTruthy();
+        expect(result.has(555)).toBeTruthy();
+        expect(result.findMax()?.key).toBe(666);
+    })
+
 })
