@@ -1,12 +1,13 @@
 {
-    "name": "tslib",
-    "version": "1.0.0",
-    "description": "",
-    "main": "dist/tslib.js",
+    "name": "persist-ts",
+    "version": "1.0.6",
+    "description": "A collection of persistent data structures in TypeScript",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
-        "dev": "ts-node src/tslib.ts",
-        "start": "node dist/tslib.js",
+        "dev": "ts-node src/index.ts",
+        "start": "node dist/index.js",
         "test": "jest"
     },
     "dependencies": {
@@ -19,5 +20,18 @@
         "ts-node": "^10.9.2",
         "typescript": "^5.5.3"
     },
-    "private": true
+    "private": false,
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/williamforbrigd/PersistentTS/tree/treemap"
+    },
+    "keywords": [
+        "persistent",
+        "data",
+        "structures",
+        "typescript"
+    ],
+    "author": "William Forbrigd",
+    "license": "MIT",
+    "homepage": "https://github.com/williamforbrigd/PersistentTS/blob/treemap/README.md"
 }
