@@ -1,12 +1,13 @@
 {
-    "name": "persistent-ts",
-    "version": "1.0.0",
+    "name": "persist-ts",
+    "version": "1.0.6",
     "description": "A collection of persistent data structures in TypeScript",
-    "main": "dist/persistent.js",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
-        "dev": "ts-node src/persistent.ts",
-        "start": "node dist/persistent.js",
+        "dev": "ts-node src/index.ts",
+        "start": "node dist/index.js",
         "test": "jest"
     },
     "dependencies": {
@@ -19,7 +20,7 @@
         "ts-node": "^10.9.2",
         "typescript": "^5.5.3"
     },
-    "private": true,
+    "private": false,
     "repository": {
         "type": "git",
         "url": "git+https://github.com/williamforbrigd/PersistentTS/tree/treemap"
