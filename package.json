@@ -2,11 +2,11 @@
     "name": "tslib",
     "version": "1.0.0",
     "description": "",
-    "main": "dist/tslib.js",
+    "main": "dist/persistent.js",
     "scripts": {
         "build": "tsc",
-        "dev": "ts-node src/tslib.ts",
-        "start": "node dist/tslib.js",
+        "dev": "ts-node src/persistent.ts",
+        "start": "node dist/persistent.js",
         "test": "jest"
     },
     "dependencies": {
