@@ -101,119 +101,80 @@ export default interface Map<K, V> extends MapIterator<KeyValuePair<K, V>> {
     reduceRight<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
 
     // HOFs from immutable.js
-    // merge<KC, VC>(
-    //     ...collections: Array<Iterable<[KC, VC]>>
-    // ): Map<K | KC, Exclude<V, VC> | VC>;
-    // merge<C>(
-    //     ...collections: Array<{ [key: string]: C }>
-    // ): Map<K | string, Exclude<V, C> | C>;
-    // merge<KC, VC>(other: Map<KC, VC>): Map<K | KC, V | VC>;
+    updateOrAdd(key: K, callback: (value: V) => V): Map<K, V>;
+    updateOrAdd(key: K, callback: (value: V | undefined) => V | undefined): Map<K, V | undefined>;
+    updateOrAdd(key: K, newValue: V): Map<K, V>;
+
     merge<KC, VC>(
             ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
-    ): Map<K | KC, Exclude<V, VC> | VC>;
+        ): Map<K | KC, Exclude<V, VC> | VC>;
+    merge<C>(
+        ...collections: Array<{ [key: string]: C }>
+    ): Map<K | string, Exclude<V, C> | C>;
     merge<KC, VC>(other: Map<KC, VC>): Map<K | KC, V | VC>;
 
-
-
     concat<KC, VC>(
-        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
-    ): Map<K | KC, Exclude<V, VC> | VC>;
-    // concat<C>(
-    //     ...collections: Array<{ [key: string]: C }>
-    // ): Map<K | string, Exclude<V, C> | C>;
-    
-
-    /*
+            ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+    ): Map<K | KC, Exclude<V, VC> | VC>;    
+    concat<C>(
+        ...collections: Array<{ [key: string]: C }>
+    ): Map<K | string, Exclude<V, C> | C>;
 
     mergeWith<KC, VC, VCC>(
-        merger: (oldVal: V, newVal: VC, key: K) => VCC,
-        ...collections: Array<Iterable<[KC, VC]>>
+        callback: (oldVal: V, newVal: VC, key: K) => VCC,
+        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
     ): Map<K | KC, V | VC | VCC>;
     mergeWith<C, CC>(
-        merger: (oldVal: V, newVal: C, key: string) => CC,
+        callback: (oldVal: V, newVal: C, key: string) => CC,
         ...collections: Array<{ [key: string]: C }>
     ): Map<K | string, V | C | CC>;
-
-    mergeDeep<KC, VC>(
-        ...collections: Array<Iterable<[KC, VC]>>
-    ): Map<K | KC, V | VC>;
-    mergeDeep<C>(
-        ...collections: Array<{ [key: string]: C }>
-    ): Map<K | string, V | C>;
-
-    mergeDeepWith(
-        merger: (oldVal: unknown, newVal: unknown, key: unknown) => unknown,
-        ...collections: Array<Iterable<[K, V]> | { [key: string]: V }>
-    ): this;
-
-    setIn(keyPath: Iterable<unknown>, value: unknown): this;
-
-    deleteIn(keyPath: Iterable<unknown>): this;
-    removeIn(keyPath: Iterable<unknown>): this;
-
-    updateIn(
-        keyPath: Iterable<unknown>,
-        notSetValue: unknown,
-        updater: (value: unknown) => unknown
-    ): this;
-    updateIn(
-        keyPath: Iterable<unknown>,
-        updater: (value: unknown) => unknown
-    ): this;
-
-    mergeIn(keyPath: Iterable<unknown>, ...collections: Array<unknown>): this;
-
-    mergeDeepIn(
-        keyPath: Iterable<unknown>,
-        ...collections: Array<unknown>
-    ): this;
-
-    // this is mapping values
+   
     map<M>(
-        mapper: (value: V, key: K, map: this) => M,
+        callback: (value: V, key: K, map: this) => M,
         thisArg?: unknown
     ): Map<K, M>;
 
     mapKeys<M>(
-        mapper: (key: K, value: V, map: this) => M,
-        thisArg?: unknown
+        callback: (key: K, value: V, map: this) => M,
+        thisArg?: unknown,
+        compare?: Comparator<M>
     ): Map<M, V>;
 
     mapEntries<KM, VM>(
         mapper: (
-            entry: [K, V],
+            entry: KeyValuePair<K, V>,
             index: number,
             map: this
-        ) => [KM, VM] | undefined,
-        thisArg?: unknown
+        ) => KeyValuePair<KM, VM> | undefined,
+        thisArg?: unknown,
+        compare?: Comparator<KM>
     ): Map<KM, VM>;
 
     flatMap<KM, VM>(
-        mapper: (value: V, key: K, map: this) => Iterable<[KM, VM]>,
-        thisArg?: unknown
+        callback: (value: V, key: K, map: this) => Iterable<KeyValuePair<KM, VM>>,
+        thisArg?: unknown,
+        compare?: Comparator<KM>
     ): Map<KM, VM>;
 
     filter<F extends V>(
         predicate: (value: V, key: K, map: this) => value is F,
-        thisArg?: unknown
-    ): Map<K, F>;
+        thisArg?: unknown,
+      ): Map<K, F>;
     filter(
         predicate: (value: V, key: K, map: this) => unknown,
         thisArg?: unknown
-    ): this;
+    ): Map<K, V>;
 
     partition<F extends V, C>(
         predicate: (this: C, value: V, key: K, map: this) => value is F,
         thisArg?: C
-    ): [Map<K, V>, Map<K, F>];
+      ): [Map<K, V>, Map<K, F>];
     partition<C>(
         predicate: (this: C, value: V, key: K, map: this) => unknown,
         thisArg?: C
-    ): [this, this];
+    ): [Map<K, V>, Map<K, V>];
 
     flip(): Map<V, K>;
-
-     */
 }
 
 

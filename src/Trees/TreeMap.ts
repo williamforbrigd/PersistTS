@@ -47,6 +47,7 @@ export class Node<K, V> implements KeyValuePair<K, V> {
     }
 
     toString(): string {
+        // return this.key + "=" + this.value;
         return `${this.key}${this.color === Color.RED ? "R" : "B"}`;
     }
 }
@@ -69,9 +70,31 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
     equalityComparer: EqualityComparer<K>;
 
+    // constructor(root: Node<K,V> | null, compare?: Comparator<K>);
+    // constructor(compare: Comparator<K>, root?: Node<K,V> | null);
+    // constructor(
+    //     compareOrRoot: Comparator<K> | Node<K,V> | null,
+    //     rootOrCompare: Node<K,V> | null = null
+    // ) {
+    //     super();
+
+    //     if (typeof compareOrRoot === 'function') {
+    //         this.compare = compareOrRoot;
+    //         this.root = rootOrCompare;
+    //     } else {
+    //         this.compare = TreeMap.defaultComparator<K>;
+    //         this.root = compareOrRoot;
+    //     }
+
+    //     this.equalityComparer = {
+    //         equals: (a: K, b: K) => this.compare(a, b) === 0,
+    //         hashCode: (a: K) => HashCode.hashCode(a)
+    //     };
+    // }
+
     constructor(
+        private readonly compare = TreeMap.defaultComparator<K>,
         private readonly root: Node<K,V> | null = null,
-        private readonly compare: Comparator<K> = (a: K, b: K) => a < b ? -1 : a > b ? 1 : 0,
         ) {
         super();
 
@@ -134,7 +157,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         if (!right.isEmpty() && this.compare(right.rootKey(), x.key) <= 0) {
             throw new Error("right subtree value must be greater than root value");
         }
-        return new TreeMap(new Node(color, left.root, x.key, x.value, right.root), this.compare);
+        return new TreeMap(this.compare, new Node(color, left.root, x.key, x.value, right.root));
     }
 
     isEmpty(): boolean {
@@ -167,12 +190,12 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
     left(): TreeMap<K, V> {
         if (this.isEmpty()) return this.empty();
-        return new TreeMap<K, V>(this.root!.leftNode, this.compare);
+        return new TreeMap<K, V>(this.compare, this.root!.leftNode);
     }
 
     right(): TreeMap<K, V> {
         if (this.isEmpty()) return this.empty();
-        return new TreeMap<K, V>(this.root!.rightNode, this.compare);
+        return new TreeMap<K, V>(this.compare, this.root!.rightNode);
     }
 
     /**
@@ -212,6 +235,22 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
                 // cannot have duplicates
                 return this;
             }
+        }
+    }
+
+    private update(key: K, newValue: V): TreeMap<K, V> {
+        if (this.isEmpty()) return this;
+
+        const y = this.rootKeyValue();
+        const cmp = this.compare(key, y.key);
+
+        if (cmp < 0) {
+            return this.from(this.rootColor(), this.left().update(key, newValue), y, this.right())
+        } else if (cmp > 0) {
+            return this.from(this.rootColor(), this.left(), y, this.right().update(key, newValue));
+        } else {
+            // key found, update it
+            return this.from(this.rootColor(), this.left(), this.keyValuePair(key, newValue), this.right());
         }
     }
 
@@ -414,6 +453,10 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
     // end Red-Black Tree methods 
 
+    static defaultComparator<T>(a: T, b: T): number {
+        return a < b ? -1 : a > b ? 1 : 0;
+    }
+
     getRoot(): Node<K, V> | null {
         return this.root;
     }
@@ -443,12 +486,18 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return this.getNode(this.root, key)?.value;
     }
 
+    /**
+     * First key is the leftmost key in the tree.
+     * @returns the first key in the tree or undefined if the tree is empty
+     */
     firstKey(): K | undefined {
-        return this.root?.key;
+        const min = this.findMin();
+        return min?.key;
     }
 
     lastKey(): K | undefined {
-        return this.maxSubTree()?.rootKey();
+        const max = this.findMax();
+        return max?.key;
     }
 
     setFirst(): TreeMap<K, V> {
@@ -543,7 +592,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
             return this;
         }
         const newTree = this.deleteNode(this.root, key);
-        return new TreeMap<K, V>(newTree, this.compare);
+        return new TreeMap<K, V>(this.compare, newTree);
     }
 
     deleteAll(keys: Iterable<K>): TreeMap<K, V> {
@@ -555,7 +604,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
 
     clear(): TreeMap<K, V> {
-        return new TreeMap<K, V>(null, this.compare);
+        return new TreeMap<K, V>(this.compare, null);
     }
 
     equals(o: Object): boolean {
@@ -581,6 +630,14 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
             this._hashCode = hash;
         }
         return this._hashCode;
+    }
+
+    toString(): string {
+        let res = "{";
+        for (const entry of this) {
+            res += entry.toString() + ", ";
+        }
+        return res + "}";
     }
 
     getOrDefault(key: K, defaultValue: V): V {
@@ -635,7 +692,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
 
     ofEntries(...entries: KeyValuePair<K, V>[]): TreeMap<K, V> {
-        let newTree = new TreeMap<K, V>(null, this.compare);
+        let newTree = new TreeMap<K, V>(this.compare);
         for (const entry of entries) {
             newTree = newTree.set(entry.key, entry.value);
         }
@@ -643,7 +700,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
 
     static of<K, V>(comparer: Comparator<K>, ...entries: KeyValuePair<K, V>[]): TreeMap<K, V> {
-        let newTree = new TreeMap<K, V>(null, comparer);
+        let newTree = new TreeMap<K, V>(comparer);
         for (const entry of entries) {
             newTree = newTree.set(entry.key, entry.value);
         }
@@ -655,7 +712,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
 
     copyOf(map: Map<K, V>): TreeMap<K, V> {
-        let newTree = new TreeMap<K, V>(null, this.compare);
+        let newTree = new TreeMap<K, V>(this.compare);
         for (const entry of map.entries()) {
             newTree = newTree.set(entry.key, entry.value);
         }
@@ -678,7 +735,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
      * @param compare
      */
     sort(compare?: Comparator<K>): TreeMap<K, V> {
-        let newTreeMap = new TreeMap<K, V>(null, compare ?? this.compare);
+        let newTreeMap = new TreeMap<K, V>(compare ?? this.compare);
         for (const entry of this) {
             newTreeMap = newTreeMap.set(entry.key, entry.value);
         }
@@ -742,6 +799,29 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return acc;
     }
 
+    updateOrAdd(key: K, callback: (value: V) => V): TreeMap<K, V>;
+    updateOrAdd(key: K, callback: (value: V | undefined) => V | undefined): TreeMap<K, V | undefined>;
+    updateOrAdd(key: K, newValue: V): TreeMap<K, V>;
+    updateOrAdd(key: K, callbackOrValue: ((value: any) => any) | V): TreeMap<K, V | undefined> {
+        if (typeof callbackOrValue === 'function') {
+            const callback = callbackOrValue as (value: any) => any;
+            if (this.has(key)) {
+                return this.update(key, callback(this.get(key)));
+            } else {
+                return this.set(key, callback(this.get(key)))
+            }
+        } else {
+            const newValue = callbackOrValue as V;
+            if (this.has(key)) {
+                return this.update(key, newValue);
+            } else {
+                return this.set(key, newValue);
+            }
+        }
+    }
+    
+
+
     isCustomMap(obj: any): obj is Map<any, any> {
         return obj && typeof obj.set === "function" && typeof obj.entries === "function";
     }
@@ -749,21 +829,27 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     merge<KC, VC>(
         ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
     ): TreeMap<K | KC, Exclude<V, VC> | VC>;
-    // merge<C>(
-    //     ...collections: Array<{ [key: string]: C }>
-    // ): TreeMap<K | string, Exclude<V, C> | C>;
+    merge<C>(
+        ...collections: Array<{ [key: string]: C }>
+    ): TreeMap<K | string, Exclude<V, C> | C>;
     merge<KC, VC>(other: Map<KC, VC>): TreeMap<K | KC, V | VC>;
     merge(...collections: any[]): TreeMap<any, any> {
         let newTree = this as TreeMap<any, any>;
 
         for (const collection of collections) {
-            if (Array.isArray(collection)) {
+            if (this.isCustomMap(collection)) {
+                for (const {key, value} of collection.entries()) {
+                    newTree = newTree.set(key, value);
+                }
+            } else if (Array.isArray(collection)) {
                 for (const {key, value} of collection) {
                     newTree = newTree.set(key, value);
                 }
-            } else {
-                for (const {key, value} of collection.entries()) {
-                    newTree = newTree.set(key, value);
+            } else if (typeof collection === 'object' && collection !== null) {
+                for (const key in collection) {
+                    if (collection.hasOwnProperty(key)) {
+                        newTree = newTree.set(key as any, collection[key]);
+                    }
                 }
             }
         }
@@ -772,38 +858,239 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
 
     concat<KC, VC>(
-            ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
-    ): TreeMap<K | KC, Exclude<V, VC> | VC> {
+        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+    ): TreeMap<K | KC, Exclude<V, VC> | VC>;    
+    concat<C>(
+        ...collections: Array<{ [key: string]: C }>
+    ): TreeMap<K | string, Exclude<V, C> | C>;
+    concat(...collections: any[]): TreeMap<any, any> {
         let newTree = this as TreeMap<any, any>;
 
         for (const collection of collections) {
-            for (const {key, value} of collection) {
+            if (Array.isArray(collection)) {
+                for (const {key, value} of collection) {
+                    newTree = newTree.set(key, value);
+                }
+            } else if (typeof collection === 'object' && collection !== null) {
+                for (const key in collection) {
+                    if (collection.hasOwnProperty(key)) {
+                        newTree = newTree.set(key as any, collection[key]);
+                    }
+                }
+            }
+        }
+
+        return newTree;
+    }
+
+    mergeWith<KC, VC, VCC>(
+        callback: (oldVal: V, newVal: VC, key: K) => VCC,
+        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+    ): TreeMap<K | KC, V | VC | VCC>;
+    mergeWith<C, CC>(
+        callback: (oldVal: V, newVal: C, key: string) => CC,
+        ...collections: Array<{ [key: string]: C }>
+    ): TreeMap<K | string, V | C | CC>;
+    mergeWith(
+        callback: (oldVal: V, newVal: any, key: any) => any,
+        ...collections: any[]
+    ): TreeMap<any, any> {
+        let newTree = this as TreeMap<any, any>;
+
+        for (const collection of collections) {
+            if (Array.isArray(collection)) {
+                for (const { key, value } of collection) {
+                    if (newTree.has(key)) {
+                        newTree = newTree.update(key, callback(newTree.get(key)!, value, key));
+                    } else {
+                        newTree = newTree.set(key, value);
+                    }
+                }
+            } else if (typeof collection === 'object' && collection !== null) {
+                for (const key in collection) {
+                    if (newTree.has(key)) {
+                        newTree = newTree.update(key, callback(newTree.get(key)!, collection[key], key));
+                    } else {
+                        newTree = newTree.set(key, collection[key]);
+                    }
+                }
+            }
+        }
+        return newTree;
+    }
+
+    // mergeDeep<KC, VC>(
+    //     ...collections: Array<Iterable<[KC, VC]>>
+    // ): TreeMap<K | KC, V | VC>;
+    // mergeDeep<C>(
+    // ...collections: Array<{ [key: string]: C }>
+    // ): TreeMap<K | string, V | C>;
+    // mergeDeep<KC, VC>(other: TreeMap<KC, VC>): TreeMap<K | KC, V | VC>;
+    // mergeDeep(...collections: any[]): TreeMap<any, any> {
+    //     let newTree = this as TreeMap<any, any>;
+        
+    //     for (const collection of collections) {
+    //         if (this.isCustomMap(collection)) {
+    //             for (const {key, value} of collection.entries()) {
+    //                 newTree = newTree.setDeep(key, value);
+    //             }
+    //         } else if (Array.isArray(collection)) {
+    //             for (const {key, value} of collection) {
+    //                 newTree = newTree.setDeep(key, value);
+    //             }
+    //         } else if (typeof collection === 'object' && collection !== null) {
+    //             for (const key in collection) {
+    //                 if (collection.hasOwnProperty(key)) {
+    //                     newTree = newTree.setDeep(key as any, collection[key]);
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     return newTree;
+    // }
+
+    // private setDeep(key: any, value: any): TreeMap<any, any> {
+    //     if (this.has(key)) {
+    //         const existingValue = this.get(key);
+    //         if (typeof existingValue === 'object' && existingValue !== null && typeof value === 'object' && value !== null) {
+    //             const mergedValue = this.mergeDeepObjects(existingValue, value);
+    //             return this.set(key, mergedValue);
+    //         }
+    //     }
+    //     return this.set(key, value);
+    // }
+    
+    // private mergeDeepObjects(obj1: any, obj2: any): any {
+    //     const result = { ...obj1 };
+    //     for (const key in obj2) {
+    //         if (obj2.hasOwnProperty(key)) {
+    //             if (typeof obj2[key] === 'object' && obj2[key] !== null && typeof obj1[key] === 'object' && obj1[key] !== null) {
+    //                 result[key] = this.mergeDeepObjects(obj1[key], obj2[key]);
+    //             } else {
+    //                 result[key] = obj2[key];
+    //             }
+    //         }
+    //     }
+    //     return result;
+    // }
+
+    map<M>(
+        callback: (value: V, key: K, map: this) => M,
+        thisArg?: unknown
+    ): TreeMap<K, M> {
+        let newTree = new TreeMap<K, M>(this.compare);
+        for (const {key, value} of this.entries()) {
+            newTree = newTree.set(key, callback.call(thisArg, value, key, this));
+        }
+        return newTree;
+    }
+
+    mapKeys<M>(
+        callback: (key: K, value: V, map: this) => M,
+        thisArg?: unknown,
+        compare?: Comparator<M>
+    ): TreeMap<M, V> {
+        const keyComparator = compare ?? TreeMap.defaultComparator<M>;
+        let newTree = new TreeMap<M, V>(compare);
+        for (const {key, value} of this.entries()) {
+            newTree = newTree.set(callback.call(thisArg, key, value, this), value);
+        }
+        return newTree;
+    }
+
+    mapEntries<KM, VM>(
+        mapper: (
+          entry: KeyValuePair<K, V>,
+          index: number,
+          map: this
+        ) => KeyValuePair<KM, VM> | undefined,
+        thisArg?: unknown,
+        compare?: Comparator<KM>
+      ): TreeMap<KM, VM> {
+        const newCompare = compare ?? TreeMap.defaultComparator<KM>;
+        let newTree = new TreeMap<KM, VM>(newCompare);
+        let index = 0;
+        for (const entry of this.entries()) {
+          const newEntry = mapper.call(thisArg, entry, index++, this);
+          if (newEntry) {
+            newTree = newTree.set(newEntry.key, newEntry.value);
+          }
+        }
+        return newTree;
+      }
+
+    flatMap<KM, VM>(
+        callback: (value: V, key: K, map: this) => Iterable<KeyValuePair<KM, VM>>,
+        thisArg?: unknown,
+        compare?: Comparator<KM>
+    ): TreeMap<KM, VM> {
+        const newCompare = compare ?? TreeMap.defaultComparator<KM>;
+        let newTree = new TreeMap<KM, VM>(newCompare);
+
+        for (const {key, value} of this.entries()) {
+            for (const {key: newKey, value: newValue} of callback.call(thisArg, value, key, this)) {
+                newTree = newTree.set(newKey, newValue);
+            }
+        }
+        return newTree;
+    }
+
+    filter<F extends V>(
+        predicate: (value: V, key: K, map: this) => value is F,
+        thisArg?: unknown,
+      ): TreeMap<K, F>;
+    filter(
+        predicate: (value: V, key: K, map: this) => unknown,
+        thisArg?: unknown
+    ): TreeMap<K, V>;
+    filter(
+        predicate: (value: V, key: K, map: this) => unknown,
+        thisArg?: unknown
+    ): TreeMap<any, any> {
+        let newTree = new TreeMap<any, any>(this.compare);
+        for (const {key, value} of this.entries()) {
+            if (predicate.call(thisArg, value, key, this)) {
                 newTree = newTree.set(key, value);
             }
         }
         return newTree;
     }
-    // concat<C>(
-    //     ...collections: Array<{ [key: string]: C }>
-    // ): TreeMap<K | string, Exclude<V, C> | C>;
 
-
-
-    /*
-    findOrAdd(key: K, value: V): KeyValuePair<K, V> {
-        throw new Error("Method not implemented.");
+    partition<F extends V, C>(
+        predicate: (this: C, value: V, key: K, map: this) => value is F,
+        thisArg?: C
+      ): [TreeMap<K, V>, TreeMap<K, F>];
+    partition<C>(
+        predicate: (this: C, value: V, key: K, map: this) => unknown,
+        thisArg?: C
+    ): [TreeMap<K, V>, TreeMap<K, V>];
+    partition(
+        predicate: (value: V, key: K, map: this) => unknown,
+        thisArg?: unknown
+    ): [TreeMap<K, V>, TreeMap<K, V>] {
+        let trueTree = new TreeMap<K, V>(this.compare);
+        let falseTree = new TreeMap<K, V>(this.compare);
+        for (const {key, value} of this.entries()) {
+            if (predicate.call(thisArg, value, key, this)) {
+                trueTree = trueTree.set(key, value);
+            } else {
+                falseTree = falseTree.set(key, value);
+            }
+        }
+        return [trueTree, falseTree];
     }
-    updateOrAdd(key: K, value: V): Map<K, V>;
-    updateOrAdd(key: K, value: V, newValue: V): Map<K, V>;
-    updateOrAdd(key: K, value: V, newValue?: V): Map<K, V> {
-        throw new Error("Method not implemented.");
+
+    flip(): TreeMap<V, K> {
+        let newTree = new TreeMap<V, K>(TreeMap.defaultComparator);
+        for (const {key, value} of this.entries()) {
+            newTree = newTree.set(value, key);
+        }
+        return newTree;
     }
 
-    check(): boolean {
-        return true;
-    }
 
-     */
+    // end HOFs
 
     findMin(node?: Node<K, V> | null): Node<K, V> | undefined {
         let minNode = node ?? this.root;

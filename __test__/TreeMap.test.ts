@@ -11,7 +11,7 @@ function shuffleArray<T>(array: T[]): T[] {
 
 describe("TreeMap", () => {
     const compare = (a: number, b: number) => a-b;
-    let treeMap: TreeMap<number, string> = new TreeMap<number, string>(null, compare);
+    let treeMap: TreeMap<number, string> = new TreeMap<number, string>(compare);
     const arr = [50, 40, 30, 10, 20, 30, 100, 0, 45, 55, 25, 15];
     const arrDistinct = Array.from(new Set(arr));
     const arrDistinctSorted = arrDistinct.slice().sort((a, b) => a-b);
@@ -26,7 +26,7 @@ describe("TreeMap", () => {
     // });
 
     test('validateRedBlackTree() properties after adding and deletion of many nodes', () => {
-        const tree = new TreeMap(null, compare);
+        const tree = new TreeMap(compare);
         let elements = [50, 40, 30, 10, 20, 30, 100, 0, 45, 55, 25, 15, 1000, 11111, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390];
         elements = shuffleArray(elements);
 
@@ -41,6 +41,17 @@ describe("TreeMap", () => {
         //     newTree = newTree.delete(elem);
         //     expect(newTree.validateRedBlackTree()).toBeTruthy();
         // }
+    })
+
+    test('change compare to be reversed order', () => {
+        let newTree = new TreeMap((a: number, b: number) => b-a);
+        for (const elem of arr) {
+            newTree = newTree.set(elem, elem.toString());
+        }
+        expect(newTree.size()).toBe(arrDistinct.length);
+        expect(newTree.firstKey()).toBe(100);
+        expect(newTree.lastKey()).toBe(0);
+        expect(newTree.keys()).toEqual(arrDistinctReversed);
     })
 
     test('get()', () => {
@@ -61,7 +72,7 @@ describe("TreeMap", () => {
 
     test('firstKey()', () => {
         const first = treeMap.firstKey();
-        expect(first).toBe(40);
+        expect(first).toBe(0);
     })
 
     test('lastKey()', () => {
@@ -132,15 +143,15 @@ describe("TreeMap", () => {
     })
 
     test('equals()', () => {
-        const otherTreeMap = new TreeMap<number, string>(null, compare)
+        const otherTreeMap = new TreeMap<number, string>(compare)
             .set(1, "1").set(2, "2").set(3, "3");
-        const otherTreeMap2 = new TreeMap<number, string>(null, (a: number, b: number) => b-a)
+        const otherTreeMap2 = new TreeMap<number, string>((a: number, b: number) => b-a)
             .set(3, "3").set(2, "2").set(1, "1");
         expect(otherTreeMap.equals(otherTreeMap2)).toBeTruthy();
     });
 
     test('hashCode() same', () => {
-        let otherTreeMap = new TreeMap<number, string>(null,compare);
+        let otherTreeMap = new TreeMap<number, string>(compare);
         for (const elem of arr) {
            otherTreeMap = otherTreeMap.set(elem, elem.toString());
         }
@@ -148,7 +159,7 @@ describe("TreeMap", () => {
     })
 
     test('hashCode() differ', () => {
-        const otherTreeMap = new TreeMap<number, string>(null, compare)
+        const otherTreeMap = new TreeMap<number, string>(compare)
             .set(2, "2")
             .set(3, "3");
         expect(treeMap.hashCode()).not.toBe(otherTreeMap.hashCode());
@@ -160,7 +171,7 @@ describe("TreeMap", () => {
     })
 
     test('check that hashCode() does not change', () => {
-        const tree = new TreeMap<number, string>(null, compare);
+        const tree = new TreeMap<number, string>(compare);
         const tree1 = tree.set(1, "1");
         const tree2 = tree1.set(2, "2");
         const tree3 = tree2.set(3, "3");
@@ -408,7 +419,7 @@ describe("TreeMap", () => {
     });
 
     test('merge() with other treeMap', () => {
-        const otherTreeMap = new TreeMap<number, string>(null, compare)
+        const otherTreeMap = new TreeMap<number, string>(compare)
             .set(666, "666")
             .set(555, "555");
         const expectedSize = arrDistinct.length + 2;
@@ -440,6 +451,248 @@ describe("TreeMap", () => {
         expect(result.has(666)).toBeTruthy();
         expect(result.has(555)).toBeTruthy();
         expect(result.findMax()?.key).toBe(666);
+    })
+
+    test('concat() with objects', () => {
+        const obj1 = { "666": "666", "555": "555" };
+        const obj2 = { "777": "777", "888": "888" };
+
+        const expectedSize = arrDistinct.length + 4;
+        const result = treeMap.concat(obj1, obj2);
+        expect(result.size()).toBe(expectedSize);
+        expect(result.has(50)).toBeTruthy();
+        expect(result.has("666")).toBeTruthy();
+        expect(result.has("555")).toBeTruthy();
+        expect(result.has("777")).toBeTruthy();
+        expect(result.has("888")).toBeTruthy();
+    })
+
+    test('updateOrAdd() with value', () => {
+        // const result = treeMap.update(50, (value) => value + "50");
+        const result = treeMap.updateOrAdd(50, "5050");
+        expect(result.get(50)).toBe("5050");
+    })
+
+    test('updateOrAdd() with function', () => {
+        const result = treeMap.updateOrAdd(50, (value) => value + "5050");
+        expect(result.get(50)).toBe("505050");
+    })
+
+    test('updateOrAdd() when key does not exist so the key will be added', () => {
+        const result = treeMap.updateOrAdd(666, "666");
+        expect(result.get(666)).toBe("666");
+    })
+
+    test('mergeWith() an iterable', () => {
+        const iterable = [{key: 50, value: "5050"}, {key: 40, value: "4040"}];
+        const expectedSize = arrDistinct.length;
+        const result = treeMap.mergeWith((oldVal, newVal, key) => oldVal + newVal, iterable);
+        result.printTree();
+
+        expect(result.size()).toBe(expectedSize); // size should not change
+        expect(result.get(50)).toBe("505050");
+    })
+
+    // test('mergeDeep()', () => {
+    //     const otherTreeMap = new TreeMap<number, TreeMap<number, number>>(null, compare);
+    //     const inner1 = new TreeMap<number, number>(null, compare).set(1, 1).set(2, 2);
+    //     const inner2 = new TreeMap<number, number>(null, compare).set(3, 3).set(4, 4);
+    //     otherTreeMap.set(1, inner1).set(2, inner2);
+
+    //     const otherTreeMap2 = new TreeMap<number, TreeMap<number, number>>(null, compare);
+    //     const inner3 = new TreeMap<number, number>(null, compare).set(5, 5).set(6, 6);
+    //     const inner4 = new TreeMap<number, number>(null, compare).set(7, 7).set(8, 8);
+    //     otherTreeMap2.set(1, inner3).set(2, inner4);
+
+    //     const result = otherTreeMap.mergeDeep(otherTreeMap2);
+    //     expect(result.size()).toBe(2);
+    //     expect(result.get(1)?.size()).toBe(4);
+    //     expect(result.get(2)?.size()).toBe(4);
+
+    // })
+
+    test('map()', () => {
+        const result = treeMap.map((value, key, map) => value + value + value);
+        expect(result.get(50)).toBe("505050");
+        expect(result.get(40)).toBe("404040");
+        expect(result.get(30)).toBe("303030");
+        expect(result.get(10)).toBe("101010");
+        expect(result.get(20)).toBe("202020");
+        expect(result.get(100)).toBe("100100100");
+    })
+
+    test('map() to a number number map', () => {
+        const result = treeMap.map((value, key, map) => key + key + key);
+        expect(result.get(50)).toBe(150);
+        expect(result.get(40)).toBe(120);
+        expect(result.get(30)).toBe(90);
+        expect(result.get(10)).toBe(30);
+        expect(result.get(20)).toBe(60);
+        expect(result.get(100)).toBe(300);
+    })
+
+    test('map() using the map size()', () => {
+        const result = treeMap.map((value, key, map) => {
+            const mapSize = map.size();
+            return `${value}-${mapSize}`;
+        });
+
+        expect(result.get(50)).toBe("50-11");
+        expect(result.get(40)).toBe("40-11");
+        expect(result.get(30)).toBe("30-11");
+        expect(result.get(10)).toBe("10-11");
+        expect(result.get(20)).toBe("20-11");
+        expect(result.get(100)).toBe("100-11");
+    })
+
+    test('mapKeys()', () => {
+        const result = treeMap.mapKeys((key, value, map) => key * 2);
+        expect(result.get(50 * 2)).toBe("50");
+        expect(result.get(40 * 2)).toBe("40");
+        expect(result.get(30 * 2)).toBe("30");
+        expect(result.get(10 * 2)).toBe("10");
+        expect(result.get(20 * 2)).toBe("20");
+        expect(result.get(100 * 2)).toBe("100");
+        expect(result.size()).toBe(arrDistinct.length)
+    })
+
+    test('mapKeys() map with thisArg', () => {
+        const thisArg = {multiplier : 3};
+        const newCompare = (a: number, b: number) => b-a;
+        const result = treeMap.mapKeys((key, value, map) => {
+            if (thisArg) {
+                return key * thisArg.multiplier;
+            } else {
+                return key * 3;
+            }
+        }, thisArg, newCompare);
+        expect(result.get(50 * 3)).toBe("50");
+        expect(result.get(40 * 3)).toBe("40");
+        expect(result.get(30 * 3)).toBe("30");
+        expect(result.get(10 * 3)).toBe("10");
+        expect(result.get(20 * 3)).toBe("20");
+        expect(result.get(100 * 3)).toBe("100");
+        expect(result.size()).toBe(arrDistinct.length)
+    })
+
+    test('mapEntries()', () => {
+        const result = treeMap.mapEntries((entry, map) => {
+            return { key: entry.key * 2, value: entry.value + entry.value };
+        });
+
+        expect(result.get(50 * 2)).toBe("5050");
+        expect(result.get(40 * 2)).toBe("4040");
+        expect(result.get(30 * 2)).toBe("3030");
+        expect(result.get(10 * 2)).toBe("1010");
+        expect(result.get(20 * 2)).toBe("2020");
+        expect(result.get(100 * 2)).toBe("100100");
+        expect(result.size()).toBe(arrDistinct.length)
+    })
+
+    test('mapEntries() with thisArg and compare in descending order', () => {
+        const thisArg = {multiplier : 3};
+        const newCompare = (a: number, b: number) => b-a;
+        const result = treeMap.mapEntries((entry, map) => {
+            if (thisArg) {
+                return { key: entry.key * thisArg.multiplier, value: entry.value + entry.value };
+            } else {
+                return { key: entry.key * 3, value: entry.value + entry.value };
+            }
+        }, thisArg, newCompare);
+
+        expect(result.get(50 * 3)).toBe("5050");
+        expect(result.get(40 * 3)).toBe("4040");
+        expect(result.get(30 * 3)).toBe("3030");
+        expect(result.get(10 * 3)).toBe("1010");
+        expect(result.get(20 * 3)).toBe("2020");
+        expect(result.get(100 * 3)).toBe("100100");
+        expect(result.size()).toBe(arrDistinct.length)
+
+        expect(result.firstKey()).toBe(100 * 3);
+        expect(result.lastKey()).toBe(0 * 3);
+    })
+
+    test('mapEntries() with thisArg and compare in ascending order', () => {
+        const thisArg = {multiplier : 3};
+        const newCompare = (a: number, b: number) => a-b;
+        const result = treeMap.mapEntries((entry, map) => {
+            if (thisArg) {
+                return { key: entry.key * thisArg.multiplier, value: entry.value + entry.value };
+            } else {
+                return { key: entry.key * 3, value: entry.value + entry.value };
+            }
+        }, thisArg, newCompare);
+
+        expect(result.get(50 * 3)).toBe("5050");
+        expect(result.get(40 * 3)).toBe("4040");
+        expect(result.get(30 * 3)).toBe("3030");
+        expect(result.get(10 * 3)).toBe("1010");
+        expect(result.get(20 * 3)).toBe("2020");
+        expect(result.get(100 * 3)).toBe("100100");
+        expect(result.size()).toBe(arrDistinct.length)
+
+        expect(result.firstKey()).toBe(0 * 3);
+        expect(result.lastKey()).toBe(100 * 3);
+    })
+
+    test('flatMap() with thisArg', () => {
+        const thisArg = {multiplier: 2};
+        const result = treeMap.flatMap((value, key, map) => {
+            const newKey = key * thisArg.multiplier;
+            const newValue = value + value;
+            return new TreeMap<number, string>(compare).set(newKey, newValue);
+        }, thisArg);
+        expect(result.get(50 * 2)).toBe("5050");
+        expect(result.get(40 * 2)).toBe("4040");
+    })
+
+    test('filter()', () => {
+        const result = treeMap.filter((value, key, map) => key > 30);
+        const expected = arrDistinct.filter((value) => value > 30);
+        expect(result.size()).toBe(expected.length);
+        expect(result.has(40)).toBeTruthy();
+        expect(result.has(50)).toBeTruthy();
+        expect(result.has(55)).toBeTruthy();
+        expect(result.has(100)).toBeTruthy();
+    })
+
+    test('filter() with thisArg', () => {
+        const thisAarg = {listIncluded: [40, 50]};
+        const result = treeMap.filter((value, key, map) => {
+            return thisAarg.listIncluded.includes(key);
+        }
+        , thisAarg);
+        expect(result.size()).toBe(2);
+        expect(result.has(40)).toBeTruthy();
+        expect(result.has(50)).toBeTruthy();
+    })
+
+    test('partition()', () => {
+        const [trueTree, falseTree] = treeMap.partition((value, key, map) => key > 30);
+        const expectedTrue = arrDistinct.filter((value) => value > 30);
+        const expectedFalse = arrDistinct.filter((value => value <= 30));
+        expect(trueTree.size()).toBe(expectedTrue.length);
+        expect(falseTree.size()).toBe(expectedFalse.length);
+
+        expect(trueTree.size()).toBe(expectedTrue.length);
+        for (const entry of expectedTrue) {
+            expect(trueTree.has(entry)).toBeTruthy();
+        }
+
+        expect(falseTree.size()).toBe(expectedFalse.length);
+        for (const entry of expectedFalse) {
+            expect(falseTree.has(entry)).toBeTruthy();
+        }
+    })
+
+    test('flip() check that the keys and values are flipped', () => {
+        const flipped = treeMap.flip();
+        expect(flipped.size()).toBe(arrDistinct.length);
+        expect(flipped.get("50")).toBe(50);
+        expect(flipped.get("40")).toBe(40);
+        expect(flipped.get("30")).toBe(30);
+        expect(flipped.get("10")).toBe(10);
+        expect(flipped.get("20")).toBe(20);
     })
 
 })
