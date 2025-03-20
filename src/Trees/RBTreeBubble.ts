@@ -380,64 +380,32 @@ export default class RBTreeBubble<T> {
         return this.left().redInvariantHelper() && this.right().redInvariantHelper();
     }
 
+
     /**
-     * Validate that every path in the tree has the same number of black nodes. 
-     * Path to the min node in a BST is obtained by following the left pointer from a node to a null node, so traversing the black nodes we encounter
-     * while traversing the left most node will give the baseline.
-     * @returns true if the black height invariant is maintained
+     * Validate every path in the tree has the same black height.
+     * This is the black height invariant.
+     * @returns true if the black height invariant is maintained.
      */
-    // blackBalancedInvariant(): boolean {
-    //     let blackHeight = 0;
-    //     let current: RBTreeBubble<T> = this;
-    //     // Traverse leftmost path and count the black nodes
-    //     while (!current.isEmpty()) {
-    //         if (current.isB()) blackHeight++;
-    //         current = current.left();
-    //     }
-    //     return this.blackBalancedHelper(blackHeight);
-    // }
-
-    // private blackBalancedHelper(bb: number): boolean {
-    //     if (this.isEmpty()) return bb === 0;
-    //     let currentBlackHeight = bb;
-    //     if (this.isB()) currentBlackHeight--;
-    //     if (this.left().isEmpty() && !this.right().isEmpty()) {
-    //         return this.right().blackBalancedHelper(currentBlackHeight);
-    //     } else if (!this.left().isEmpty() && this.right().isEmpty()) {
-    //         return this.left().blackBalancedHelper(currentBlackHeight);
-    //     } else {
-    //         return this.left().blackBalancedHelper(currentBlackHeight) && this.right().blackBalancedHelper(currentBlackHeight);
-    //     }
-    // }
-
     public blackBalancedInvariant(): boolean {
-        return this.checkBlackHeight() !== -1;
+        return this.blackBalancedHelper() !== -1;
       }
       
-      private checkBlackHeight(): number {
-        // If we're at an empty leaf, treat it as a black leaf and return 1
+      private blackBalancedHelper(): number {
+        // empty leaf nodes are black
         if (this.isEmpty()) {
           return 1;
         }
       
-        // Recursively check black height for left and right subtrees
-        const leftHeight = this.left().checkBlackHeight();
-        if (leftHeight === -1) {
-          return -1;
-        }
+        const lh = this.left().blackBalancedHelper();
+        if (lh === -1) return -1;
       
-        const rightHeight = this.right().checkBlackHeight();
-        if (rightHeight === -1) {
-          return -1;
-        }
+        const rh = this.right().blackBalancedHelper();
+        if (rh === -1) return -1;
       
-        // If they differ, it's invalid
-        if (leftHeight !== rightHeight) {
-          return -1;
-        }
+        if (lh !== rh) return -1;
       
         // If this node is black, increment black height by 1
-        return leftHeight + (this.isB() ? 1 : 0);
+        return lh + (this.isB() ? 1 : 0);
       }
 
 
@@ -450,45 +418,32 @@ export default class RBTreeBubble<T> {
      * @returns true if the tree is a valid red-black tree.
      */
      validateRedBlackTree(): boolean {
-        let numBlack = 0;
-        let current: RBTreeBubble<T> = this;
-
-        // Traverse leftmost path and count the black nodes
-        while (!current.isEmpty()) {
-            if (current.isB()) numBlack++;
-            current = current.left();
-        }
-
-        return this.validateRedBlackTreeHelper(numBlack);
+        return this.validateRedBlackTreeHelper() !== -1;
     }
 
-    private validateRedBlackTreeHelper(bb: number): boolean {
-        if (this.isEmpty()) return bb === 0;
+    private validateRedBlackTreeHelper(): number {
+        if (this.isEmpty()) return 1;
 
-        let currentBlackHeight = bb;
-
-        // Decrement black height if node is black
-        if (this.isB()) currentBlackHeight--;
+        // Validate BST properties
+        if (!this.left().isEmpty() && this.left().rootValue() >= this.rootValue()) return -1;
+        if (!this.right().isEmpty() && this.right().rootValue() <= this.rootValue()) return -1;
 
         // Check for consecutive red nodes
         if (this.isR()) {
             if (this.left().isR() || this.right().isR()) {
-                return false;
+                return -1;
             }
         }
 
-        // Validate BST properties
-        if (!this.left().isEmpty() && this.left().rootValue() >= this.rootValue()) return false;
-        if (!this.right().isEmpty() && this.right().rootValue() <= this.rootValue()) return false;
+        const lh = this.left().validateRedBlackTreeHelper();
+        if (lh === -1) return -1;
 
-        if (this.left().isEmpty() && !this.right().isEmpty()) {
-            return this.right().validateRedBlackTreeHelper(currentBlackHeight);
-        } else if (!this.left().isEmpty() && this.right().isEmpty()) {
-            return this.left().validateRedBlackTreeHelper(currentBlackHeight);
-        } else {
-            return this.left().validateRedBlackTreeHelper(currentBlackHeight) &&
-                   this.right().validateRedBlackTreeHelper(currentBlackHeight);
-        }
+        const rh = this.right().validateRedBlackTreeHelper();
+        if (rh === -1) return -1;
+
+        if (lh !== rh) return -1;
+
+        return lh + (this.isB() ? 1 : 0);
     }
 }
 
@@ -504,7 +459,7 @@ function shuffleArray<T>(array: T[]): T[] {
     return array;
 }
 
-const largeArray = createRandomIntArray(1_000, 1, 100);
+const largeArray = createRandomIntArray(1_000_000, 1, 1000);
 let rbtree = new RBTreeBubble<number>();
 
 for (const elem of largeArray) {
