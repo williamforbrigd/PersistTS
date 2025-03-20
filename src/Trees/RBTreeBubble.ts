@@ -5,54 +5,24 @@ enum Color {
     NEGATIVEBLACK
 }
 
-class Node2<T> {
-    constructor(
-        public color: Color,
-        public leftNode: Node2<T> | null,
-        public value: T,
-        public rightNode: Node2<T> | null
-    ) {
-    }
-
-    isRed(): boolean {
-        return this.color === Color.RED;
-    }
-
-    isBlack(): boolean {
-        return this.color === Color.BLACK;
-    }
-
-    isDoubleBlack(): boolean {
-        return this.color === Color.DOUBLEBLACK;
-    }
-
-    isNegativeBlack(): boolean {
-        return this.color === Color.NEGATIVEBLACK;
-    }
-
-
-    toString(): string {
-        // include the double black as DB
-        return `${this.value}${this.color === Color.RED ? 'R' : this.color === Color.BLACK ? 'B' : 'DB'}`;
-    }
-}
-
 export default class RBTreeBubble<T> {
     
     constructor(
-        private readonly root: Node2<T> | null = null,
-        private readonly isDoubleBlackLeaf: boolean = false
+        private readonly color: Color = Color.BLACK,
+        private readonly leftTree: RBTreeBubble<T> | null = null,
+        private readonly root: T | null = null,
+        private readonly rightTree: RBTreeBubble<T> | null = null,
     ) {
     }
 
     from(color: Color, left: RBTreeBubble<T>, value: T, right: RBTreeBubble<T>): RBTreeBubble<T> {
-        if (!left.isEmpty() && left.rootValue() >= value) {
+        if (!left.isEmpty() && left.root !== null && left.root! >= value) {
             throw new Error("left subtree value must be less than root value");
         }
-        if (!right.isEmpty() && value >= right.rootValue()) {
+        if (!right.isEmpty() && right.root !== null && value >= right.root!) {
             throw new Error("right subtree value must be greater than root value");
         }
-        return new RBTreeBubble(new Node2(color, left.root, value, right.root));
+        return new RBTreeBubble(color, left, value, right);
     }
 
     isEmpty(): boolean {
@@ -60,51 +30,51 @@ export default class RBTreeBubble<T> {
     }
 
     isEmptyDoubleBlackLeaf(): boolean {
-        return this.root === null && this.isDoubleBlackLeaf;
+        return this.root === null && this.color === Color.DOUBLEBLACK;
     }
 
     empty(): RBTreeBubble<T> {
-        return new RBTreeBubble<T>(null);
+        return new RBTreeBubble<T>(Color.BLACK, null, null, null);
     }
 
     emptyDoubleBlackLeaf(): RBTreeBubble<T> {
-        return new RBTreeBubble<T>(null, true);
+        return new RBTreeBubble<T>(Color.DOUBLEBLACK, null, null, null);
     }
 
     rootValue(): T {
         if (this.isEmpty()) throw new Error("Tree is empty. Cannot get root value");
-        return this.root!.value;
+        return this.root!
     }
 
     rootColor(): Color {
         if (this.isEmpty()) throw new Error("Tree is empty. Cannot get root color");
-        return this.root!.color;
+        return this.color;
     }
 
     left(): RBTreeBubble<T> {
-        if (this.isEmpty()) return this.empty();
-        return new RBTreeBubble<T>(this.root!.leftNode);
+        if (!this.leftTree) return this.empty();
+        return this.leftTree;
     }
 
     right(): RBTreeBubble<T> {
-        if (this.isEmpty()) return this.empty();
-        return new RBTreeBubble<T>(this.root!.rightNode);
+        if (!this.rightTree) return this.empty();
+        return this.rightTree;
     }
 
     isB(): boolean {
-        return this.rootColor() === Color.BLACK;
+        return !this.isEmpty() && this.color === Color.BLACK;
     }
 
     isR(): boolean {
-        return this.rootColor() === Color.RED;
+        return !this.isEmpty() && this.color === Color.RED;
     }
 
     isBB(): boolean {
-        return this.rootColor() === Color.DOUBLEBLACK || this.isDoubleBlackLeaf;
+        return !this.isEmpty() && this.color === Color.DOUBLEBLACK;
     }
 
     isNB(): boolean {
-        return this.rootColor() === Color.NEGATIVEBLACK;
+        return !this.isEmpty() && this.color === Color.NEGATIVEBLACK;
     }
 
     member(x: T): boolean {
@@ -151,7 +121,7 @@ export default class RBTreeBubble<T> {
     }
 
     redderTree(): RBTreeBubble<T> {
-        if (this.isEmpty() && this.isDoubleBlackLeaf) return this.empty();
+        if (this.isEmptyDoubleBlackLeaf()) return this.empty();
         return this.from(this.redder(this.rootColor()), this.left(), this.rootValue(), this.right())
     }
 
@@ -316,21 +286,21 @@ export default class RBTreeBubble<T> {
 
     private doubledLeft(): boolean {
         const res = !this.isEmpty()
-            && this.root!.isRed()
-            && this.left().root?.isRed();
+            && this.isR()
+            && this.left().isR();
         return res ?? false;
     }
 
     private doubledRight(): boolean {
         const res = !this.isEmpty()
-            && this.root!.isRed()
-            && this.right().root?.isRed();
+            && this.isR()
+            && this.right().isR();
         return res ?? false;
     }
 
     private paint(color: Color): RBTreeBubble<T> {
         if (this.isEmpty()) return this.empty();
-        return this.from(color, this.left(), this.rootValue(), this.right());
+        return new RBTreeBubble(color, this.leftTree, this.root, this.rightTree);
     }
 
 
@@ -366,47 +336,49 @@ export default class RBTreeBubble<T> {
         return this.right().isEmpty() ? this.rootValue() : this.right().maxSubTreeValue();
     }
 
-    private printTreeHelper(root: Node2<T> | null, space: number): void {
-        if (root) {
+    private printTreeHelper(tree: RBTreeBubble<T>, space: number): void {
+        if (!tree.isEmpty()) {
             space += 10;
-            this.printTreeHelper(root.rightNode, space);
-            console.log(' '.repeat(space) + root.toString());
-            this.printTreeHelper(root.leftNode, space);
+            this.printTreeHelper(tree.right(), space);
+            const color = tree.color === Color.RED ? 'R' : 'B';
+            const rootString = tree.root + color;
+            console.log(' '.repeat(space) + rootString);
+            this.printTreeHelper(tree.left(), space);
         }
     }
 
     public printTree(): void {
-        this.printTreeHelper(this.root, 0);
+        this.printTreeHelper(this, 0);
     }
 
     isBST(): boolean {
-        return this.isBSTHelper(this.root);
+        return this.isBSTHelper();
     }
 
-    private isBSTHelper(x: Node2<T> | null): boolean {
-        if (x === null) return true;
+    private isBSTHelper(): boolean {
+        if (this.isEmpty()) return true;
 
-        if (x.leftNode !== null && x.value < x.leftNode.value) return false;
+        if (!this.left().isEmpty() && this.left().rootValue() >= this.rootValue()) return false;
 
-        if (x.rightNode !== null && x.value > x.rightNode.value) return false;
+        if (!this.right().isEmpty() && this.right().rootValue() <= this.rootValue()) return false;
 
-        return this.isBSTHelper(x.leftNode) && this.isBSTHelper(x.rightNode);
+        return this.left().isBSTHelper() && this.right().isBSTHelper();
     }
 
     redInvariant(): boolean {
-        return this.redInvariantHelper(this.root);
+        return this.redInvariantHelper();
     }
 
-    private redInvariantHelper(x: Node2<T> | null): boolean {
-        if (x === null) return true;
+    private redInvariantHelper(this: RBTreeBubble<T>): boolean {
+        if (this.isEmpty()) return true;
 
-        if (x.isRed()) {
-            if (x.leftNode?.isRed() || x.rightNode?.isRed()) {
+        if (this.isR()) {
+            if (this.left().isR()   || this.right().isR()) {
                 return false;
             }
         }
 
-        return this.redInvariantHelper(x.leftNode) && this.redInvariantHelper(x.rightNode);
+        return this.left().redInvariantHelper() && this.right().redInvariantHelper();
     }
 
     /**
@@ -417,25 +389,25 @@ export default class RBTreeBubble<T> {
      */
     blackBalancedInvariant(): boolean {
         let blackHeight = 0;
-        let x = this.root;
+        let current: RBTreeBubble<T> = this;
         // Traverse leftmost path and count the black nodes
-        while (x !== null) {
-            if (x.isBlack()) blackHeight++;
-            x = x.leftNode;
+        while (!current.isEmpty()) {
+            if (current.isB()) blackHeight++;
+            current = current.left();
         }
-        return this.blackBalancedHelper(this.root, blackHeight);
+        return this.blackBalancedHelper(blackHeight);
     }
 
-    private blackBalancedHelper(x: Node2<T> | null, bb: number): boolean {
-        if (x === null) return bb === 0;
+    private blackBalancedHelper(bb: number): boolean {
+        if (this.isEmpty()) return bb === 0;
         let currentBlackHeight = bb;
-        if (x.isBlack()) currentBlackHeight--;
-        if (x.leftNode === null && x.rightNode !== null) {
-            return this.blackBalancedHelper(x.rightNode, currentBlackHeight);
-        } else if (x.leftNode !== null && x.rightNode === null) {
-            return this.blackBalancedHelper(x.leftNode, currentBlackHeight);
+        if (this.isB()) currentBlackHeight--;
+        if (this.left().isEmpty() && !this.right().isEmpty()) {
+            return this.right().blackBalancedHelper(currentBlackHeight);
+        } else if (!this.left().isEmpty() && this.right().isEmpty()) {
+            return this.left().blackBalancedHelper(currentBlackHeight);
         } else {
-            return this.blackBalancedHelper(x.leftNode, currentBlackHeight) && this.blackBalancedHelper(x.rightNode, currentBlackHeight);
+            return this.left().blackBalancedHelper(currentBlackHeight) && this.right().blackBalancedHelper(currentBlackHeight);
         }
     }
 
@@ -450,44 +422,43 @@ export default class RBTreeBubble<T> {
      */
      validateRedBlackTree(): boolean {
         let numBlack = 0;
-        let x = this.root;
+        let current: RBTreeBubble<T> = this;
 
         // Traverse leftmost path and count the black nodes
-        while (x != null) {
-            if (x.isBlack()) numBlack++;
-            x = x.leftNode;
+        while (!current.isEmpty()) {
+            if (current.isB()) numBlack++;
+            current = current.left();
         }
 
-        return this.validateRedBlackTreeHelper(this.root, numBlack);
+        return this.validateRedBlackTreeHelper(numBlack);
     }
 
-    private validateRedBlackTreeHelper(x: Node2<T> | null, bb: number): boolean {
-        if (x === null) return bb === 0;
+    private validateRedBlackTreeHelper(bb: number): boolean {
+        if (this.isEmpty()) return bb === 0;
 
         let currentBlackHeight = bb;
 
         // Decrement black height if node is black
-        if (x.isBlack()) currentBlackHeight--;
+        if (this.isB()) currentBlackHeight--;
 
         // Check for consecutive red nodes
-        if (x.isRed()) {
-            if (x.leftNode && x.leftNode.isRed() || x.rightNode && x.rightNode.isRed()) {
+        if (this.isR()) {
+            if (this.left().isR() || this.right().isR()) {
                 return false;
             }
         }
 
         // Validate BST properties
-        if (x.leftNode && x.leftNode.value >= x.value) return false;
-        if (x.rightNode && x.rightNode.value <= x.value) return false;
+        if (!this.left().isEmpty() && this.left().rootValue() >= this.rootValue()) return false;
+        if (!this.right().isEmpty() && this.right().rootValue() <= this.rootValue()) return false;
 
-        // Recursive check for the left and right subtrees
-        if (x.leftNode === null && x.rightNode !== null) {
-            return this.validateRedBlackTreeHelper(x.rightNode, currentBlackHeight);
-        } else if (x.leftNode !== null && x.rightNode === null) {
-            return this.validateRedBlackTreeHelper(x.leftNode, currentBlackHeight);
+        if (this.left().isEmpty() && !this.right().isEmpty()) {
+            return this.right().validateRedBlackTreeHelper(currentBlackHeight);
+        } else if (!this.left().isEmpty() && this.right().isEmpty()) {
+            return this.left().validateRedBlackTreeHelper(currentBlackHeight);
         } else {
-            return this.validateRedBlackTreeHelper(x.leftNode, currentBlackHeight) && 
-                   this.validateRedBlackTreeHelper(x.rightNode, currentBlackHeight);
+            return this.left().validateRedBlackTreeHelper(currentBlackHeight) &&
+                   this.right().validateRedBlackTreeHelper(currentBlackHeight);
         }
     }
 }
@@ -541,8 +512,6 @@ for (const elem of largeArray) {
 //     }
 // }
 
-//TODO: look at this becasue sometimes fails for black invariant and for large data sets.
-// TODO: maybe look at the other implementation in RedBlackSet.hs
 
 const tree = new RBTreeBubble<number>();
 console.log(tree.isEmpty()); // true
