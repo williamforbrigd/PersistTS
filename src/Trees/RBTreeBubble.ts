@@ -46,11 +46,6 @@ export default class RBTreeBubble<T> {
         return this.root!
     }
 
-    rootColor(): Color {
-        if (this.isEmpty()) throw new Error("Tree is empty. Cannot get root color");
-        return this.color;
-    }
-
     left(): RBTreeBubble<T> {
         if (!this.leftTree) return this.empty();
         return this.leftTree;
@@ -70,6 +65,7 @@ export default class RBTreeBubble<T> {
     }
 
     isBB(): boolean {
+        if (this.isEmptyDoubleBlackLeaf()) return true;
         return !this.isEmpty() && this.color === Color.DOUBLEBLACK;
     }
 
@@ -117,22 +113,22 @@ export default class RBTreeBubble<T> {
 
     blackerTree(): RBTreeBubble<T> {
         if (this.isEmpty()) return this.emptyDoubleBlackLeaf();
-        return this.from(Color.BLACK, this.left(), this.rootValue(), this.right());
+        return this.from(this.blacker(this.color), this.left(), this.rootValue(), this.right());
     }
 
     redderTree(): RBTreeBubble<T> {
         if (this.isEmptyDoubleBlackLeaf()) return this.empty();
-        return this.from(this.redder(this.rootColor()), this.left(), this.rootValue(), this.right())
+        return this.from(this.redder(this.color), this.left(), this.rootValue(), this.right())
     }
 
     insert(x: T): RBTreeBubble<T> {
-        return this.ins(x).blacken();
+        return this.ins(x).paint(Color.BLACK);
     }
 
     private ins(x: T): RBTreeBubble<T> {
         if (this.isEmpty()) return this.from(Color.RED, this.empty(), x, this.empty());
         const y = this.rootValue();
-        const c = this.rootColor();
+        const c = this.color;
         if (x < y) {
             return this.bubble(c, this.left().ins(x), y, this.right());
         } else if (x > y) {
@@ -143,14 +139,14 @@ export default class RBTreeBubble<T> {
     }
 
     delete(x: T): RBTreeBubble<T> {
-        return this.del(x).blacken();
+        return this.del(x).paint(Color.BLACK);
     }
 
     private del(x: T): RBTreeBubble<T> {
         if (this.isEmpty()) return this.empty();
 
         const y = this.rootValue();
-        const c = this.rootColor();
+        const c = this.color;
 
         if (x < y) {
             return this.bubble(c, this.left().del(x), y, this.right());
@@ -163,7 +159,7 @@ export default class RBTreeBubble<T> {
     }
 
     private bubble(c: Color, left: RBTreeBubble<T>, y: T, right: RBTreeBubble<T>): RBTreeBubble<T> {
-        if ((!left.isEmpty() && left.isBB()) || (!right.isEmpty() && right.isBB())) {
+        if ((left.isBB()) || (right.isBB())) {
             return this.balance(this.blacker(c), left.redderTree(), y, right.redderTree());
         } else {
             return this.balance(c, left, y, right);
@@ -218,7 +214,7 @@ export default class RBTreeBubble<T> {
             } else if (right.doubledRight()) {
                 const newLeft = this.from(Color.BLACK, left, x, right.left());
                 const rootValue = right.rootValue();
-                const newRight = this.from(Color.BLACK, right.right(), right.rootValue(), right.right());
+                const newRight = right.right().paint(Color.BLACK);
                 return this.from(Color.BLACK, newLeft, rootValue, newRight);
             // end Matt Might's deletion cases
 
@@ -263,6 +259,7 @@ export default class RBTreeBubble<T> {
     private remove(): RBTreeBubble<T> {
         if (this.isEmpty()) return this.empty();
         else if (this.isR() && this.left().isEmpty() && this.right().isEmpty()) return this.empty();
+        // deletion of double black leaf
         else if (this.isB() && this.left().isEmpty() && this.right().isEmpty()) return this.emptyDoubleBlackLeaf();
         else if (this.isB() && this.left().isEmpty() && this.right().isR()) return this.right().paint(Color.BLACK);
         else if (this.isB() && this.left().isR() && this.right().isEmpty()) return this.left().paint(Color.BLACK);
@@ -271,7 +268,7 @@ export default class RBTreeBubble<T> {
             const maxTreeValue = this.left().maxSubTreeValue();
             // remove max in the left subtree from the left subtree
             const rmMax = this.left().removeMax();
-            return this.bubble(this.rootColor(), rmMax, maxTreeValue, this.right());
+            return this.bubble(this.color, rmMax, maxTreeValue, this.right());
         }
     }
 
@@ -280,7 +277,7 @@ export default class RBTreeBubble<T> {
         else if (this.right().isEmpty()) {
             return this.remove();
         } else {
-            return this.bubble(this.rootColor(), this.left(), this.rootValue(), this.right().removeMax())
+            return this.bubble(this.color, this.left(), this.rootValue(), this.right().removeMax())
         }
     }       
 
@@ -336,19 +333,21 @@ export default class RBTreeBubble<T> {
         return this.right().isEmpty() ? this.rootValue() : this.right().maxSubTreeValue();
     }
 
-    private printTreeHelper(tree: RBTreeBubble<T>, space: number): void {
-        if (!tree.isEmpty()) {
+    private printTreeHelper(space: number): void {
+        if (!this.isEmpty()) {
             space += 10;
-            this.printTreeHelper(tree.right(), space);
-            const color = tree.color === Color.RED ? 'R' : 'B';
-            const rootString = tree.root + color;
+            this.right().printTreeHelper(space);
+
+            const color = this.color === Color.RED ? 'R' : 'B';
+            const rootString = this.root + color;
             console.log(' '.repeat(space) + rootString);
-            this.printTreeHelper(tree.left(), space);
+
+            this.left().printTreeHelper(space);
         }
     }
 
     public printTree(): void {
-        this.printTreeHelper(this, 0);
+        this.printTreeHelper(0);
     }
 
     isBST(): boolean {
@@ -387,29 +386,59 @@ export default class RBTreeBubble<T> {
      * while traversing the left most node will give the baseline.
      * @returns true if the black height invariant is maintained
      */
-    blackBalancedInvariant(): boolean {
-        let blackHeight = 0;
-        let current: RBTreeBubble<T> = this;
-        // Traverse leftmost path and count the black nodes
-        while (!current.isEmpty()) {
-            if (current.isB()) blackHeight++;
-            current = current.left();
-        }
-        return this.blackBalancedHelper(blackHeight);
-    }
+    // blackBalancedInvariant(): boolean {
+    //     let blackHeight = 0;
+    //     let current: RBTreeBubble<T> = this;
+    //     // Traverse leftmost path and count the black nodes
+    //     while (!current.isEmpty()) {
+    //         if (current.isB()) blackHeight++;
+    //         current = current.left();
+    //     }
+    //     return this.blackBalancedHelper(blackHeight);
+    // }
 
-    private blackBalancedHelper(bb: number): boolean {
-        if (this.isEmpty()) return bb === 0;
-        let currentBlackHeight = bb;
-        if (this.isB()) currentBlackHeight--;
-        if (this.left().isEmpty() && !this.right().isEmpty()) {
-            return this.right().blackBalancedHelper(currentBlackHeight);
-        } else if (!this.left().isEmpty() && this.right().isEmpty()) {
-            return this.left().blackBalancedHelper(currentBlackHeight);
-        } else {
-            return this.left().blackBalancedHelper(currentBlackHeight) && this.right().blackBalancedHelper(currentBlackHeight);
+    // private blackBalancedHelper(bb: number): boolean {
+    //     if (this.isEmpty()) return bb === 0;
+    //     let currentBlackHeight = bb;
+    //     if (this.isB()) currentBlackHeight--;
+    //     if (this.left().isEmpty() && !this.right().isEmpty()) {
+    //         return this.right().blackBalancedHelper(currentBlackHeight);
+    //     } else if (!this.left().isEmpty() && this.right().isEmpty()) {
+    //         return this.left().blackBalancedHelper(currentBlackHeight);
+    //     } else {
+    //         return this.left().blackBalancedHelper(currentBlackHeight) && this.right().blackBalancedHelper(currentBlackHeight);
+    //     }
+    // }
+
+    public blackBalancedInvariant(): boolean {
+        return this.checkBlackHeight() !== -1;
+      }
+      
+      private checkBlackHeight(): number {
+        // If we're at an empty leaf, treat it as a black leaf and return 1
+        if (this.isEmpty()) {
+          return 1;
         }
-    }
+      
+        // Recursively check black height for left and right subtrees
+        const leftHeight = this.left().checkBlackHeight();
+        if (leftHeight === -1) {
+          return -1;
+        }
+      
+        const rightHeight = this.right().checkBlackHeight();
+        if (rightHeight === -1) {
+          return -1;
+        }
+      
+        // If they differ, it's invalid
+        if (leftHeight !== rightHeight) {
+          return -1;
+        }
+      
+        // If this node is black, increment black height by 1
+        return leftHeight + (this.isB() ? 1 : 0);
+      }
 
 
      /**
@@ -494,104 +523,60 @@ for (const elem of largeArray) {
     }
 }
 
-// const elemsToDelete = shuffleArray(largeArray);
-// const elemsToDelete = largeArray;
-// for (const elem of elemsToDelete) {
-//     rbtree = rbtree.delete(elem);
-//     if (!rbtree.isBST()) {
-//         console.log("Tree is not a valid BST after deletion");
-//         rbtree.printTree();
-//     }
-//     if (!rbtree.redInvariant()) {
-//         console.log("red invariant violated after deletion");
-//         rbtree.printTree();
-//     }
-//     if (!rbtree.blackBalancedInvariant()) {
-//         console.log("black balanced invariant violated after deletion");
-//         rbtree.printTree();
-//     }
-// }
-
-
-const tree = new RBTreeBubble<number>();
-console.log(tree.isEmpty()); // true
-
-let newTree = tree;
-// const arr = [50, 40, 30, 10, 20, 30, 100, 0, 45, 55, 25, 15];
-const arr = [50, 40, 30, 10, 20, 30, 100, 0, 45, 55, 25, 15, 1000, 11111];
-
-for (const elem of arr) {
-    newTree = newTree.insert(elem);
-    newTree.printTree();
+const elemsToDelete = shuffleArray(largeArray);
+for (const elem of elemsToDelete) {
+    rbtree = rbtree.delete(elem);
+    if (!rbtree.isBST()) {
+        console.log("Tree is not a valid BST after deletion");
+        rbtree.printTree();
+    }
+    if (!rbtree.redInvariant()) {
+        console.log("red invariant violated after deletion");
+        rbtree.printTree();
+    }
+    if (!rbtree.blackBalancedInvariant()) {
+        console.log("black balanced invariant violated after deletion");
+        rbtree.printTree();
+    }
 }
 
-console.log("minSubTree: " + newTree.minSubTree());
 
-const newTree12 = newTree.delete(55);
-newTree12.printTree();
-console.log(newTree12.isBST());
-console.log(newTree12.redInvariant());
-console.log(newTree12.blackBalancedInvariant());
-console.log(newTree12.validateRedBlackTree())
+// const tree = new RBTreeBubble<number>();
+// console.log(tree.isEmpty()); // true
 
-const newTree13 = newTree12.delete(50);
-newTree13.printTree();
-console.log(newTree13.isBST());
-console.log(newTree13.redInvariant());
-console.log(newTree13.blackBalancedInvariant());
-console.log(newTree13.validateRedBlackTree())
+// let newTree = tree;
+// // const arr = [50, 40, 30, 10, 20, 30, 100, 0, 45, 55, 25, 15];
+// const arr = [50, 40, 30, 10, 20, 30, 100, 0, 45, 55, 25, 15, 1000, 11111];
 
-const newTree14 = newTree13.delete(45);
-newTree14.printTree();
-console.log(newTree14.isBST());
-console.log(newTree14.redInvariant());
-console.log(newTree14.blackBalancedInvariant());
-console.log(newTree14.validateRedBlackTree())
+// for (const elem of arr) {
+//     newTree = newTree.insert(elem);
+//     newTree.printTree();
+// }
 
-const newTree15 = newTree14.delete(40);
-newTree15.printTree();
-console.log(newTree15.isBST());
-console.log(newTree15.redInvariant());
-console.log(newTree15.blackBalancedInvariant());
-console.log(newTree15.validateRedBlackTree())
+// console.log("minSubTree: " + newTree.minSubTree());
 
-const newTree16 = newTree15.delete(30);
-newTree16.printTree();
-console.log(newTree16.isBST());
-console.log(newTree16.redInvariant());
-console.log(newTree16.blackBalancedInvariant());
-console.log(newTree16.validateRedBlackTree())
+// const newTree12 = newTree.delete(55);
+// newTree12.printTree();
+// console.log(newTree12.isBST());
+// console.log(newTree12.redInvariant());
+// console.log(newTree12.blackBalancedInvariant());
+// console.log(newTree12.validateRedBlackTree())
 
-const newTree17 = newTree16.delete(25);
-newTree17.printTree();
-console.log(newTree17.isBST());
-console.log(newTree17.redInvariant());
-console.log(newTree17.blackBalancedInvariant());
-console.log(newTree17.validateRedBlackTree())
+// const newTree13 = newTree12.delete(50);
+// newTree13.printTree();
+// console.log(newTree13.isBST());
+// console.log(newTree13.redInvariant());
+// console.log(newTree13.blackBalancedInvariant());
+// console.log(newTree13.validateRedBlackTree())
 
-const newTree18 = newTree17.delete(20);
-newTree18.printTree();
-console.log(newTree18.isBST());
-console.log(newTree18.redInvariant());
-console.log(newTree18.blackBalancedInvariant());
-console.log(newTree18.validateRedBlackTree())
-
-const newTree19 = newTree18.delete(15);
-newTree19.printTree();
-console.log(newTree19.isBST());
-console.log(newTree19.redInvariant());
-console.log(newTree19.blackBalancedInvariant());
-console.log(newTree19.validateRedBlackTree())
-
-
-// const newTree14 = newTree13.delete(10);
+// const newTree14 = newTree13.delete(45);
 // newTree14.printTree();
 // console.log(newTree14.isBST());
 // console.log(newTree14.redInvariant());
 // console.log(newTree14.blackBalancedInvariant());
 // console.log(newTree14.validateRedBlackTree())
 
-// const newTree15 = newTree14.delete(15);
+// const newTree15 = newTree14.delete(40);
 // newTree15.printTree();
 // console.log(newTree15.isBST());
 // console.log(newTree15.redInvariant());
@@ -605,7 +590,7 @@ console.log(newTree19.validateRedBlackTree())
 // console.log(newTree16.blackBalancedInvariant());
 // console.log(newTree16.validateRedBlackTree())
 
-// const newTree17 = newTree16.delete(55);
+// const newTree17 = newTree16.delete(25);
 // newTree17.printTree();
 // console.log(newTree17.isBST());
 // console.log(newTree17.redInvariant());
@@ -619,24 +604,9 @@ console.log(newTree19.validateRedBlackTree())
 // console.log(newTree18.blackBalancedInvariant());
 // console.log(newTree18.validateRedBlackTree())
 
-// const newTree19 = newTree18.delete(45);
+// const newTree19 = newTree18.delete(15);
 // newTree19.printTree();
 // console.log(newTree19.isBST());
 // console.log(newTree19.redInvariant());
 // console.log(newTree19.blackBalancedInvariant());
 // console.log(newTree19.validateRedBlackTree())
-
-// const newTree20 = newTree19.delete(100);
-// newTree20.printTree();
-// console.log(newTree20.isBST());
-// console.log(newTree20.redInvariant());
-// console.log(newTree20.blackBalancedInvariant());
-// console.log(newTree20.validateRedBlackTree())
-
-
-// const newTree21 = newTree20.delete(40);
-// newTree21.printTree();
-// console.log(newTree21.isBST());
-// console.log(newTree21.redInvariant());
-// console.log(newTree21.blackBalancedInvariant());
-// console.log(newTree21.validateRedBlackTree())
