@@ -6,7 +6,7 @@ enum Color {
 }
 
 export default class RBTreeBubble<T> {
-    
+    private static readonly EMPTY = new RBTreeBubble<any>(Color.BLACK, null, null, null);
     constructor(
         private readonly color: Color = Color.BLACK,
         private readonly leftTree: RBTreeBubble<T> | null = null,
@@ -29,15 +29,15 @@ export default class RBTreeBubble<T> {
         return this.root === null;
     }
 
-    isEmptyDoubleBlackLeaf(): boolean {
+    isDoubleBlackLeaf(): boolean {
         return this.root === null && this.color === Color.DOUBLEBLACK;
     }
 
-    empty(): RBTreeBubble<T> {
-        return new RBTreeBubble<T>(Color.BLACK, null, null, null);
+    static empty<T>(): RBTreeBubble<T> {
+        return this.EMPTY as RBTreeBubble<T>;
     }
 
-    emptyDoubleBlackLeaf(): RBTreeBubble<T> {
+    doubleBlackLeaf(): RBTreeBubble<T> {
         return new RBTreeBubble<T>(Color.DOUBLEBLACK, null, null, null);
     }
 
@@ -47,12 +47,12 @@ export default class RBTreeBubble<T> {
     }
 
     left(): RBTreeBubble<T> {
-        if (!this.leftTree) return this.empty();
+        if (!this.leftTree) return RBTreeBubble.empty<T>();
         return this.leftTree;
     }
 
     right(): RBTreeBubble<T> {
-        if (!this.rightTree) return this.empty();
+        if (!this.rightTree) return RBTreeBubble.empty<T>();
         return this.rightTree;
     }
 
@@ -65,7 +65,7 @@ export default class RBTreeBubble<T> {
     }
 
     isBB(): boolean {
-        if (this.isEmptyDoubleBlackLeaf()) return true;
+        if (this.isDoubleBlackLeaf()) return true;
         return !this.isEmpty() && this.color === Color.DOUBLEBLACK;
     }
 
@@ -73,23 +73,23 @@ export default class RBTreeBubble<T> {
         return !this.isEmpty() && this.color === Color.NEGATIVEBLACK;
     }
 
-    member(x: T): boolean {
+    has(x: T): boolean {
         if (this.isEmpty()) return false;
         const y = this.rootValue();
-        if (x < y) return this.left().member(x);
-        if (x > y) return this.right().member(x);
+        if (x < y) return this.left().has(x);
+        if (x > y) return this.right().has(x);
         else return true;
     }
 
     redden(): RBTreeBubble<T> {
         if (this.isEmpty()) throw new Error("cannto redden empty tree");
-        else if (this.isEmptyDoubleBlackLeaf()) throw new Error("cannot redden double black tree");
+        else if (this.isDoubleBlackLeaf()) throw new Error("cannot redden double black tree");
         return this.paint(Color.RED);
     }
 
     blacken(): RBTreeBubble<T> {
-        if (this.isEmpty()) return this.empty();
-        else if (this.isEmptyDoubleBlackLeaf()) return this.empty();
+        if (this.isEmpty()) return RBTreeBubble.empty<T>();
+        else if (this.isDoubleBlackLeaf()) return RBTreeBubble.empty<T>();
         return this.paint(Color.BLACK);
     }
 
@@ -112,12 +112,12 @@ export default class RBTreeBubble<T> {
     }
 
     blackerTree(): RBTreeBubble<T> {
-        if (this.isEmpty()) return this.emptyDoubleBlackLeaf();
+        if (this.isEmpty()) return this.doubleBlackLeaf();
         return this.from(this.blacker(this.color), this.left(), this.rootValue(), this.right());
     }
 
     redderTree(): RBTreeBubble<T> {
-        if (this.isEmptyDoubleBlackLeaf()) return this.empty();
+        if (this.isDoubleBlackLeaf()) return RBTreeBubble.empty<T>();
         return this.from(this.redder(this.color), this.left(), this.rootValue(), this.right())
     }
 
@@ -126,7 +126,7 @@ export default class RBTreeBubble<T> {
     }
 
     private ins(x: T): RBTreeBubble<T> {
-        if (this.isEmpty()) return this.from(Color.RED, this.empty(), x, this.empty());
+        if (this.isEmpty()) return this.from(Color.RED, RBTreeBubble.empty<T>(), x, RBTreeBubble.empty<T>());
         const y = this.rootValue();
         const c = this.color;
         if (x < y) {
@@ -143,7 +143,7 @@ export default class RBTreeBubble<T> {
     }
 
     private del(x: T): RBTreeBubble<T> {
-        if (this.isEmpty()) return this.empty();
+        if (this.isEmpty()) return RBTreeBubble.empty<T>();
 
         const y = this.rootValue();
         const c = this.color;
@@ -257,10 +257,10 @@ export default class RBTreeBubble<T> {
     }
 
     private remove(): RBTreeBubble<T> {
-        if (this.isEmpty()) return this.empty();
-        else if (this.isR() && this.left().isEmpty() && this.right().isEmpty()) return this.empty();
+        if (this.isEmpty()) return RBTreeBubble.empty<T>();
+        else if (this.isR() && this.left().isEmpty() && this.right().isEmpty()) return RBTreeBubble.empty<T>();
         // deletion of double black leaf
-        else if (this.isB() && this.left().isEmpty() && this.right().isEmpty()) return this.emptyDoubleBlackLeaf();
+        else if (this.isB() && this.left().isEmpty() && this.right().isEmpty()) return this.doubleBlackLeaf();
         else if (this.isB() && this.left().isEmpty() && this.right().isR()) return this.right().paint(Color.BLACK);
         else if (this.isB() && this.left().isR() && this.right().isEmpty()) return this.left().paint(Color.BLACK);
         else {
@@ -296,32 +296,19 @@ export default class RBTreeBubble<T> {
     }
 
     private paint(color: Color): RBTreeBubble<T> {
-        if (this.isEmpty()) return this.empty();
+        if (this.isEmpty()) return RBTreeBubble.empty<T>();
         return new RBTreeBubble(color, this.leftTree, this.root, this.rightTree);
     }
 
-
-    minSubTree(): RBTreeBubble<T> | null {
-        let current: RBTreeBubble<T> = this;
-        while (!current.left().isEmpty()) {
-            current = current.left();
-        }
-        return current.isEmpty() ? null : current;
+    minSubTree(): RBTreeBubble<T> {
+        if (this.isEmpty()) throw new Error("cannot get min value from empty tree");
+        return this.left().isEmpty() ? this : this.left().minSubTree();
     }
 
-    maxSubTree(): RBTreeBubble<T> | null {
-        let current: RBTreeBubble<T> = this;
-        while (!current.right().isEmpty()) {
-            current = current.right();
-        }
-        return current.isEmpty() ? null : current;
+    maxSubTree(): RBTreeBubble<T> {
+        if (this.isEmpty()) throw new Error("cannot get max value from empty tree");
+        return this.right().isEmpty() ? this : this.right().maxSubTree();
     }
-
-    // maxSubTreeValue(): T {
-    //     const maxSubTree = this.maxSubTree();
-    //     if (maxSubTree === null) throw new Error("cannot get max value from empty tree");
-    //     return maxSubTree.rootValue();
-    // }
 
     minSubTreeValue(): T {
         if (this.isEmpty()) throw new Error("cannot get min value from empty tree");
