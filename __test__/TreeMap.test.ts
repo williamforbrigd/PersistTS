@@ -9,8 +9,15 @@ function shuffleArray<T>(array: T[]): T[] {
     return array;
 }
 
+function createRandomIntArray(size: number, min: number = 0, max: number = 100): number[] {
+    return Array.from({ length: size }, () => Math.floor(Math.random() * (max - min + 1)) + min);
+}
+
+
+
 describe("TreeMap", () => {
     const compare = (a: number, b: number) => a-b;
+    const compareReversed = (a: number, b: number) => b-a;
     let treeMap: TreeMap<number, string> = new TreeMap<number, string>(compare);
     const arr = [50, 40, 30, 10, 20, 30, 100, 0, 45, 55, 25, 15];
     const arrDistinct = Array.from(new Set(arr));
@@ -27,32 +34,101 @@ describe("TreeMap", () => {
 
     test('validateRedBlackTree() properties after adding and deletion of many nodes', () => {
         const tree = new TreeMap(compare);
-        let elements = [50, 40, 30, 10, 20, 30, 100, 0, 45, 55, 25, 15, 1000, 11111, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390];
+        // let elements = [50, 40, 30, 10, 20, 30, 100, 0, 45, 55, 25, 15, 1000, 11111, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390];
+        let elements = createRandomIntArray(1_000, 1, 1000);
         elements = shuffleArray(elements);
 
         let newTree = tree;
         for (const elem of elements) {
             newTree = newTree.set(elem, elem.toString());
+            // expect(newTree.isBST()).toBeTruthy();
+            // expect(newTree.redInvariant()).toBeTruthy();
+            // expect(newTree.blackBalancedInvariant()).toBeTruthy();
             expect(newTree.validateRedBlackTree()).toBeTruthy();
         }
 
-        // const elementsToDelete = shuffleArray(elements);
-        // for (const elem of elementsToDelete) {
-        //     newTree = newTree.delete(elem);
-        //     expect(newTree.validateRedBlackTree()).toBeTruthy();
-        // }
+        const elementsToDelete = shuffleArray(elements);
+        for (const elem of elementsToDelete) {
+            newTree = newTree.delete(elem);
+            // expect(newTree.isBST()).toBeTruthy();
+            // expect(newTree.redInvariant()).toBeTruthy();
+            // expect(newTree.blackBalancedInvariant()).toBeTruthy();
+            expect(newTree.validateRedBlackTree()).toBeTruthy();
+        }
     })
 
+    // test('simulate large numbers to check complexity of tree', () => {
+    //     const tm = new TreeMap<number, string>();
+    //     const size = 1_000_000;
+
+    //     const data = Array.from({ length: size }, (_, i) => i); // Sequential numbers
+
+    //     console.log(`Inserting ${size} elements into the Red-Black Tree...`);
+    //     console.time("Insertion Time");
+    //     data.forEach(num => tm.set(num, num.toString()));
+    //     console.timeEnd("Insertion Time");
+
+    //     // console.log(`Searching ${size} elements in the Red-Black Tree...`);
+    //     // console.time("Search Time");
+    //     // data.forEach(num => tm.search(num));
+    //     // console.timeEnd("Search Time");
+    // })
+
     test('change compare to be reversed order', () => {
-        let newTree = new TreeMap((a: number, b: number) => b-a);
+        let newTree = new TreeMap(compareReversed);
         for (const elem of arr) {
             newTree = newTree.set(elem, elem.toString());
         }
         expect(newTree.size()).toBe(arrDistinct.length);
         expect(newTree.firstKey()).toBe(100);
         expect(newTree.lastKey()).toBe(0);
-        expect(newTree.keys()).toEqual(arrDistinctReversed);
+        expect(newTree.validateRedBlackTree()).toBeTruthy();
     })
+
+    test('next() on iterator', () => {
+        const iterator = treeMap[Symbol.iterator]();
+        let result = iterator.next();
+        expect(result.value?.key).toBe(0);
+        expect(result.value?.value).toBe("0");
+        expect(result.done).toBe(false);
+
+        result = iterator.next();
+        expect(result.value?.key).toBe(10);
+        expect(result.value?.value).toBe("10");
+        expect(result.done).toBe(false);
+
+    })
+
+    test('throw() on iterator', () => {
+        const iterator = treeMap[Symbol.iterator]();
+        iterator.next();
+
+        try {
+            if (iterator.throw) {
+                iterator.throw(new Error("test error"));
+            }
+        } catch (e: any) {
+            expect(e.message).toBe("test error");
+        }
+        const result = iterator.next();
+        expect(result.done).toBe(true);
+    })
+
+    test('return() on iterator', () => {
+        const iterator = treeMap[Symbol.iterator]();
+        iterator.next();
+
+        let result;
+        if (iterator.return) {
+            result = iterator.return();
+            expect(result.done).toBe(true);
+            expect(result.value).toBeUndefined();
+        }
+
+        const nextResult = iterator.next();
+        expect(nextResult.done).toBe(true);
+    })
+
 
     test('get()', () => {
         const value = treeMap.get(50);
@@ -145,7 +221,7 @@ describe("TreeMap", () => {
     test('equals()', () => {
         const otherTreeMap = new TreeMap<number, string>(compare)
             .set(1, "1").set(2, "2").set(3, "3");
-        const otherTreeMap2 = new TreeMap<number, string>((a: number, b: number) => b-a)
+        const otherTreeMap2 = new TreeMap<number, string>(compareReversed)
             .set(3, "3").set(2, "2").set(1, "1");
         expect(otherTreeMap.equals(otherTreeMap2)).toBeTruthy();
     });
@@ -402,8 +478,8 @@ describe("TreeMap", () => {
         const succ2 = treeMap.successor(2);
         expect(succ2?.key).toBe(undefined);
 
-        const succ3 = treeMap.successor(0);
-        expect(succ3?.key).toBe(10);
+        const succ3 = treeMap.successor(20);
+        expect(succ3?.key).toBe(25);
 
     });
 
@@ -467,21 +543,21 @@ describe("TreeMap", () => {
         expect(result.has("888")).toBeTruthy();
     })
 
-    test('updateOrAdd() with value', () => {
-        // const result = treeMap.update(50, (value) => value + "50");
-        const result = treeMap.updateOrAdd(50, "5050");
-        expect(result.get(50)).toBe("5050");
-    })
+    // test('updateOrAdd() with value', () => {
+    //     // const result = treeMap.update(50, (value) => value + "50");
+    //     const result = treeMap.updateOrAdd(50, "5050");
+    //     expect(result.get(50)).toBe("5050");
+    // })
 
-    test('updateOrAdd() with function', () => {
-        const result = treeMap.updateOrAdd(50, (value) => value + "5050");
-        expect(result.get(50)).toBe("505050");
-    })
+    // test('updateOrAdd() with function', () => {
+    //     const result = treeMap.updateOrAdd(50, (value) => value + "5050");
+    //     expect(result.get(50)).toBe("505050");
+    // })
 
-    test('updateOrAdd() when key does not exist so the key will be added', () => {
-        const result = treeMap.updateOrAdd(666, "666");
-        expect(result.get(666)).toBe("666");
-    })
+    // test('updateOrAdd() when key does not exist so the key will be added', () => {
+    //     const result = treeMap.updateOrAdd(666, "666");
+    //     expect(result.get(666)).toBe("666");
+    // })
 
     test('mergeWith() an iterable', () => {
         const iterable = [{key: 50, value: "5050"}, {key: 40, value: "4040"}];

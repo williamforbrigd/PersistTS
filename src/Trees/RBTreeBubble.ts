@@ -1,36 +1,36 @@
 enum Color {
-    RED,
-    BLACK,
-    DOUBLEBLACK,
-    NEGATIVEBLACK
+    R, // Red
+    B, // Black
+    BB, // Double Black
+    NB // Negative Black
 }
 
 export default class RBTreeBubble<T> {
-    private static readonly EMPTY = new RBTreeBubble<any>(Color.BLACK, null, null, null);
+    private static readonly EMPTY = new RBTreeBubble<any>(Color.B, null, null, null);
     constructor(
-        private readonly color: Color = Color.BLACK,
+        private readonly color: Color = Color.B,
         private readonly leftTree: RBTreeBubble<T> | null = null,
-        private readonly root: T | null = null,
+        private readonly rootValue: T | null = null,
         private readonly rightTree: RBTreeBubble<T> | null = null,
     ) {
     }
 
     from(color: Color, left: RBTreeBubble<T>, value: T, right: RBTreeBubble<T>): RBTreeBubble<T> {
-        if (!left.isEmpty() && left.root !== null && left.root! >= value) {
+        if (!left.isEmpty() && left.root() >= value) {
             throw new Error("left subtree value must be less than root value");
         }
-        if (!right.isEmpty() && right.root !== null && value >= right.root!) {
+        if (!right.isEmpty()&& value >= right.root()) {
             throw new Error("right subtree value must be greater than root value");
         }
         return new RBTreeBubble(color, left, value, right);
     }
 
     isEmpty(): boolean {
-        return this.root === null;
+        return this.rootValue === null;
     }
 
     isDoubleBlackLeaf(): boolean {
-        return this.root === null && this.color === Color.DOUBLEBLACK;
+        return this.rootValue === null && this.color === Color.BB;
     }
 
     static empty<T>(): RBTreeBubble<T> {
@@ -38,12 +38,12 @@ export default class RBTreeBubble<T> {
     }
 
     doubleBlackLeaf(): RBTreeBubble<T> {
-        return new RBTreeBubble<T>(Color.DOUBLEBLACK, null, null, null);
+        return new RBTreeBubble<T>(Color.BB, null, null, null);
     }
 
-    rootValue(): T {
+    root(): T {
         if (this.isEmpty()) throw new Error("Tree is empty. Cannot get root value");
-        return this.root!
+        return this.rootValue!
     }
 
     left(): RBTreeBubble<T> {
@@ -57,25 +57,25 @@ export default class RBTreeBubble<T> {
     }
 
     isB(): boolean {
-        return !this.isEmpty() && this.color === Color.BLACK;
+        return !this.isEmpty() && this.color === Color.B;
     }
 
     isR(): boolean {
-        return !this.isEmpty() && this.color === Color.RED;
+        return !this.isEmpty() && this.color === Color.R;
     }
 
     isBB(): boolean {
         if (this.isDoubleBlackLeaf()) return true;
-        return !this.isEmpty() && this.color === Color.DOUBLEBLACK;
+        return !this.isEmpty() && this.color === Color.BB;
     }
 
     isNB(): boolean {
-        return !this.isEmpty() && this.color === Color.NEGATIVEBLACK;
+        return !this.isEmpty() && this.color === Color.NB;
     }
 
     has(x: T): boolean {
         if (this.isEmpty()) return false;
-        const y = this.rootValue();
+        const y = this.root();
         if (x < y) return this.left().has(x);
         if (x > y) return this.right().has(x);
         else return true;
@@ -84,50 +84,50 @@ export default class RBTreeBubble<T> {
     redden(): RBTreeBubble<T> {
         if (this.isEmpty()) throw new Error("cannto redden empty tree");
         else if (this.isDoubleBlackLeaf()) throw new Error("cannot redden double black tree");
-        return this.paint(Color.RED);
+        return this.paint(Color.R);
     }
 
     blacken(): RBTreeBubble<T> {
         if (this.isEmpty()) return RBTreeBubble.empty<T>();
         else if (this.isDoubleBlackLeaf()) return RBTreeBubble.empty<T>();
-        return this.paint(Color.BLACK);
+        return this.paint(Color.B);
     }
 
     blacker(c: Color): Color {
         switch (c) {
-            case Color.BLACK: return Color.DOUBLEBLACK;
-            case Color.RED: return Color.BLACK;
-            case Color.NEGATIVEBLACK: return Color.RED;
-            case Color.DOUBLEBLACK: throw new Error("Cannot blacken double black");
+            case Color.B: return Color.BB;
+            case Color.R: return Color.B;
+            case Color.NB: return Color.R;
+            case Color.BB: throw new Error("Cannot blacken double black");
         }
     }
 
     redder(c: Color): Color {
         switch (c) {
-            case Color.DOUBLEBLACK: return Color.BLACK;
-            case Color.BLACK: return Color.RED;
-            case Color.RED: return Color.NEGATIVEBLACK;
-            case Color.NEGATIVEBLACK: throw new Error("cannot lighten negative black");
+            case Color.BB: return Color.B;
+            case Color.B: return Color.R;
+            case Color.R: return Color.NB;
+            case Color.NB: throw new Error("cannot lighten negative black");
         }
     }
 
     blackerTree(): RBTreeBubble<T> {
         if (this.isEmpty()) return this.doubleBlackLeaf();
-        return this.from(this.blacker(this.color), this.left(), this.rootValue(), this.right());
+        return this.from(this.blacker(this.color), this.left(), this.root(), this.right());
     }
 
     redderTree(): RBTreeBubble<T> {
         if (this.isDoubleBlackLeaf()) return RBTreeBubble.empty<T>();
-        return this.from(this.redder(this.color), this.left(), this.rootValue(), this.right())
+        return this.from(this.redder(this.color), this.left(), this.root(), this.right())
     }
 
     insert(x: T): RBTreeBubble<T> {
-        return this.ins(x).paint(Color.BLACK);
+        return this.ins(x).paint(Color.B);
     }
 
     private ins(x: T): RBTreeBubble<T> {
-        if (this.isEmpty()) return this.from(Color.RED, RBTreeBubble.empty<T>(), x, RBTreeBubble.empty<T>());
-        const y = this.rootValue();
+        if (this.isEmpty()) return this.from(Color.R, RBTreeBubble.empty<T>(), x, RBTreeBubble.empty<T>());
+        const y = this.root();
         const c = this.color;
         if (x < y) {
             return this.bubble(c, this.left().ins(x), y, this.right());
@@ -139,13 +139,13 @@ export default class RBTreeBubble<T> {
     }
 
     delete(x: T): RBTreeBubble<T> {
-        return this.del(x).paint(Color.BLACK);
+        return this.del(x).paint(Color.B);
     }
 
     private del(x: T): RBTreeBubble<T> {
         if (this.isEmpty()) return RBTreeBubble.empty<T>();
 
-        const y = this.rootValue();
+        const y = this.root();
         const c = this.color;
 
         if (x < y) {
@@ -168,83 +168,83 @@ export default class RBTreeBubble<T> {
 
     private balance(c: Color, left: RBTreeBubble<T>, x: T, right: RBTreeBubble<T>): RBTreeBubble<T> {
         // Okasaki's insertion cases
-        if (c === Color.BLACK) {
+        if (c === Color.B) {
             if (left.doubledLeft()) {
-                const newLeft = left.left().paint(Color.BLACK);
-                const rootValue = left.rootValue();
-                const newRight = this.from(Color.BLACK, left.right(), x, right);
-                return this.from(Color.RED, newLeft, rootValue, newRight);
+                const newLeft = left.left().paint(Color.B);
+                const rootValue = left.root();
+                const newRight = this.from(Color.B, left.right(), x, right);
+                return this.from(Color.R, newLeft, rootValue, newRight);
             } else if (left.doubledRight()) {
-                const newLeft = this.from(Color.BLACK, left.left(), left.rootValue(), left.right().left());
-                const rootValue = left.right().rootValue();
-                const newRight = this.from(Color.BLACK, left.right().right(), x, right);
-                return this.from(Color.RED, newLeft, rootValue, newRight);
+                const newLeft = this.from(Color.B, left.left(), left.root(), left.right().left());
+                const rootValue = left.right().root();
+                const newRight = this.from(Color.B, left.right().right(), x, right);
+                return this.from(Color.R, newLeft, rootValue, newRight);
             } else if (right.doubledLeft()) {
-                const newLeft = this.from(Color.BLACK, left, x, right.left().left());
-                const rootValue = right.left().rootValue();
-                const newRight = this.from(Color.BLACK, right.left().right(), right.rootValue(), right.right());
-                return this.from(Color.RED, newLeft, rootValue, newRight);
+                const newLeft = this.from(Color.B, left, x, right.left().left());
+                const rootValue = right.left().root();
+                const newRight = this.from(Color.B, right.left().right(), right.root(), right.right());
+                return this.from(Color.R, newLeft, rootValue, newRight);
             } else if (right.doubledRight()) {
-                const newLeft = this.from(Color.BLACK, left, x, right.left());
-                const rootValue = right.rootValue();
-                const newRight = right.right().paint(Color.BLACK);
-                return this.from(Color.RED, newLeft, rootValue, newRight);
+                const newLeft = this.from(Color.B, left, x, right.left());
+                const rootValue = right.root();
+                const newRight = right.right().paint(Color.B);
+                return this.from(Color.R, newLeft, rootValue, newRight);
             } else {
                 return this.from(c, left, x, right);
             }
         }
 
-        if (c === Color.DOUBLEBLACK) {
+        if (c === Color.BB) {
             // Matt Might's deletion cases for double black
             if (left.doubledLeft()) {
-                const newLeft = this.from(Color.BLACK, left.left().left(), left.left().rootValue(), left.left().right());
-                const rootValue = left.rootValue();
-                const newRight = this.from(Color.BLACK, left.right(), x, right);
-                return this.from(Color.BLACK, newLeft, rootValue, newRight)
+                const newLeft = this.from(Color.B, left.left().left(), left.left().root(), left.left().right());
+                const rootValue = left.root();
+                const newRight = this.from(Color.B, left.right(), x, right);
+                return this.from(Color.B, newLeft, rootValue, newRight)
             } else if (left.doubledRight()) {
-                const newLeft = this.from(Color.BLACK, left.left(), left.rootValue(), left.right().left());
-                const rootValue = left.right().rootValue();
-                const newRight = this.from(Color.BLACK, left.right().right(), x, right);
-                return this.from(Color.BLACK, newLeft, rootValue, newRight);
+                const newLeft = this.from(Color.B, left.left(), left.root(), left.right().left());
+                const rootValue = left.right().root();
+                const newRight = this.from(Color.B, left.right().right(), x, right);
+                return this.from(Color.B, newLeft, rootValue, newRight);
             } else if (right.doubledLeft()) {
-                const newLeft = this.from(Color.BLACK, left, x, right.left().left());
-                const rootValue = right.left().rootValue();
-                const newRight = this.from(Color.BLACK, right.left().right(), right.rootValue(), right.right());
-                return this.from(Color.BLACK, newLeft, rootValue, newRight);
+                const newLeft = this.from(Color.B, left, x, right.left().left());
+                const rootValue = right.left().root();
+                const newRight = this.from(Color.B, right.left().right(), right.root(), right.right());
+                return this.from(Color.B, newLeft, rootValue, newRight);
             } else if (right.doubledRight()) {
-                const newLeft = this.from(Color.BLACK, left, x, right.left());
-                const rootValue = right.rootValue();
-                const newRight = right.right().paint(Color.BLACK);
-                return this.from(Color.BLACK, newLeft, rootValue, newRight);
+                const newLeft = this.from(Color.B, left, x, right.left());
+                const rootValue = right.root();
+                const newRight = right.right().paint(Color.B);
+                return this.from(Color.B, newLeft, rootValue, newRight);
             // end Matt Might's deletion cases
 
             // Matt Might's negative black cases
             } else if (right.isNB()) {
                 if (right.left().isB() && right.right().isB()) {
-                    const newLeft = this.from(Color.BLACK, left, x, right.left().left());
-                    const rootValue = right.left().rootValue();
+                    const newLeft = this.from(Color.B, left, x, right.left().left());
+                    const rootValue = right.left().root();
                     const newRight = this.balance(
-                                            Color.BLACK,
+                                            Color.B,
                                             right.left().right(),
-                                            right.rootValue(),
+                                            right.root(),
                                             right.right().redden(),
                     );
-                    return this.from(Color.BLACK, newLeft, rootValue, newRight);
+                    return this.from(Color.B, newLeft, rootValue, newRight);
                 } else {
                     return this.from(c, left, x, right);
                 }
             } else if (left.isNB()) {
                 if (left.left().isB() && left.right().isB()) {
                     const newLeft = this.balance(
-                                        Color.BLACK,
+                                        Color.B,
                                         left.left().redden(),
-                                        left.rootValue(),
+                                        left.root(),
                                         left.right().left(),
                         
                     );
-                    const rootValue = left.right().rootValue();
-                    const newRight = this.from(Color.BLACK, left.right().right(), x, right);
-                    return this.from(Color.BLACK, newLeft, rootValue, newRight);
+                    const rootValue = left.right().root();
+                    const newRight = this.from(Color.B, left.right().right(), x, right);
+                    return this.from(Color.B, newLeft, rootValue, newRight);
                 } else {
                     return this.from(c, left, x, right);
                 }
@@ -261,8 +261,8 @@ export default class RBTreeBubble<T> {
         else if (this.isR() && this.left().isEmpty() && this.right().isEmpty()) return RBTreeBubble.empty<T>();
         // deletion of double black leaf
         else if (this.isB() && this.left().isEmpty() && this.right().isEmpty()) return this.doubleBlackLeaf();
-        else if (this.isB() && this.left().isEmpty() && this.right().isR()) return this.right().paint(Color.BLACK);
-        else if (this.isB() && this.left().isR() && this.right().isEmpty()) return this.left().paint(Color.BLACK);
+        else if (this.isB() && this.left().isEmpty() && this.right().isR()) return this.right().paint(Color.B);
+        else if (this.isB() && this.left().isR() && this.right().isEmpty()) return this.left().paint(Color.B);
         else {
             // find max in the left subtree and move it to the root
             const maxTreeValue = this.left().maxSubTreeValue();
@@ -277,7 +277,7 @@ export default class RBTreeBubble<T> {
         else if (this.right().isEmpty()) {
             return this.remove();
         } else {
-            return this.bubble(this.color, this.left(), this.rootValue(), this.right().removeMax())
+            return this.bubble(this.color, this.left(), this.root(), this.right().removeMax())
         }
     }       
 
@@ -297,7 +297,7 @@ export default class RBTreeBubble<T> {
 
     private paint(color: Color): RBTreeBubble<T> {
         if (this.isEmpty()) return RBTreeBubble.empty<T>();
-        return new RBTreeBubble(color, this.leftTree, this.root, this.rightTree);
+        return new RBTreeBubble(color, this.leftTree, this.rootValue, this.rightTree);
     }
 
     minSubTree(): RBTreeBubble<T> {
@@ -312,12 +312,12 @@ export default class RBTreeBubble<T> {
 
     minSubTreeValue(): T {
         if (this.isEmpty()) throw new Error("cannot get min value from empty tree");
-        return this.left().isEmpty() ? this.rootValue() : this.left().minSubTreeValue();
+        return this.left().isEmpty() ? this.root() : this.left().minSubTreeValue();
     }
 
     maxSubTreeValue(): T {
         if (this.isEmpty()) throw new Error("cannot get max value from empty tree");
-        return this.right().isEmpty() ? this.rootValue() : this.right().maxSubTreeValue();
+        return this.right().isEmpty() ? this.root() : this.right().maxSubTreeValue();
     }
 
     private printTreeHelper(space: number): void {
@@ -325,8 +325,8 @@ export default class RBTreeBubble<T> {
             space += 10;
             this.right().printTreeHelper(space);
 
-            const color = this.color === Color.RED ? 'R' : 'B';
-            const rootString = this.root + color;
+            const color = this.color === Color.R ? 'R' : 'B';
+            const rootString = this.rootValue + color;
             console.log(' '.repeat(space) + rootString);
 
             this.left().printTreeHelper(space);
@@ -344,9 +344,9 @@ export default class RBTreeBubble<T> {
     private isBSTHelper(): boolean {
         if (this.isEmpty()) return true;
 
-        if (!this.left().isEmpty() && this.left().rootValue() >= this.rootValue()) return false;
+        if (!this.left().isEmpty() && this.left().root() >= this.root()) return false;
 
-        if (!this.right().isEmpty() && this.right().rootValue() <= this.rootValue()) return false;
+        if (!this.right().isEmpty() && this.right().root() <= this.root()) return false;
 
         return this.left().isBSTHelper() && this.right().isBSTHelper();
     }
@@ -355,7 +355,7 @@ export default class RBTreeBubble<T> {
         return this.redInvariantHelper();
     }
 
-    private redInvariantHelper(this: RBTreeBubble<T>): boolean {
+    private redInvariantHelper(): boolean {
         if (this.isEmpty()) return true;
 
         if (this.isR()) {
@@ -412,8 +412,8 @@ export default class RBTreeBubble<T> {
         if (this.isEmpty()) return 1;
 
         // Validate BST properties
-        if (!this.left().isEmpty() && this.left().rootValue() >= this.rootValue()) return -1;
-        if (!this.right().isEmpty() && this.right().rootValue() <= this.rootValue()) return -1;
+        if (!this.left().isEmpty() && this.left().root() >= this.root()) return -1;
+        if (!this.right().isEmpty() && this.right().root() <= this.root()) return -1;
 
         // Check for consecutive red nodes
         if (this.isR()) {
