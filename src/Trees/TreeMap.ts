@@ -251,7 +251,6 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         }
     }
 
-    // TODO: should you be able to pass value here?
     delete(key: K, value?: V): TreeMap<K, V> {
         return this.del(this.keyValuePair(key, value as any)).paint(Color.B);
     }
@@ -1018,53 +1017,53 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return newTree;
     }
 
-    // mergeDeep<KC, VC>(
-    //     ...collections: Array<Iterable<[KC, VC]>>
-    // ): TreeMap<K | KC, V | VC>;
-    // mergeDeep<C>(
-    // ...collections: Array<{ [key: string]: C }>
-    // ): TreeMap<K | string, V | C>;
-    // mergeDeep<KC, VC>(other: TreeMap<KC, VC>): TreeMap<K | KC, V | VC>;
-    // mergeDeep(...collections: any[]): TreeMap<any, any> {
+    // mergeDeep<KC, VC>(...collections: any[]): TreeMap<any, any> {
     //     let newTree = this as TreeMap<any, any>;
-        
     //     for (const collection of collections) {
-    //         if (this.isCustomMap(collection)) {
-    //             for (const {key, value} of collection.entries()) {
+    //         if (newTree.isCustomMap(collection)) {
+    //             for (const { key, value } of collection.entries()) {
     //                 newTree = newTree.setDeep(key, value);
     //             }
     //         } else if (Array.isArray(collection)) {
-    //             for (const {key, value} of collection) {
+    //             for (const { key, value } of collection) {
     //                 newTree = newTree.setDeep(key, value);
     //             }
     //         } else if (typeof collection === 'object' && collection !== null) {
     //             for (const key in collection) {
-    //                 if (collection.hasOwnProperty(key)) {
-    //                     newTree = newTree.setDeep(key as any, collection[key]);
+    //                 if (Object.prototype.hasOwnProperty.call(collection, key)) {
+    //                     newTree = newTree.setDeep(key, collection[key]);
     //                 }
     //             }
     //         }
     //     }
-
     //     return newTree;
     // }
-
+    
     // private setDeep(key: any, value: any): TreeMap<any, any> {
     //     if (this.has(key)) {
     //         const existingValue = this.get(key);
-    //         if (typeof existingValue === 'object' && existingValue !== null && typeof value === 'object' && value !== null) {
-    //             const mergedValue = this.mergeDeepObjects(existingValue, value);
-    //             return this.set(key, mergedValue);
+    //         // If both values are TreeMaps, merge them recursively.
+    //         if (existingValue instanceof TreeMap && value instanceof TreeMap) {
+    //             const mergedValue = existingValue.mergeDeep(value);
+    //             return this.set(key, mergedValue as V);
     //         }
+    //         // Otherwise, if both are plain objects, merge them.
+    //         else if (this.isObject(existingValue) && this.isObject(value)) {
+    //             const mergedValue = this.mergeDeepObjects(existingValue, value);
+    //             return this.set(key, mergedValue as V);
+    //         } else {
+    //             return this.set(key, value);
+    //         }
+    //     } else {
+    //         return this.set(key, value);
     //     }
-    //     return this.set(key, value);
     // }
     
     // private mergeDeepObjects(obj1: any, obj2: any): any {
     //     const result = { ...obj1 };
     //     for (const key in obj2) {
-    //         if (obj2.hasOwnProperty(key)) {
-    //             if (typeof obj2[key] === 'object' && obj2[key] !== null && typeof obj1[key] === 'object' && obj1[key] !== null) {
+    //         if (Object.prototype.hasOwnProperty.call(obj2, key)) {
+    //             if (this.isObject(obj2[key]) && this.isObject(obj1[key])) {
     //                 result[key] = this.mergeDeepObjects(obj1[key], obj2[key]);
     //             } else {
     //                 result[key] = obj2[key];
@@ -1073,6 +1072,11 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     //     }
     //     return result;
     // }
+    
+    // private isObject(item: any): boolean {
+    //     return item !== null && typeof item === 'object' && !Array.isArray(item);
+    // }
+    
 
     map<M>(
         callback: (value: V, key: K, map: this) => M,
@@ -1373,31 +1377,3 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return succ;
     }
 }
-
-const arr = [50, 40, 30, 10, 20, 30, 100, 0, 45, 55, 25, 15];
-// const arr = [1,3, 2, 6, 5, 4];
-// const arr = [1,3,2]
-const compareAscending = (a: number, b: number) => {
-    return a-b;
-}
-
-const compareDescending = (a: number, b: number) => {
-    return b-a;
-}
-let treemap = new TreeMap<number, string>(compareAscending);
-let treemapReversed = new TreeMap<number, string>(compareDescending);
-
-for (const elem of arr) {
-    treemap = treemap.set(elem, elem.toString());
-    treemapReversed = treemapReversed.set(elem, elem.toString());
-}
-
-treemap.printTree();
-console.log("---------------------------------------------------------")
-treemapReversed.printTree();
-
-const keys1 = treemap.keys();
-console.log(keys1);
-
-const keys = treemapReversed.keys();
-console.log(keys);

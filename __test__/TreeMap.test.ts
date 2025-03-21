@@ -633,22 +633,21 @@ describe("TreeMap", () => {
         const iterable = [{key: 50, value: "5050"}, {key: 40, value: "4040"}];
         const expectedSize = arrDistinct.length;
         const result = treeMap.mergeWith((oldVal, newVal, key) => oldVal + newVal, iterable);
-        result.printTree();
 
         expect(result.size()).toBe(expectedSize); // size should not change
         expect(result.get(50)).toBe("505050");
     })
 
     // test('mergeDeep()', () => {
-    //     const otherTreeMap = new TreeMap<number, TreeMap<number, number>>(null, compare);
-    //     const inner1 = new TreeMap<number, number>(null, compare).set(1, 1).set(2, 2);
-    //     const inner2 = new TreeMap<number, number>(null, compare).set(3, 3).set(4, 4);
-    //     otherTreeMap.set(1, inner1).set(2, inner2);
+    //     let otherTreeMap = new TreeMap<number, TreeMap<number, number>>(compare);
+    //     const inner1 = new TreeMap<number, number>(compare).set(1, 1).set(2, 2);
+    //     const inner2 = new TreeMap<number, number>(compare).set(3, 3).set(4, 4);
+    //     otherTreeMap = otherTreeMap.set(1, inner1).set(2, inner2);
 
-    //     const otherTreeMap2 = new TreeMap<number, TreeMap<number, number>>(null, compare);
-    //     const inner3 = new TreeMap<number, number>(null, compare).set(5, 5).set(6, 6);
-    //     const inner4 = new TreeMap<number, number>(null, compare).set(7, 7).set(8, 8);
-    //     otherTreeMap2.set(1, inner3).set(2, inner4);
+    //     let otherTreeMap2 = new TreeMap<number, TreeMap<number, number>>(compare);
+    //     const inner3 = new TreeMap<number, number>(compare).set(5, 5).set(6, 6);
+    //     const inner4 = new TreeMap<number, number>(compare).set(7, 7).set(8, 8);
+    //     otherTreeMap2 = otherTreeMap2.set(1, inner3).set(2, inner4);
 
     //     const result = otherTreeMap.mergeDeep(otherTreeMap2);
     //     expect(result.size()).toBe(2);
