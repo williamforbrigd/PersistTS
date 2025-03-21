@@ -823,21 +823,39 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return newTreeMap;
     }
 
-    sortBy<C>(comparatorValueMapper: (value: V, key: K, map: this) => C, compare?: Comparator<C>): TreeMap<K | C, V> {
-        // const entries = [...this.entries()];
-        // entries.sort((a,b) => {
-        //     const mappedA = comparatorValueMapper(a.value, a.key, this);
-        //     const mappedB = comparatorValueMapper(b.value, b.key, this);
-        //     if (compare) {
-        //         return compare(mappedA, mappedB);
-        //     } else {
-        //         return this.compare(a.key, b.key);
-        //     }
-        // })
-
-        // return this.ofEntries(...entries);
-        throw new Error("Method not implemented.");
-    }
+    sortBy<C>(
+        comparatorValueMapper: (value: V, key: K, map: this) => C,
+        compare?: Comparator<C>
+      ): TreeMap<K | C, V> {
+        // Map each entry to a new key using the provided comparatorValueMapper
+        const mappedEntries: { key: K | C, value: V }[] = [];
+        for (const entry of this.entries()) {
+          const newKey = comparatorValueMapper(entry.value, entry.key, this);
+          mappedEntries.push({ key: newKey, value: entry.value });
+        }
+      
+        // Sort the mapped entries using the provided comparator if given,
+        // otherwise use a default comparator that can compare values of type K | C.
+        mappedEntries.sort((a, b) => {
+          if (compare) {
+            return compare(a.key as C, b.key as C);
+          } else {
+            // Default comparator assuming the new key supports < and >
+            return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
+          }
+        });
+      
+        // Build a new TreeMap using a comparator for keys of type K | C.
+        const newComparator: Comparator<K | C> = compare
+          ? ((a, b) => compare(a as C, b as C))
+          : ((a, b) => a < b ? -1 : a > b ? 1 : 0);
+      
+        let newTree = new TreeMap<K | C, V>(newComparator);
+        for (const entry of mappedEntries) {
+          newTree = newTree.set(entry.key, entry.value);
+        }
+        return newTree;
+      }
 
     forEach(callback: (value: V, key: K, map: this) => void, thisArg?: any) {
         for (const entry of this) {
@@ -880,37 +898,25 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return acc;
     }
 
-    // updateOrAdd(key: K, callback: (value: V) => V): TreeMap<K, V>;
-    // updateOrAdd(key: K, callback: (value: V | undefined) => V | undefined): TreeMap<K, V | undefined>;
-    // updateOrAdd(key: K, newValue: V): TreeMap<K, V>;
-    // updateOrAdd(key: K, callbackOrValue: ((value: unknown) => unknown) | V): TreeMap<K, V> {
-    //     if (typeof callbackOrValue === 'function') {
-    //         const callback = callbackOrValue as (value: V) => V;
-    //         if (this.has(key)) {
-    //             return this.update(key, callback(this.get(key)!));
-    //         } else {
-    //             return this.set(key, callback(this.get(key)))
-    //         }
-    //     } else {
-    //         const newValue = callbackOrValue as V;
-    //         if (this.has(key)) {
-    //             return this.update(key, newValue);
-    //         } else {
-    //             return this.set(key, newValue);
-    //         }
-    //     }
-    // }
-
-    // updateOrAdd(key: K, callback: (value: V | undefined) => V): TreeMap<K, V> {
-    //     if (this.has(key)) {
-    //         return this.update(key, callback(this.get(key)));
-    //     } else {
-    //         return this.set(key, callback(this.get(key)));
-    //     }
-    // }
-
-    updateOrAdd(key: any, callback: any): any {
-        throw new Error("Method not implemented.");
+    updateOrAdd(key: K, callback: (value: V) => V): TreeMap<K, V>;
+    updateOrAdd(key: K, callback: (value: V | undefined) => V | undefined): TreeMap<K, V | undefined>;
+    updateOrAdd(key: K, newValue: V): TreeMap<K, V>;
+    updateOrAdd(key: K, callbackOrValue: ((value: any) => any) | V): TreeMap<K, any> {
+        if (typeof callbackOrValue === 'function') {
+            const callback = callbackOrValue as (value: V) => V;
+            if (this.has(key)) {
+                return this.update(key, callback(this.get(key)!));
+            } else {
+                return this.set(key, callback(this.get(key) as any))
+            }
+        } else {
+            const newValue = callbackOrValue as V;
+            if (this.has(key)) {
+                return this.update(key, newValue);
+            } else {
+                return this.set(key, newValue);
+            }
+        }
     }
 
 

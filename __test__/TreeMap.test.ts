@@ -194,24 +194,21 @@ describe("TreeMap", () => {
         expect(treeMap.hasAll(newArr)).toBeFalsy();
     })
 
-    /*
     test('delete()', () => {
-        const newTreeMap = treeMap.delete(1);
-        expect(newTreeMap.has(1)).toBeFalsy();
-        expect(newTreeMap.has(2)).toBeTruthy();
-        expect(newTreeMap.has(3)).toBeTruthy();
-    })
-     */
+        const newTreeMap = treeMap.delete(50);
+        expect(newTreeMap.has(50)).toBeFalsy();
+        expect(newTreeMap.has(40)).toBeTruthy();
+        expect(newTreeMap.has(0)).toBeTruthy();
 
-    /*
+        expect(newTreeMap.validateRedBlackTree()).toBeTruthy();
+    })
+
     test('deleteAll()', () => {
-        const newTreeMap = treeMap.deleteAll([1, 2]);
-        expect(newTreeMap.has(1)).toBeFalsy();
-        expect(newTreeMap.has(2)).toBeFalsy();
-        expect(newTreeMap.has(3)).toBeTruthy();
-    })
+        const elemsToDelete = shuffleArray(arrDistinct);
 
-     */
+        const newTreeMap = treeMap.deleteAll(elemsToDelete);
+        expect(newTreeMap.size()).toBe(0)
+    })
 
     test('clear()', () => {
         const newTreeMap = treeMap.clear();
@@ -346,28 +343,28 @@ describe("TreeMap", () => {
         expect(Array.from(reversed.keys())).toEqual(arrDistinctReversed);
     })
 
-    // test('sortBy() sort by key', () => {
-    //     const sortedByKey = treeMap.sortBy((value, key) => key,
-    //         (a: number, b: number) => b - a
-    //     );
-    //     expect(sortedByKey.size()).toBe(3);
-    //     expect(sortedByKey.has(1)).toBeTruthy();
-    //     expect(sortedByKey.has(2)).toBeTruthy();
-    //     expect(sortedByKey.has(3)).toBeTruthy();
-    //     expect(Array.from(sortedByKey.keys())).toEqual([3, 2, 1]);
-    // });
+    test('sortBy() sort by key in descending order', () => {
+        const sortedByKey = treeMap.sortBy((value, key) => key,
+            (a: number, b: number) => b - a
+        );
+        expect(sortedByKey.size()).toBe(arrDistinctReversed.length);
+        expect(sortedByKey.has(45)).toBeTruthy();
+        expect(sortedByKey.has(25)).toBeTruthy();
+        expect(sortedByKey.has(15)).toBeTruthy();
+        expect(sortedByKey.has(0)).toBeTruthy();
+        expect(Array.from(sortedByKey.keys())).toEqual(arrDistinctReversed);
+    });
 
-    // test('sortBy() sort by value', () => {
-    //     const sortedByValue = treeMap.sortBy((value) => value,
-    //         (a: string, b: string) => a.length - b.length,
-    //     );
+    test('sortBy() sort by value', () => {
+        const sortedByValue = treeMap.sortBy((value) => value,
+            (a: string, b: string) => a.length - b.length || a.localeCompare(b),
+        );
 
-    //     expect(sortedByValue.size()).toBe(3);
-    //     expect(sortedByValue.has(1)).toBeTruthy();
-    //     expect(sortedByValue.has(2)).toBeTruthy();
-    //     expect(sortedByValue.has(3)).toBeTruthy();
-    //     expect(Array.from(sortedByValue.keys())).toEqual([3, 2, 1]);
-    // })
+        expect(sortedByValue.size()).toBe(arrDistinct.length);
+        expect(sortedByValue.firstKey()).toBe("0")
+        expect(sortedByValue.lastKey()).toBe("100")
+        expect(sortedByValue.validateRedBlackTree()).toBeTruthy();
+    })
 
     test('forEach() keys', () => {
         const expected = arrDistinct.reduce((acc, curr) => acc + curr, 0);
@@ -428,12 +425,20 @@ describe("TreeMap", () => {
         expect(result?.value).toEqual("0");
     });
 
-    // test('deleteMin()', () => {
-    //     const result = treeMap.deleteMin();
-    //     expect(result.has(1)).toBeFalsy();
-    //     expect(result.has(2)).toBeTruthy();
-    //     expect(result.has(3)).toBeTruthy();
-    // })
+    test('deleteMin()', () => {
+        const min = treeMap.findMin();
+        expect(min).not.toBeUndefined();
+        const result = treeMap.deleteMin();
+        expect(result.has(min!.key)).toBeFalsy();
+
+        // remove the key from arrDistinct
+        const newArr = Array.from(arrDistinct);
+        const index = newArr.indexOf(min!.key);
+        newArr.splice(index, 1);
+        newArr.forEach((key) => {
+            expect(result.has(key)).toBeTruthy();
+        })
+    })
 
     test('findMax()', () => {
         const max = treeMap.findMax();
@@ -443,17 +448,23 @@ describe("TreeMap", () => {
     })
 
     test('findMax() pass in key', () => {
-        // the max subchildren of 20 is 30 for this specific tree
         const maxOfNode = treeMap.findMax(20);
         expect(maxOfNode?.key).toBe(30);
     })
 
-    // test('deleteMax()', () => {
-    //     const result = treeMap.deleteMax();
-    //     expect(result.has(1)).toBeTruthy();
-    //     expect(result.has(2)).toBeTruthy();
-    //     expect(result.has(3)).toBeFalsy();
-    // })
+    test('deleteMax()', () => {
+        const max = treeMap.findMax();
+        expect(max).not.toBeUndefined();
+        const result = treeMap.deleteMax();
+        expect(result.has(max!.key)).toBeFalsy();
+        
+        const newArr = Array.from(arrDistinct);
+        const index = newArr.indexOf(max!.key);
+        newArr.splice(index, 1);
+        newArr.forEach((key) => {
+            expect(result.has(key)).toBeTruthy();
+        })
+    })
 
 
     /*
@@ -543,21 +554,21 @@ describe("TreeMap", () => {
         expect(result.has("888")).toBeTruthy();
     })
 
-    // test('updateOrAdd() with value', () => {
-    //     // const result = treeMap.update(50, (value) => value + "50");
-    //     const result = treeMap.updateOrAdd(50, "5050");
-    //     expect(result.get(50)).toBe("5050");
-    // })
+    test('updateOrAdd() with value', () => {
+        // const result = treeMap.update(50, (value) => value + "50");
+        const result = treeMap.updateOrAdd(50, "5050");
+        expect(result.get(50)).toBe("5050");
+    })
 
-    // test('updateOrAdd() with function', () => {
-    //     const result = treeMap.updateOrAdd(50, (value) => value + "5050");
-    //     expect(result.get(50)).toBe("505050");
-    // })
+    test('updateOrAdd() with function', () => {
+        const result = treeMap.updateOrAdd(50, (value) => value + "5050");
+        expect(result.get(50)).toBe("505050");
+    })
 
-    // test('updateOrAdd() when key does not exist so the key will be added', () => {
-    //     const result = treeMap.updateOrAdd(666, "666");
-    //     expect(result.get(666)).toBe("666");
-    // })
+    test('updateOrAdd() when key does not exist so the key will be added', () => {
+        const result = treeMap.updateOrAdd(666, "666");
+        expect(result.get(666)).toBe("666");
+    })
 
     test('mergeWith() an iterable', () => {
         const iterable = [{key: 50, value: "5050"}, {key: 40, value: "4040"}];
