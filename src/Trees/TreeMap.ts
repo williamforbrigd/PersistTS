@@ -1252,19 +1252,43 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
 
     tryPredecessor(key: K, out: KeyValuePair<K, V>): boolean {
-        throw new Error("Method not implemented.");
+        const pred = this.predecessor(key);
+        if (pred !== undefined) {
+            out.key = pred.key;
+            out.value = pred.value;
+            return true;
+        }
+        return false;
     }
 
     trySuccessor(key: K, out: KeyValuePair<K, V>): boolean {
-        throw new Error("Method not implemented.");
+        const succ = this.successor(key);
+        if (succ !== undefined) {
+            out.key = succ.key;
+            out.value = succ.value;
+            return true;
+        }
+        return false;
     }
 
     tryWeakPredecessor(key: K, out: KeyValuePair<K, V>): boolean {
-        throw new Error("Method not implemented.");
+        const pred = this.weakPredecessor(key);
+        if (pred !== undefined) {
+            out.key = pred.key;
+            out.value = pred.value;
+            return true;
+        }
+        return false;
     }
 
     tryWeakSuccessor(key: K, out: KeyValuePair<K, V>): boolean {
-        throw new Error("Method not implemented.");
+        const succ = this.weakSuccessor(key);
+        if (succ !== undefined) {
+            out.key = succ.key;
+            out.value = succ.value;
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1292,6 +1316,22 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return pred;
     }
 
+    weakPredecessor(key: K): KeyValuePair<K, V> | undefined {
+        let pred: KeyValuePair<K, V> | undefined = undefined;
+        let current: TreeMap<K, V> = this;
+
+        while (!current.isEmpty()) {
+            const cmp = this.compare(key, current.key());
+            if (cmp < 0) {
+                current = current.left();
+            } else {
+                pred = current.keyValue();
+                current = current.right();
+            }
+        }
+        return pred;
+    }
+
 
     /**
      * Return the successor of the given key
@@ -1316,65 +1356,23 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         }
         return succ;
     }
+
+    weakSuccessor(key: K): KeyValuePair<K, V> | undefined {
+        let succ: KeyValuePair<K, V> | undefined = undefined;
+        let current: TreeMap<K, V> = this;
+
+        while (!current.isEmpty()) {
+            const cmp = this.compare(key, current.key());
+            if (cmp > 0) {
+                current = current.right();
+            } else {
+                succ = current.keyValue();
+                current = current.left();
+            }
+        }
+        return succ;
+    }
 }
-
-
-// function createRandomIntArray(size: number, min: number = 0, max: number = 100): number[] {
-//     return Array.from({ length: size }, () => Math.floor(Math.random() * (max - min + 1)) + min);
-// }
-
-// function shuffleArray<T>(array: T[]): T[] {
-//     for (let i = array.length - 1; i > 0; i--) {
-//         const j = Math.floor(Math.random() * (i + 1));
-//         [array[i], array[j]] = [array[j], array[i]];
-//     }
-//     return array;
-// }
-
-// const largeArray = createRandomIntArray(1_000_000, 1, 1000);
-// let treemap = new TreeMap<number, string>();
-
-// for (const elem of largeArray) {
-//     treemap = treemap.set(elem, elem.toString());
-//     if (!treemap.isBST()) {
-//         console.log("Tree is not a valid BST after insertion");
-//         treemap.printTree();
-//     }
-//     if (!treemap.redInvariant()) {
-//         console.log("red invariant violated after insertion");
-//         treemap.printTree();
-//     }
-//     if (!treemap.blackBalancedInvariant()) {
-//         console.log("black balanced invariant violated after insertion");
-//         treemap.printTree();
-//     }
-//     if (!treemap.validateRedBlackTree()) {
-//         console.log("Tree is not a valid red-black tree after insertion");
-//         treemap.printTree();
-//     }
-// }
-
-// const elemsToDelete = shuffleArray(largeArray);
-// for (const elem of elemsToDelete) {
-//     treemap = treemap.delete(elem);
-//     if (!treemap.isBST()) {
-//         console.log("Tree is not a valid BST after deletion");
-//         treemap.printTree();
-//     }
-//     if (!treemap.redInvariant()) {
-//         console.log("red invariant violated after deletion");
-//         treemap.printTree();
-//     }
-//     if (!treemap.blackBalancedInvariant()) {
-//         console.log("black balanced invariant violated after deletion");
-//         treemap.printTree();
-//     }
-//     if(!treemap.validateRedBlackTree()) {
-//         console.log("Tree is not a valid red-black tree after deletion");
-//         treemap.printTree();
-//     }
-// }
-
 
 const arr = [50, 40, 30, 10, 20, 30, 100, 0, 45, 55, 25, 15];
 // const arr = [1,3, 2, 6, 5, 4];
