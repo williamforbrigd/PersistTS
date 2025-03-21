@@ -1,7 +1,6 @@
 import { Speed } from "../Enums/Speed";
 import HashCode from "../Hashing/HashCode";
 import Map from "../Interfaces/Map";
-import KeyValuePair from "../Interfaces/KeyValuePair";
 import {Comparator} from "../Interfaces/Comparator";
 
 import AbstractMap from "../AbstractClasses/AbstractMap";
@@ -29,7 +28,7 @@ enum Color {
 export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     // private static readonly EMPTY = new TreeMap<any, any>(TreeMap.defaultComparator, Color.B, null, null, null);
     private _hashCode: number | null = null; // cache the hashcode which is computed only once
-    private iterator: Iterator<KeyValuePair<K, V>> | null = null;
+    private iterator: Iterator<[K, V]> | null = null;
 
     equalityComparer: EqualityComparer<K>;
 
@@ -37,7 +36,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         private readonly compare: Comparator<K> = TreeMap.defaultComparator<K>,
         private readonly color: Color = Color.B,
         private readonly leftTree: TreeMap<K, V> | null = null,
-        private readonly root: KeyValuePair<K, V> | null = null,
+        private readonly root: [K, V] | null = null,
         private readonly rightTree: TreeMap<K, V> | null = null,
         ) {
         super();
@@ -52,11 +51,11 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
     
     //Iterator methods
-    *[Symbol.iterator](): MapIterator<KeyValuePair<K, V>> {
+    *[Symbol.iterator](): MapIterator<[K, V]> {
         yield* this.inOrderTraversal();
     }
 
-    *inOrderTraversal(): MapIterator<KeyValuePair<K, V>> {
+    *inOrderTraversal(): MapIterator<[K, V]> {
         if (!this.isEmpty()) {
             yield* this.left().inOrderTraversal();
             yield this.keyValue();
@@ -64,7 +63,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         }
     }
 
-    *preOrderTraversal(node: KeyValuePair<K, V> | null): MapIterator<KeyValuePair<K, V>> {
+    *preOrderTraversal(node: [K, V] | null): MapIterator<[K, V]> {
         if (!this.isEmpty()) {
             yield this.keyValue();
             yield* this.left().inOrderTraversal();
@@ -72,7 +71,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         }
     }
 
-    *postOrderTraversal(node: KeyValuePair<K, V> | null): MapIterator<KeyValuePair<K, V>> {
+    *postOrderTraversal(node: [K, V] | null): MapIterator<[K, V]> {
         if (!this.isEmpty()) {
             yield* this.left().inOrderTraversal();
             yield* this.right().inOrderTraversal();
@@ -81,7 +80,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
 
     
-    next(...[value]: [] | [unknown]): IteratorResult<KeyValuePair<K, V>, BuiltinIteratorReturn> {
+    next(...[value]: [] | [unknown]): IteratorResult<[K, V], BuiltinIteratorReturn> {
         if (this.iterator === null) {
             this.iterator = this[Symbol.iterator]();
         }
@@ -92,13 +91,13 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         }
         return result;
     }
-    throw(e?: any): IteratorResult<KeyValuePair<K, V>, BuiltinIteratorReturn> {
+    throw(e?: any): IteratorResult<[K, V], BuiltinIteratorReturn> {
         if (this.iterator !== null && typeof this.iterator.throw === 'function') {
             return this.iterator.throw(e);
         }
         return e;
     }
-    return(value?: BuiltinIteratorReturn): IteratorResult<KeyValuePair<K, V>, BuiltinIteratorReturn> {
+    return(value?: BuiltinIteratorReturn): IteratorResult<[K, V], BuiltinIteratorReturn> {
         if (this.iterator !== null && typeof this.iterator.return === 'function') {
             return this.iterator.return(value);
         }
@@ -108,7 +107,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
 
     // Red-Black Tree methods
-    from(color: Color, left: TreeMap<K, V>, root: KeyValuePair<K, V>, right: TreeMap<K, V>): TreeMap<K, V> {
+    from(color: Color, left: TreeMap<K, V>, root: [K, V], right: TreeMap<K, V>): TreeMap<K, V> {
         // if (!left.isEmpty() && this.compare(left.key(), root.key) >= 0) {
         //     throw new Error("left subtree value must be less than root value");
         // }
@@ -138,17 +137,17 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return new TreeMap<K, V>(this.compare, Color.BB, null, null, null);
     }
 
-    keyValue(): KeyValuePair<K, V> {
+    keyValue(): [K, V] {
         if (this.isEmpty()) throw new Error("Tree is empty. Cannot get the root key value pair");
         return this.root!;
     }
 
     key(): K {
-        return this.keyValue().key;
+        return this.keyValue()[0];
     }
 
     value(): V {
-        return this.keyValue().value;
+        return this.keyValue()[1];
     }
 
     left(): TreeMap<K, V> {
@@ -178,7 +177,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return !this.isEmpty() && this.color === Color.NB;
     }
 
-    getNode(x: K): KeyValuePair<K, V> | null {
+    getNode(x: K): [K, V] | null {
         if (this.isEmpty()) return null;
         const y = this.key();
         const cmp = this.compare(x, y);
@@ -233,15 +232,15 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
      * @param value
      */
     set(key: K, value: V): TreeMap<K, V> {
-        return this.ins(this.keyValuePair(key, value)).paint(Color.B);
+        return this.ins([key, value]).paint(Color.B);
     }
 
-    private ins(x: KeyValuePair<K, V>): TreeMap<K, V> {
+    private ins(x: [K, V]): TreeMap<K, V> {
         if (this.isEmpty()) return this.from(Color.R, this.empty(), x, this.empty());
         const y = this.keyValue();
         const c = this.color;
 
-        const cmp = this.compare(x.key, y.key);
+        const cmp = this.compare(x[0], y[0]);
         if (cmp < 0) {
             return this.bubble(c, this.left().ins(x), y, this.right());
         } else if (cmp > 0) {
@@ -252,15 +251,15 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
 
     delete(key: K, value?: V): TreeMap<K, V> {
-        return this.del(this.keyValuePair(key, value as any)).paint(Color.B);
+        return this.del([key, value as any]).paint(Color.B);
     }
 
-    private del(x: KeyValuePair<K, V>): TreeMap<K, V> {
+    private del(x: [K, V]): TreeMap<K, V> {
         if (this.isEmpty()) return this.empty();
 
         const y = this.keyValue();
         const c = this.color;
-        const cmp = this.compare(x.key, y.key);
+        const cmp = this.compare(x[0], y[0]);
 
         if (cmp < 0) {
             return this.bubble(c, this.left().del(x), y, this.right());
@@ -272,7 +271,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         }
     }
 
-    private bubble(c: Color, left: TreeMap<K, V>, y: KeyValuePair<K, V>, right: TreeMap<K, V>): TreeMap<K, V> {
+    private bubble(c: Color, left: TreeMap<K, V>, y: [K, V], right: TreeMap<K, V>): TreeMap<K, V> {
         if ((left.isBB()) || (right.isBB())) {
             return this.balance(this.blacker(c), left.redderTree(), y, right.redderTree());
         } else {
@@ -280,7 +279,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         }
     }
 
-    private balance(c: Color, left: TreeMap<K, V>, x: KeyValuePair<K, V>, right: TreeMap<K, V>): TreeMap<K, V> {
+    private balance(c: Color, left: TreeMap<K, V>, x: [K, V], right: TreeMap<K, V>): TreeMap<K, V> {
         // Okasaki's insertion cases
         if (c === Color.B) {
             if (left.doubledLeft()) {
@@ -424,12 +423,12 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return this.right().isEmpty() ? this : this.right().maxSubTree();
     }
 
-    minSubTreeKeyValue(): KeyValuePair<K, V> {
+    minSubTreeKeyValue(): [K, V] {
         if (this.isEmpty()) throw new Error("cannot get min value from empty tree");
         return this.left().isEmpty() ? this.keyValue() : this.left().minSubTreeKeyValue();
     }
 
-    maxSubTreeKeyValue(): KeyValuePair<K, V> {
+    maxSubTreeKeyValue(): [K, V] {
         if (this.isEmpty()) throw new Error("cannot get max value from empty tree");
         return this.right().isEmpty() ? this.keyValue() : this.right().maxSubTreeKeyValue();
     }
@@ -438,7 +437,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         if (this.isEmpty()) return this;
 
         const y = this.keyValue();
-        const cmp = this.compare(key, y.key);
+        const cmp = this.compare(key, y[0]);
 
         if (cmp < 0) {
             return this.from(this.color, this.left().update(key, newValue), y, this.right())
@@ -446,12 +445,8 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
             return this.from(this.color, this.left(), y, this.right().update(key, newValue));
         } else {
             // key found, update it
-            return this.from(this.color, this.left(), this.keyValuePair(key, newValue), this.right());
+            return this.from(this.color, this.left(), [key, newValue], this.right());
         }
-    }
-
-    private keyValuePair(key: K, value: V): KeyValuePair<K, V> {
-        return { key, value };
     }
     
     successorTree(): TreeMap<K, V> | null {
@@ -585,7 +580,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return a < b ? -1 : a > b ? 1 : 0;
     }
 
-    getRoot(): KeyValuePair<K, V> | null {
+    getRoot(): [K, V] | null {
         return this.root;
     }
 
@@ -598,7 +593,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
 
     get(key: K): V | undefined {
-        return this.getNode(key)?.value;
+        return this.getNode(key)?.[1];
     }
 
     /**
@@ -607,12 +602,12 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
      */
     firstKey(): K | undefined {
         const min = this.findMin();
-        return min?.key;
+        return min?.[0];
     }
 
     lastKey(): K | undefined {
         const max = this.findMax();
-        return max?.key;
+        return max?.[0];
     }
 
     setFirst(): TreeMap<K, V> {
@@ -623,19 +618,18 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         throw new Error("Unsupported operand")
     }
 
-    setAll(entries: Iterable<KeyValuePair<K, V>>): TreeMap<K, V> {
+    setAll(entries: Iterable<[K, V]>): TreeMap<K, V> {
         let newTree: TreeMap<K, V> = this;
 
-        for (const entry of entries) {
-            newTree = newTree.set(entry.key, entry.value);
+        for (const [k, v] of entries) {
+            newTree = newTree.set(k, v);
         }
         return newTree;
     }
 
 
-    entries(): KeyValuePair<K, V>[] {
-        // need to do this mapping because it is calling super which is using the symbol iterator which maps over the nodes. 
-        return super.entries().map(entry => ({ key: entry.key, value: entry.value }));
+    entries(): [K, V][] {
+        return super.entries();
     }
 
     keys(): K[] {
@@ -651,8 +645,8 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
 
     hasValue(value: V): boolean {
-        for (const entry of this) {
-            if (entry.value === value) {
+        for (const [k, v] of this) {
+            if (v === value) {
                 return true;
             }
         }
@@ -702,9 +696,9 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     hashCode(): number {
         if (this._hashCode === null) {
             let hash = 0;
-            for (const entry of this) {
-                const entryKeyHash = HashCode.hashCode(entry.key);
-                const entryValueHash = HashCode.hashCode(entry.value);
+            for (const [k, v] of this) {
+                const entryKeyHash = HashCode.hashCode(k);
+                const entryValueHash = HashCode.hashCode(v);
                 hash += entryKeyHash ^ entryValueHash;
             }
             this._hashCode = hash;
@@ -771,30 +765,30 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return [newTree, newValue];
     }
 
-    ofEntries(...entries: KeyValuePair<K, V>[]): TreeMap<K, V> {
+    ofEntries(...entries: [K, V][]): TreeMap<K, V> {
         let newTree = new TreeMap<K, V>(this.compare);
-        for (const entry of entries) {
-            newTree = newTree.set(entry.key, entry.value);
+        for (const [k, v] of entries) {
+            newTree = newTree.set(k, v);
         }
         return newTree;
     }
 
-    static of<K, V>(comparer: Comparator<K>, ...entries: KeyValuePair<K, V>[]): TreeMap<K, V> {
+    static of<K, V>(comparer: Comparator<K>, ...entries: [K, V][]): TreeMap<K, V> {
         let newTree = new TreeMap<K, V>(comparer);
-        for (const entry of entries) {
-            newTree = newTree.set(entry.key, entry.value);
+        for (const [k, v] of entries) {
+            newTree = newTree.set(k, v);
         }
         return newTree;
     }
 
-    entry(k: K, v: V): KeyValuePair<K, V> {
-        return { key: k, value: v };
+    entry(k: K, v: V): [K, V] {
+        return [k, v];
     }
 
     copyOf(map: Map<K, V>): TreeMap<K, V> {
         let newTree = new TreeMap<K, V>(this.compare);
-        for (const entry of map.entries()) {
-            newTree = newTree.set(entry.key, entry.value);
+        for (const [k, v] of map.entries()) {
+            newTree = newTree.set(k, v);
         }
         return newTree;
     }
@@ -816,8 +810,8 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
      */
     sort(compare?: Comparator<K>): TreeMap<K, V> {
         let newTreeMap = new TreeMap<K, V>(compare ?? this.compare);
-        for (const entry of this) {
-            newTreeMap = newTreeMap.set(entry.key, entry.value);
+        for (const [k, v] of this) {
+            newTreeMap = newTreeMap.set(k, v);
         }
         return newTreeMap;
     }
@@ -827,20 +821,21 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         compare?: Comparator<C>
       ): TreeMap<K | C, V> {
         // Map each entry to a new key using the provided comparatorValueMapper
-        const mappedEntries: { key: K | C, value: V }[] = [];
-        for (const entry of this.entries()) {
-          const newKey = comparatorValueMapper(entry.value, entry.key, this);
-          mappedEntries.push({ key: newKey, value: entry.value });
+        // const mappedEntries: { key: K | C, value: V }[] = [];
+        const mappedEntries: [K|C, V][] = [];
+        for (const [k, v] of this.entries()) {
+          const newKey = comparatorValueMapper(v, k, this);
+          mappedEntries.push([newKey, v]);
         }
       
         // Sort the mapped entries using the provided comparator if given,
         // otherwise use a default comparator that can compare values of type K | C.
         mappedEntries.sort((a, b) => {
           if (compare) {
-            return compare(a.key as C, b.key as C);
+            return compare(a[0] as C, b[0] as C);
           } else {
             // Default comparator assuming the new key supports < and >
-            return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
+            return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
           }
         });
       
@@ -850,22 +845,22 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
           : ((a, b) => a < b ? -1 : a > b ? 1 : 0);
       
         let newTree = new TreeMap<K | C, V>(newComparator);
-        for (const entry of mappedEntries) {
-          newTree = newTree.set(entry.key, entry.value);
+        for (const [k, v] of mappedEntries) {
+          newTree = newTree.set(k, v);
         }
         return newTree;
       }
 
     forEach(callback: (value: V, key: K, map: this) => void, thisArg?: any) {
-        for (const entry of this) {
-            callback.call(thisArg, entry.value, entry.key, this);
+        for (const [k, v] of this) {
+            callback.call(thisArg, v, k, this);
         }
     }
 
     find(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): V | undefined {
-        for (const entry of this) {
-            if (predicate(entry.value, entry.key, this)) {
-                return entry.value;
+        for (const [k, v] of this) {
+            if (predicate(v, k, this)) {
+                return v;
             }
         }
         return undefined;
@@ -875,8 +870,8 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
     reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R {
         let acc: R = initialValue as R;
-        for (const entry of this) {
-            acc = callback(acc, entry.value, entry.key, this);
+        for (const [k, v] of this) {
+            acc = callback(acc, v, k, this);
         }
         return acc;
     }
@@ -892,7 +887,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         let acc: R = initialValue as R;
         const entries = [...this.entries()];
         for (let i = entries.length - 1; i >= 0; i--) {
-            acc = callback(acc, entries[i].value, entries[i].key, this);
+            acc = callback(acc, entries[i][1], entries[i][0], this);
         }
         return acc;
     }
@@ -925,7 +920,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
 
     merge<KC, VC>(
-        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+        ...collections: Array<Iterable<[KC, VC]>>
     ): TreeMap<K | KC, Exclude<V, VC> | VC>;
     merge<C>(
         ...collections: Array<{ [key: string]: C }>
@@ -936,11 +931,11 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
         for (const collection of collections) {
             if (this.isCustomMap(collection)) {
-                for (const {key, value} of collection.entries()) {
+                for (const [key, value] of collection.entries()) {
                     newTree = newTree.set(key, value);
                 }
             } else if (Array.isArray(collection)) {
-                for (const {key, value} of collection) {
+                for (const [key, value] of collection) {
                     newTree = newTree.set(key, value);
                 }
             } else if (typeof collection === 'object' && collection !== null) {
@@ -956,7 +951,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     }
 
     concat<KC, VC>(
-        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+        ...collections: Array<Iterable<[KC, VC]>>
     ): TreeMap<K | KC, Exclude<V, VC> | VC>;    
     concat<C>(
         ...collections: Array<{ [key: string]: C }>
@@ -966,7 +961,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
         for (const collection of collections) {
             if (Array.isArray(collection)) {
-                for (const {key, value} of collection) {
+                for (const [key, value] of collection) {
                     newTree = newTree.set(key, value);
                 }
             } else if (typeof collection === 'object' && collection !== null) {
@@ -983,7 +978,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
     mergeWith<KC, VC, VCC>(
         callback: (oldVal: V, newVal: VC, key: K) => VCC,
-        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+        ...collections: Array<Iterable<[KC, VC]>>
     ): TreeMap<K | KC, V | VC | VCC>;
     mergeWith<C, CC>(
         callback: (oldVal: V, newVal: C, key: string) => CC,
@@ -997,7 +992,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
         for (const collection of collections) {
             if (Array.isArray(collection)) {
-                for (const { key, value } of collection) {
+                for (const [key, value] of collection) {
                     if (newTree.has(key)) {
                         newTree = newTree.update(key, callback(newTree.get(key)!, value, key));
                     } else {
@@ -1083,8 +1078,8 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         thisArg?: unknown
     ): TreeMap<K, M> {
         let newTree = new TreeMap<K, M>(this.compare);
-        for (const {key, value} of this.entries()) {
-            newTree = newTree.set(key, callback.call(thisArg, value, key, this));
+        for (const [k, v] of this.entries()) {
+            newTree = newTree.set(k, callback.call(thisArg, v, k, this));
         }
         return newTree;
     }
@@ -1096,7 +1091,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     ): TreeMap<M, V> {
         const keyComparator = compare ?? TreeMap.defaultComparator<M>;
         let newTree = new TreeMap<M, V>(compare);
-        for (const {key, value} of this.entries()) {
+        for (const [key, value] of this.entries()) {
             newTree = newTree.set(callback.call(thisArg, key, value, this), value);
         }
         return newTree;
@@ -1104,10 +1099,10 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
     mapEntries<KM, VM>(
         mapper: (
-          entry: KeyValuePair<K, V>,
+          entry: [K, V],
           index: number,
           map: this
-        ) => KeyValuePair<KM, VM> | undefined,
+        ) => [KM, VM] | undefined,
         thisArg?: unknown,
         compare?: Comparator<KM>
       ): TreeMap<KM, VM> {
@@ -1117,22 +1112,22 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         for (const entry of this.entries()) {
           const newEntry = mapper.call(thisArg, entry, index++, this);
           if (newEntry) {
-            newTree = newTree.set(newEntry.key, newEntry.value);
+            newTree = newTree.set(newEntry[0], newEntry[1]);
           }
         }
         return newTree;
       }
 
     flatMap<KM, VM>(
-        callback: (value: V, key: K, map: this) => Iterable<KeyValuePair<KM, VM>>,
+        callback: (value: V, key: K, map: this) => Iterable<[KM, VM]>,
         thisArg?: unknown,
         compare?: Comparator<KM>
     ): TreeMap<KM, VM> {
         const newCompare = compare ?? TreeMap.defaultComparator<KM>;
         let newTree = new TreeMap<KM, VM>(newCompare);
 
-        for (const {key, value} of this.entries()) {
-            for (const {key: newKey, value: newValue} of callback.call(thisArg, value, key, this)) {
+        for (const [key, value] of this.entries()) {
+            for (const [newKey, newValue] of callback.call(thisArg, value, key, this)) {
                 newTree = newTree.set(newKey, newValue);
             }
         }
@@ -1152,9 +1147,9 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         thisArg?: unknown
     ): TreeMap<any, any> {
         let newTree = new TreeMap<any, any>(this.compare);
-        for (const {key, value} of this.entries()) {
-            if (predicate.call(thisArg, value, key, this)) {
-                newTree = newTree.set(key, value);
+        for (const [k, v] of this.entries()) {
+            if (predicate.call(thisArg, v, k, this)) {
+                newTree = newTree.set(k, v);
             }
         }
         return newTree;
@@ -1174,11 +1169,11 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
     ): [TreeMap<K, V>, TreeMap<K, V>] {
         let trueTree = new TreeMap<K, V>(this.compare);
         let falseTree = new TreeMap<K, V>(this.compare);
-        for (const {key, value} of this.entries()) {
-            if (predicate.call(thisArg, value, key, this)) {
-                trueTree = trueTree.set(key, value);
+        for (const [k, v] of this.entries()) {
+            if (predicate.call(thisArg, v, k, this)) {
+                trueTree = trueTree.set(k, v);
             } else {
-                falseTree = falseTree.set(key, value);
+                falseTree = falseTree.set(k, v);
             }
         }
         return [trueTree, falseTree];
@@ -1186,8 +1181,8 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
     flip(): TreeMap<V, K> {
         let newTree = new TreeMap<V, K>(TreeMap.defaultComparator);
-        for (const {key, value} of this.entries()) {
-            newTree = newTree.set(value, key);
+        for (const [k, v] of this.entries()) {
+            newTree = newTree.set(v, k);
         }
         return newTree;
     }
@@ -1195,7 +1190,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
     // end HOFs
 
-    findMin(key?: K): KeyValuePair<K, V> | undefined {
+    findMin(key?: K): [K, V] | undefined {
         if (key === undefined) {
             if (this.isEmpty()) return undefined;
             return this.minSubTreeKeyValue();
@@ -1215,7 +1210,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return undefined;
     }
 
-    // findMin(): KeyValuePair<K, V> {
+    // findMin(): [K, V] {
     //     if (this.isEmpty()) throw new Error("cannot get min value from empty tree");
     //     return this.minSubTreeKeyValue();
     // }
@@ -1224,10 +1219,10 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         if (this.isEmpty()) return this.empty();
         const min = this.findMin();
         if (min === undefined) return this;
-        return this.delete(min.key);
+        return this.delete(min[0]);
     }
 
-    findMax(key?: K): KeyValuePair<K, V> | undefined {
+    findMax(key?: K): [K, V] | undefined {
         if (key === undefined) {
             if (this.isEmpty()) return undefined;
             return this.maxSubTreeKeyValue();
@@ -1252,44 +1247,44 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         if (this.isEmpty()) return this.empty();
         const max = this.findMax();
         if (max === undefined) return this;
-        return this.delete(max.key);
+        return this.delete(max[0]);
     }
 
-    tryPredecessor(key: K, out: KeyValuePair<K, V>): boolean {
+    tryPredecessor(key: K, out: [K, V]): boolean {
         const pred = this.predecessor(key);
         if (pred !== undefined) {
-            out.key = pred.key;
-            out.value = pred.value;
+            out[0] = pred[0];
+            out[1] = pred[1];
             return true;
         }
         return false;
     }
 
-    trySuccessor(key: K, out: KeyValuePair<K, V>): boolean {
+    trySuccessor(key: K, out: [K, V]): boolean {
         const succ = this.successor(key);
         if (succ !== undefined) {
-            out.key = succ.key;
-            out.value = succ.value;
+            out[0] = succ[0];
+            out[1] = succ[1];
             return true;
         }
         return false;
     }
 
-    tryWeakPredecessor(key: K, out: KeyValuePair<K, V>): boolean {
+    tryWeakPredecessor(key: K, out: [K, V]): boolean {
         const pred = this.weakPredecessor(key);
         if (pred !== undefined) {
-            out.key = pred.key;
-            out.value = pred.value;
+            out[0] = pred[0];
+            out[1] = pred[1];
             return true;
         }
         return false;
     }
 
-    tryWeakSuccessor(key: K, out: KeyValuePair<K, V>): boolean {
+    tryWeakSuccessor(key: K, out: [K, V]): boolean {
         const succ = this.weakSuccessor(key);
         if (succ !== undefined) {
-            out.key = succ.key;
-            out.value = succ.value;
+            out[0] = succ[0];
+            out[1] = succ[1];
             return true;
         }
         return false;
@@ -1301,10 +1296,10 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
      * @param key 
      * @returns the predecessor of the key in the tree or undefined if the key is not in the tree.
      */
-    predecessor(key: K): KeyValuePair<K, V> | undefined {
+    predecessor(key: K): [K, V] | undefined {
         if (!this.has(key)) return undefined;
 
-        let pred: KeyValuePair<K, V> | undefined = undefined;
+        let pred: [K, V] | undefined = undefined;
         let current: TreeMap<K, V> = this;
 
         while (!current.isEmpty()) {
@@ -1320,8 +1315,8 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return pred;
     }
 
-    weakPredecessor(key: K): KeyValuePair<K, V> | undefined {
-        let pred: KeyValuePair<K, V> | undefined = undefined;
+    weakPredecessor(key: K): [K, V] | undefined {
+        let pred: [K, V] | undefined = undefined;
         let current: TreeMap<K, V> = this;
 
         while (!current.isEmpty()) {
@@ -1343,10 +1338,10 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
      * @param key
      * @returns the successor of the given key or undefined if the key is the maximum key in the tree 
      */
-    successor(key: K): KeyValuePair<K, V> | undefined {
+    successor(key: K): [K, V] | undefined {
         if (!this.has(key)) return undefined;
 
-        let succ: KeyValuePair<K, V> | undefined = undefined;
+        let succ: [K, V] | undefined = undefined;
         let current: TreeMap<K, V> = this;
 
         while (!current.isEmpty()) {
@@ -1361,8 +1356,8 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return succ;
     }
 
-    weakSuccessor(key: K): KeyValuePair<K, V> | undefined {
-        let succ: KeyValuePair<K, V> | undefined = undefined;
+    weakSuccessor(key: K): [K, V] | undefined {
+        let succ: [K, V] | undefined = undefined;
         let current: TreeMap<K, V> = this;
 
         while (!current.isEmpty()) {
