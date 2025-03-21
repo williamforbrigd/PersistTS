@@ -40,3 +40,6 @@ yarn.lock
 
 # Diagrams used for draw.io
 Diagrams/
+
+# Testing folder
+src/Testing

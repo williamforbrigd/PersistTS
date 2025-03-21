@@ -116,12 +116,78 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
 
     abstract containsSpeed(): Speed;
 
+    abstract updateOrAdd(key: K, callback: (value: V) => V): Map<K, V>;
+    abstract updateOrAdd(key: K, callback: (value: V | undefined) => V | undefined): Map<K, V | undefined>;
+    abstract updateOrAdd(key: K, newValue: V): Map<K, V>;
+
     abstract merge<KC, VC>(
-        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
-    ): Map<K | KC, Exclude<V, VC> | VC>;
+            ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+        ): Map<K | KC, Exclude<V, VC> | VC>;
+    abstract merge<C>(
+        ...collections: Array<{ [key: string]: C }>
+    ): Map<K | string, Exclude<V, C> | C>;
     abstract merge<KC, VC>(other: Map<KC, VC>): Map<K | KC, V | VC>;
 
     abstract concat<KC, VC>(
+            ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+    ): Map<K | KC, Exclude<V, VC> | VC>;    
+    abstract concat<C>(
+        ...collections: Array<{ [key: string]: C }>
+    ): Map<K | string, Exclude<V, C> | C>;
+
+    abstract mergeWith<KC, VC, VCC>(
+        callback: (oldVal: V, newVal: VC, key: K) => VCC,
         ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
-    ): Map<K | KC, Exclude<V, VC> | VC>;
+    ): Map<K | KC, V | VC | VCC>;
+    abstract mergeWith<C, CC>(
+        callback: (oldVal: V, newVal: C, key: string) => CC,
+        ...collections: Array<{ [key: string]: C }>
+    ): Map<K | string, V | C | CC>;
+   
+    abstract map<M>(
+        callback: (value: V, key: K, map: this) => M,
+        thisArg?: unknown
+    ): Map<K, M>;
+
+    abstract mapKeys<M>(
+        callback: (key: K, value: V, map: this) => M,
+        thisArg?: unknown,
+        compare?: Comparator<M>
+    ): Map<M, V>;
+
+    abstract mapEntries<KM, VM>(
+        mapper: (
+            entry: KeyValuePair<K, V>,
+            index: number,
+            map: this
+        ) => KeyValuePair<KM, VM> | undefined,
+        thisArg?: unknown,
+        compare?: Comparator<KM>
+    ): Map<KM, VM>;
+
+    abstract flatMap<KM, VM>(
+        callback: (value: V, key: K, map: this) => Iterable<KeyValuePair<KM, VM>>,
+        thisArg?: unknown,
+        compare?: Comparator<KM>
+    ): Map<KM, VM>;
+
+    abstract filter<F extends V>(
+        predicate: (value: V, key: K, map: this) => value is F,
+        thisArg?: unknown,
+      ): Map<K, F>;
+    abstract filter(
+        predicate: (value: V, key: K, map: this) => unknown,
+        thisArg?: unknown
+    ): Map<K, V>;
+
+    abstract partition<F extends V, C>(
+        predicate: (this: C, value: V, key: K, map: this) => value is F,
+        thisArg?: C
+      ): [Map<K, V>, Map<K, F>];
+    abstract partition<C>(
+        predicate: (this: C, value: V, key: K, map: this) => unknown,
+        thisArg?: C
+    ): [Map<K, V>, Map<K, V>];
+
+    abstract flip(): Map<V, K>;
 }
