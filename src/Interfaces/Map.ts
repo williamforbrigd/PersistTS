@@ -1,12 +1,11 @@
 import EqualityComparer from "./EqualityComparer";
-import KeyValuePair from "./KeyValuePair";
 import { Speed } from "../Enums/Speed";
 import {Comparator} from "./Comparator";
 
 // this is a dictionary (map) interface
-export default interface Map<K, V> extends MapIterator<KeyValuePair<K, V>> {
+export default interface Map<K, V> extends MapIterator<[K, V]> {
     // Iterable<T>
-    [Symbol.iterator](): MapIterator<KeyValuePair<K, V>>;
+    [Symbol.iterator](): MapIterator<[K, V]>;
 
     // IDictionary<K, V>
     equalityComparer: EqualityComparer<K>;
@@ -14,10 +13,10 @@ export default interface Map<K, V> extends MapIterator<KeyValuePair<K, V>> {
     get(key: K): V | undefined;
     keys(): K[];
     values(): V[];
-    entries(): KeyValuePair<K, V>[];
+    entries(): [K, V][];
     // set method adds or updates an entry in this map
     set(key: K, value: V): Map<K, V>;
-    setAll(entries: Iterable<KeyValuePair<K, V>>): Map<K, V>;
+    setAll(entries: Iterable<[K, V]>): Map<K, V>;
     has(key: K): boolean;
     hasValue(value: V): boolean;
     hasAll<H extends K>(keys: Iterable<H>): boolean;
@@ -28,23 +27,23 @@ export default interface Map<K, V> extends MapIterator<KeyValuePair<K, V>> {
     clear(): Map<K, V>;
     //update(key: K, value: V): Map<K, V>;
     //update(key: K, value: V, newValue: V): Map<K, V>;
-    //findOrAdd(key: K, value: V): KeyValuePair<K, V> | undefined;
+    //findOrAdd(key: K, value: V): [K, V] | undefined;
     //updateOrAdd(key: K, value: V): Map<K, V>;
     //updateOrAdd(key: K, value: V, newValue: V): Map<K, V>;
     //check(): boolean;
-    //findMin(): KeyValuePair<K, V> | undefined;
+    //findMin(): [K, V] | undefined;
 
 
     // ICollectionValue
     /*
     count(): number;
-    copyTo(array: KeyValuePair<K, V>[], index: number): void;
-    toArray(): KeyValuePair<K, V>[];
-    apply(action: (item: KeyValuePair<K, V>) => void): void;
-    exists(predicate: (item: KeyValuePair<K, V>) => boolean): boolean;
-    find(predicate: (item: KeyValuePair<K, V>) => boolean): KeyValuePair<K, V> | undefined;
-    all(predicate: (item: KeyValuePair<K, V>) => boolean): boolean;
-    choose(): KeyValuePair<K, V> | undefined;
+    copyTo(array: [K, V][], index: number): void;
+    toArray(): [K, V][];
+    apply(action: (item: [K, V]) => void): void;
+    exists(predicate: (item: [K, V]) => boolean): boolean;
+    find(predicate: (item: [K, V]) => boolean): [K, V] | undefined;
+    all(predicate: (item: [K, V]) => boolean): boolean;
+    choose(): [K, V] | undefined;
 
      */
 
@@ -57,13 +56,13 @@ export default interface Map<K, V> extends MapIterator<KeyValuePair<K, V>> {
     //containsValue(value: V): boolean;
     //get(key: K): V | undefined;
     //put(key: K, value: V): V | undefined;
-    //putAll(entries: Iterable<KeyValuePair<K, V>>): Map<K, V>;
+    //putAll(entries: Iterable<[K, V]>): Map<K, V>;
     //remove(key: K): V | undefined;
     //putAll(map: Map<K, V>): void;
     //clear(): Map<K, V>;
     //keySet(): Set<K>;
     //values(): Array<V>;
-    //entrySet(): Set<KeyValuePair<K, V>>;
+    //entrySet(): Set<[K, V]>;
     equals(o: Object): boolean;
     hashCode(): number;
     getOrDefault(key: K, defaultValue: V): V;
@@ -79,8 +78,8 @@ export default interface Map<K, V> extends MapIterator<KeyValuePair<K, V>> {
     //of(k1: K, v1: V, k2: K, v2: V): Map<K, V>;
     //of(k1: K, v1: V, k2: K, v2: V, k3: K, v3: V): Map<K, V>;
     //... more of these of methods
-    ofEntries(...entries: KeyValuePair<K, V>[]): Map<K, V>;
-    entry(k: K, v: V): KeyValuePair<K, V>;
+    ofEntries(...entries: [K, V][]): Map<K, V>;
+    entry(k: K, v: V): [K, V];
     copyOf(map: Map<K, V>): Map<K, V>;
 
     // higher order functions HOFs
@@ -106,7 +105,7 @@ export default interface Map<K, V> extends MapIterator<KeyValuePair<K, V>> {
     updateOrAdd(key: K, newValue: V): Map<K, V>;
 
     merge<KC, VC>(
-            ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+            ...collections: Array<Iterable<[KC, VC]>>
         ): Map<K | KC, Exclude<V, VC> | VC>;
     merge<C>(
         ...collections: Array<{ [key: string]: C }>
@@ -114,7 +113,7 @@ export default interface Map<K, V> extends MapIterator<KeyValuePair<K, V>> {
     merge<KC, VC>(other: Map<KC, VC>): Map<K | KC, V | VC>;
 
     concat<KC, VC>(
-            ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+            ...collections: Array<Iterable<[KC, VC]>>
     ): Map<K | KC, Exclude<V, VC> | VC>;    
     concat<C>(
         ...collections: Array<{ [key: string]: C }>
@@ -122,7 +121,7 @@ export default interface Map<K, V> extends MapIterator<KeyValuePair<K, V>> {
 
     mergeWith<KC, VC, VCC>(
         callback: (oldVal: V, newVal: VC, key: K) => VCC,
-        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+        ...collections: Array<Iterable<[KC, VC]>>
     ): Map<K | KC, V | VC | VCC>;
     mergeWith<C, CC>(
         callback: (oldVal: V, newVal: C, key: string) => CC,
@@ -142,16 +141,16 @@ export default interface Map<K, V> extends MapIterator<KeyValuePair<K, V>> {
 
     mapEntries<KM, VM>(
         mapper: (
-            entry: KeyValuePair<K, V>,
+            entry: [K, V],
             index: number,
             map: this
-        ) => KeyValuePair<KM, VM> | undefined,
+        ) => [KM, VM] | undefined,
         thisArg?: unknown,
         compare?: Comparator<KM>
     ): Map<KM, VM>;
 
     flatMap<KM, VM>(
-        callback: (value: V, key: K, map: this) => Iterable<KeyValuePair<KM, VM>>,
+        callback: (value: V, key: K, map: this) => Iterable<[KM, VM]>,
         thisArg?: unknown,
         compare?: Comparator<KM>
     ): Map<KM, VM>;

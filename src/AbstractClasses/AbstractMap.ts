@@ -1,18 +1,17 @@
 import Map from '../Interfaces/Map';
-import KeyValuePair from "../Interfaces/KeyValuePair";
 import EqualityComparer from "../Interfaces/EqualityComparer";
 import {Comparator} from "../Interfaces/Comparator";
 import {Speed} from "../Enums/Speed";
 
 
 export default abstract class AbstractMap<K, V> implements Map<K, V> {
-    abstract getRoot(): KeyValuePair<K, V> | null;
+    abstract getRoot(): [K, V] | null;
 
     abstract equalityComparer: EqualityComparer<K>;
-    abstract [Symbol.iterator](): MapIterator<KeyValuePair<K, V>>;
-    abstract next(...[value]: [] | [unknown]): IteratorResult<KeyValuePair<K, V>, BuiltinIteratorReturn>;
-    abstract return(value?: BuiltinIteratorReturn): IteratorResult<KeyValuePair<K, V>, BuiltinIteratorReturn>;
-    abstract throw(e?: any): IteratorResult<KeyValuePair<K, V>, BuiltinIteratorReturn>;
+    abstract [Symbol.iterator](): MapIterator<[K, V]>;
+    abstract next(...[value]: [] | [unknown]): IteratorResult<[K, V], BuiltinIteratorReturn>;
+    abstract return(value?: BuiltinIteratorReturn): IteratorResult<[K, V], BuiltinIteratorReturn>;
+    abstract throw(e?: any): IteratorResult<[K, V], BuiltinIteratorReturn>;
 
     abstract size(): number;
 
@@ -21,20 +20,20 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
 
     keys(): K[] {
         const keys = [];
-        for (const entry of this) {
-            keys.push(entry.key);
+        for (const [k, _] of this) {
+            keys.push(k);
         }
         return keys;
     }
     values(): V[] {
         const values = [];
-        for (const entry of this) {
-            values.push(entry.value);
+        for (const [_, v] of this) {
+            values.push(v);
         }
         return values;
     }
 
-    entries(): KeyValuePair<K, V>[] {
+    entries(): [K, V][] {
         const entries = [];
         for (const entry of this) {
             entries.push(entry);
@@ -43,7 +42,7 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     }
 
     abstract set(key: K, value: V): Map<K, V>;
-    abstract setAll(entries: Iterable<KeyValuePair<K, V>>): Map<K, V>;
+    abstract setAll(entries: Iterable<[K, V]>): Map<K, V>;
 
     abstract has(key: K): boolean;
     abstract hasValue(value: V): boolean;
@@ -64,13 +63,13 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
 
     abstract copyOf(map: Map<K, V>): Map<K, V>;
 
-    abstract entry(k: K, v: V): KeyValuePair<K, V>;
+    abstract entry(k: K, v: V): [K, V];
 
     every(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): this is Map<K, V>;
     every(predicate: (value: V, key: K, map: this) => unknown, thisArg?: any): boolean;
     every(predicate: ((value: V, key: K, map: this) => boolean) | ((value: V, key: K, map: this) => unknown), thisArg?: any): any {
-        for (const entry of this) {
-            if (!predicate(entry.value, entry.key, this)) {
+        for (const [k, v] of this) {
+            if (!predicate(v, k, this)) {
                 return false;
             }
         }
@@ -92,7 +91,7 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     //abstract of(k1: K, v1: V, k2: K, v2: V, k3: K, v3: V): Map<K, V>;
     //abstract of(k: K, v: V, k2?: K, v2?: V, k3?: K, v3?: V): Map<K, V>;
 
-    abstract ofEntries(...entries: KeyValuePair<K, V>[]): Map<K, V>;
+    abstract ofEntries(...entries: [K, V][]): Map<K, V>;
 
     abstract reduce(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
     abstract reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
@@ -104,8 +103,8 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
 
 
     some(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): boolean {
-        for (const entry of this) {
-            if (predicate(entry.value, entry.key, this)) {
+        for (const [k, v] of this) {
+            if (predicate(v, k, this)) {
                 return true;
             }
         }
@@ -121,7 +120,7 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     abstract updateOrAdd(key: K, newValue: V): Map<K, V>;
 
     abstract merge<KC, VC>(
-            ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+            ...collections: Array<Iterable<[KC, VC]>>
         ): Map<K | KC, Exclude<V, VC> | VC>;
     abstract merge<C>(
         ...collections: Array<{ [key: string]: C }>
@@ -129,7 +128,7 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     abstract merge<KC, VC>(other: Map<KC, VC>): Map<K | KC, V | VC>;
 
     abstract concat<KC, VC>(
-            ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+            ...collections: Array<Iterable<[KC, VC]>>
     ): Map<K | KC, Exclude<V, VC> | VC>;    
     abstract concat<C>(
         ...collections: Array<{ [key: string]: C }>
@@ -137,7 +136,7 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
 
     abstract mergeWith<KC, VC, VCC>(
         callback: (oldVal: V, newVal: VC, key: K) => VCC,
-        ...collections: Array<Iterable<KeyValuePair<KC, VC>>>
+        ...collections: Array<Iterable<[KC, VC]>>
     ): Map<K | KC, V | VC | VCC>;
     abstract mergeWith<C, CC>(
         callback: (oldVal: V, newVal: C, key: string) => CC,
@@ -157,16 +156,16 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
 
     abstract mapEntries<KM, VM>(
         mapper: (
-            entry: KeyValuePair<K, V>,
+            entry: [K, V],
             index: number,
             map: this
-        ) => KeyValuePair<KM, VM> | undefined,
+        ) => [KM, VM] | undefined,
         thisArg?: unknown,
         compare?: Comparator<KM>
     ): Map<KM, VM>;
 
     abstract flatMap<KM, VM>(
-        callback: (value: V, key: K, map: this) => Iterable<KeyValuePair<KM, VM>>,
+        callback: (value: V, key: K, map: this) => Iterable<[KM, VM]>,
         thisArg?: unknown,
         compare?: Comparator<KM>
     ): Map<KM, VM>;
