@@ -846,4 +846,68 @@ describe("TreeMap", () => {
         expect(flipped.get("20")).toBe(20);
     })
 
+    test('cut()', () => {
+        const result = treeMap.cut(((k: number) => k%3), 1, 2);
+        const expected = [10, 20, 25, 40, 50, 55, 100];
+        expect(result.size()).toBe(7);
+        for (const elem of expected) {
+            expect(result.has(elem)).toBeTruthy();
+        }
+    })
+
+    test('rangeFrom()', () => {
+        const result = treeMap.rangeFrom(30);
+        const expected = [30, 40, 45, 50, 55, 100];
+        expect(result.size()).toBe(6);
+        for (const elem of expected) {
+            expect(result.has(elem)).toBeTruthy();
+        }
+    })
+
+    test('rangeTo()', () => {
+        const result = treeMap.rangeTo(30);
+        const expected = arrDistinct.filter((elem) => elem <= 30);
+        expect(result.size()).toBe(expected.length);
+        for (const elem of expected) {
+            expect(result.has(elem)).toBeTruthy();
+        }
+    })
+
+    test('rangeFromTo()', () => {
+        const result = treeMap.rangeFromTo(30, 50);
+        const expected = arrDistinct.filter((elem) => elem >= 30 && elem <= 50);
+        expect(result.size()).toBe(expected.length);
+        for (const elem of expected) {
+            expect(result.has(elem)).toBeTruthy();
+        }
+    })
+
+    test('removeRangeFrom()', () => {
+        const result = treeMap.removeRangeFrom(30);
+        const expected = arrDistinct.filter((elem) => elem < 30);
+        expect(result.size()).toBe(expected.length);
+        for (const elem of expected) {
+            expect(result.has(elem)).toBeTruthy();
+        }
+    })
+
+    test('removeRangeTo()', () => {
+        const result = treeMap.removeRangeTo(55);
+        const expected = arrDistinct.filter((elem) => elem >= 55);
+        expect(result.size()).toBe(expected.length);
+        for (const elem of expected) {
+            expect(result.has(elem)).toBeTruthy();
+        }
+
+    })
+
+    test('removeRangeFromTo()', () => {
+        const result = treeMap.removeRangeFromTo(30, 50);
+        const expected = arrDistinct.filter((elem) => elem < 30 || elem >= 50);
+        expect(result.size()).toBe(expected.length);
+        for (const elem of expected) {
+            expect(result.has(elem)).toBeTruthy();
+        }
+    })
+
 })
