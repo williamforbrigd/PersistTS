@@ -7,7 +7,6 @@ export default interface Map<K, V> extends MapIterator<[K, V]> {
     // Iterable<T>
     [Symbol.iterator](): MapIterator<[K, V]>;
 
-    // IDictionary<K, V>
     equalityComparer: EqualityComparer<K>;
     [k: number]: V | undefined;
     get(key: K): V | undefined;
@@ -25,59 +24,16 @@ export default interface Map<K, V> extends MapIterator<[K, V]> {
     deleteAll(keys: Iterable<K>):  Map<K,V>;
     isEmpty(): boolean;
     clear(): Map<K, V>;
-    //update(key: K, value: V): Map<K, V>;
-    //update(key: K, value: V, newValue: V): Map<K, V>;
-    //findOrAdd(key: K, value: V): [K, V] | undefined;
-    //updateOrAdd(key: K, value: V): Map<K, V>;
-    //updateOrAdd(key: K, value: V, newValue: V): Map<K, V>;
-    //check(): boolean;
-    //findMin(): [K, V] | undefined;
 
 
-    // ICollectionValue
-    /*
-    count(): number;
-    copyTo(array: [K, V][], index: number): void;
-    toArray(): [K, V][];
-    apply(action: (item: [K, V]) => void): void;
-    exists(predicate: (item: [K, V]) => boolean): boolean;
-    find(predicate: (item: [K, V]) => boolean): [K, V] | undefined;
-    all(predicate: (item: [K, V]) => boolean): boolean;
-    choose(): [K, V] | undefined;
-
-     */
-
-
-
-    // Collections from Java
     size(): number;
-    //isEmpty(): boolean;
-    //containsKey(key: K): boolean;
-    //containsValue(value: V): boolean;
-    //get(key: K): V | undefined;
-    //put(key: K, value: V): V | undefined;
-    //putAll(entries: Iterable<[K, V]>): Map<K, V>;
-    //remove(key: K): V | undefined;
-    //putAll(map: Map<K, V>): void;
-    //clear(): Map<K, V>;
-    //keySet(): Set<K>;
-    //values(): Array<V>;
-    //entrySet(): Set<[K, V]>;
     equals(o: Object): boolean;
     hashCode(): number;
     getOrDefault(key: K, defaultValue: V): V;
-    //forEach(action: (key: K, value: V) => void): void;
-    //replaceAll(func: (key: K, value: V) => V): Map<K, V>;
-    //replace(key: K, oldValue: V, newValue: V): Map<K, V>;
-    //replace(key: K, value: V): Map<K, V>;
     computeIfAbsent(key: K, func: (key: K) => V): [Map<K, V>, V];
     computeIfPresent(key: K, func: (key: K, value: V) => V): [Map<K, V>, V];
     compute(key: K, func: (key: K, value: V | undefined) => V): [Map<K, V>, V];
-    //merge(key: K, value: V, func: (oldValue: V, newValue: V) => V): V;
-    //of(k: K, v: V): Map<K, V>;
-    //of(k1: K, v1: V, k2: K, v2: V): Map<K, V>;
-    //of(k1: K, v1: V, k2: K, v2: V, k3: K, v3: V): Map<K, V>;
-    //... more of these of methods
+    of(k: K, v: V): Map<K, V>;
     ofEntries(...entries: [K, V][]): Map<K, V>;
     entry(k: K, v: V): [K, V];
     copyOf(map: Map<K, V>): Map<K, V>;
@@ -99,7 +55,7 @@ export default interface Map<K, V> extends MapIterator<[K, V]> {
     reduceRight(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V
     reduceRight<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
 
-    // HOFs from immutable.js
+    // HOFs inspired by immutable.js
     updateOrAdd(key: K, callback: (value: V) => V): Map<K, V>;
     updateOrAdd(key: K, callback: (value: V | undefined) => V | undefined): Map<K, V | undefined>;
     updateOrAdd(key: K, newValue: V): Map<K, V>;

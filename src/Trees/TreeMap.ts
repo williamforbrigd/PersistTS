@@ -2,6 +2,7 @@ import { Speed } from "../Enums/Speed";
 import HashCode from "../Hashing/HashCode";
 import Map from "../Interfaces/Map";
 import {Comparator} from "../Interfaces/Comparator";
+import SortedMap from "../Interfaces/SortedMap"
 
 import AbstractMap from "../AbstractClasses/AbstractMap";
 import EqualityComparer from "../Interfaces/EqualityComparer";
@@ -25,7 +26,7 @@ enum Color {
  * It is using balancing techniques to make sure that these invariants are always met. 
  * 
  */
-export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
+export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> {
     // private static readonly EMPTY = new TreeMap<any, any>(TreeMap.defaultComparator, Color.B, null, null, null);
     private _hashCode: number | null = null; // cache the hashcode which is computed only once
     private iterator: Iterator<[K, V]> | null = null;
@@ -765,6 +766,9 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
         return [newTree, newValue];
     }
 
+    of(key: K, value: V): TreeMap<K, V> {
+        return this.set(key, value);
+    }
     ofEntries(...entries: [K, V][]): TreeMap<K, V> {
         let newTree = new TreeMap<K, V>(this.compare);
         for (const [k, v] of entries) {
@@ -1370,5 +1374,78 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements Map<K, V
             }
         }
         return succ;
+    }
+
+    getComparator(): Comparator<K> {
+        return this.compare;
+    }
+
+    cut(cutFunction: (compareToOther: K) => number, fromKey: K, toKey: K): TreeMap<K, V> {
+        const lower = cutFunction(fromKey);
+        const upper = cutFunction(toKey);
+        let newTree = new TreeMap<K, V>(this.compare);
+
+        for (const [k, v] of this) {
+            const cutValue = cutFunction(k);
+            if (cutValue >= lower && cutValue <= upper) {
+                newTree = newTree.set(k, v);
+            }
+        }
+        return newTree;
+    }
+    rangeFrom(fromKey: K): TreeMap<K, V> {
+        let newTree = new TreeMap<K, V>(this.compare);
+        for (const [k, v] of this) {
+            if (this.compare(k, fromKey) >= 0) {
+                newTree = newTree.set(k, v);
+            }
+        }
+        return newTree;
+    }
+    rangeTo(toKey: K): TreeMap<K, V> {
+        let newTree = new TreeMap<K, V>(this.compare);
+        for (const [k, v] of this) {
+            if (this.compare(k, toKey) <= 0) {
+                newTree = newTree.set(k, v);
+            }
+        }
+        return newTree;
+    }
+    rangeFromTo(fromKey: K, toKey: K): TreeMap<K, V> {
+        let newTree = new TreeMap<K, V>(this.compare);
+        for (const [k, v] of this) {
+            if (this.compare(k, fromKey) >= 0 && this.compare(k, toKey) <= 0) {
+                newTree = newTree.set(k, v);
+            }
+        }
+        return newTree;
+    }
+    // rangeAll(): Collection<[K, V]>;
+    removeRangeFrom(fromKey: K): TreeMap<K, V> {
+        let newTree = new TreeMap<K, V>(this.compare);
+        for (const [k, v] of this) {
+            if (this.compare(k, fromKey) < 0) {
+                newTree = newTree.set(k, v);
+            }
+        }
+        return newTree;
+    }
+    removeRangeTo(toKey: K): TreeMap<K, V> {
+        let newTree = new TreeMap<K, V>(this.compare);
+        for (const [k, v] of this) {
+            if (this.compare(k, toKey) >= 0) {
+                newTree = newTree.set(k, v);
+            }
+        }
+        return newTree;
+    }
+    removeRangeFromTo(fromKey: K, toKey: K): TreeMap<K, V> {
+        let newTree = new TreeMap<K, V>(this.compare);
+        for (const [k, v] of this) {
+            if (!(this.compare(k, fromKey) >= 0 && this.compare(k, toKey) < 0)) {
+                newTree = newTree.set(k, v);
+            }
+        }
+        return newTree;
     }
 }
