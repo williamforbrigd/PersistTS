@@ -19,7 +19,6 @@ export default interface Set<T> extends Iterable<T>  {
 
     values(): Array<T>;
     toArray(): Array<T>;
-    // toSet(): Set<T>;
 
     // HOFs
 
