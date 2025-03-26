@@ -3,6 +3,7 @@ import AbstractCollection from "./AbstractCollection";
 import SequencedCollection from "../Interfaces/SequencedCollection";
 import { Comparator } from "../Interfaces/Comparator";
 import Collection from "../Interfaces/Collection";
+import { Speed } from "../Enums/Speed";
 
 export default abstract class AbstractList<T> extends AbstractCollection<T> implements List<T> {
     [index: number]: T | undefined;
@@ -83,4 +84,10 @@ export default abstract class AbstractList<T> extends AbstractCollection<T> impl
 
     abstract shift(): Collection<T>;
     abstract unshift(...items: T[]): Collection<T>;
+
+    abstract indexingSpeed(): Speed;
+    abstract hasSpeed(): Speed;
+    abstract addSpeed(): Speed;
+    abstract removeSpeed(): Speed;
+
 }
