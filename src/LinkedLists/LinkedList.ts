@@ -3,6 +3,7 @@ import List, {ListInput} from '../Interfaces/List';
 import Queue from '../Interfaces/Queue';
 import HashCode from '../Hashing/HashCode';
 import { Comparator } from '../Interfaces/Comparator';
+import { Speed } from '../Enums/Speed';
 
 // This class represents a singly linked list that is immutable.
 // This list is recursively defined.
@@ -566,6 +567,21 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
         const arr2 = (o as LinkedList<T>).toArray();
 
         return arr1.every((value, index) => value === arr2[index]);
+    }
+
+    // Speed for different types of operations
+
+    indexingSpeed(): Speed {
+        return Speed.Linear;
+    }
+    hasSpeed(): Speed {
+        return Speed.Linear;
+    }
+    addSpeed(): Speed {
+        return Speed.Linear;
+    }
+    removeSpeed(): Speed {
+        return Speed.Linear;
     }
 
     hashCode(): number {

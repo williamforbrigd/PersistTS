@@ -19,12 +19,15 @@ export default interface Map<K, V> extends MapIterator<[K, V]> {
     has(key: K): boolean;
     hasValue(value: V): boolean;
     hasAll<H extends K>(keys: Iterable<H>): boolean;
-    containsSpeed(): Speed;
     delete(key: K, value?: V): Map<K, V>;
     deleteAll(keys: Iterable<K>):  Map<K,V>;
     isEmpty(): boolean;
     clear(): Map<K, V>;
 
+    // Speed
+    hasSpeed(): Speed;
+    addSpeed(): Speed;
+    removeSpeed(): Speed;
 
     size(): number;
     equals(o: Object): boolean;

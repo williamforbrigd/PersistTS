@@ -239,6 +239,36 @@ export default class TreeSet<T> implements SortedSet<T> {
         return true;
     } 
 
+
+    // Speed of different types of operations
+
+    /**
+     * To check whether the TreeSet has a given value, the complexity is logarithmic O(log n).
+     * This is because of the red-black tree properties.
+     * @returns the speed of the TreeSet, which is Logarithmic.
+     */
+    hasSpeed(): Speed {
+        return Speed.Log;
+    }
+
+    /**
+     * To add a value to the TreeSet, the complexity is logarithmic O(log n).
+     * This is because of the red-black tree properties.
+     * @returns the speed of the TreeSet, which is Logarithmic.
+     */
+    addSpeed(): Speed {
+        return Speed.Log;
+    }
+
+    /**
+     * To delete a value from the TreeSet, the complexity is logarithmic O(log n).
+     * This is because of the red-black tree properties.
+     * @returns the speed of the TreeSet, which is Logarithmic.
+     */
+    removeSpeed(): Speed {
+        return Speed.Log;
+    }
+
     /**
      * The hashcode is computed lazily, which means that it is only computed once and then cached.
      * Hashcode accounts for the order of the elements in the TreeSet.
