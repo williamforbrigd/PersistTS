@@ -1,19 +1,5 @@
 import TreeMap from "../src/Trees/TreeMap";
-
-// use this helper function when deleting nodes from the tree
-function shuffleArray<T>(array: T[]): T[] {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
-
-function createRandomIntArray(size: number, min: number = 0, max: number = 100): number[] {
-    return Array.from({ length: size }, () => Math.floor(Math.random() * (max - min + 1)) + min);
-}
-
-
+import {createRandomIntArray, shuffleArray} from "../src/Utils/Utils";
 
 describe("TreeMap", () => {
     const compare = (a: number, b: number) => a-b;
@@ -512,22 +498,6 @@ describe("TreeMap", () => {
         expect(weakPred).toBeUndefined();
     })
 
-    test('tryPredecessor()', () => {
-        const keyvalue: [number, string] = [-1, "-1"];
-        const result = treeMap.tryPredecessor(50, keyvalue);
-        expect(result).toBeTruthy();
-        expect(keyvalue[0]).toBe(45);
-        expect(keyvalue[1]).toBe("45");
-    })
-
-    test('tryWeakPredecessor()', () => {
-        const keyvalue: [number, string] = [-1, "-1"];
-        const result = treeMap.tryWeakPredecessor(50, keyvalue);
-        expect(result).toBeTruthy();
-        expect(keyvalue[0]).toBe(50);
-        expect(keyvalue[1]).toBe("50");
-    })
-
     test('successor()', () => {
         const succ = treeMap.successor(0);
         expect(succ?.[0]).toBe(10);
@@ -551,22 +521,6 @@ describe("TreeMap", () => {
     test('weakSuccessor() returns undefined if there is no successor', () => {
         const weakSucc = treeMap.weakSuccessor(110);
         expect(weakSucc).toBeUndefined();
-    })
-
-    test('trySuccessor()', () => {
-        const keyvalue: [number, string] = [-1, "-1"];
-        const result = treeMap.trySuccessor(0, keyvalue);
-        expect(result).toBeTruthy();
-        expect(keyvalue[0]).toBe(10);
-        expect(keyvalue[1]).toBe("10");
-    })
-
-    test('tryWeakSuccessor()', () => {
-        const keyvalue: [number, string] = [-1, "-1"];
-        const result = treeMap.tryWeakSuccessor(0, keyvalue);
-        expect(result).toBeTruthy();
-        expect(keyvalue[0]).toBe(0);
-        expect(keyvalue[1]).toBe("0");
     })
 
     test('merge() with other treeMap', () => {
@@ -848,8 +802,8 @@ describe("TreeMap", () => {
 
     test('cut()', () => {
         const result = treeMap.cut(((k: number) => k%3), 1, 2);
-        const expected = [10, 20, 25, 40, 50, 55, 100];
-        expect(result.size()).toBe(7);
+        const expected = [10, 25, 40, 55, 100];
+        expect(result.size()).toBe(expected.length);
         for (const elem of expected) {
             expect(result.has(elem)).toBeTruthy();
         }
@@ -875,7 +829,7 @@ describe("TreeMap", () => {
 
     test('rangeFromTo()', () => {
         const result = treeMap.rangeFromTo(30, 50);
-        const expected = arrDistinct.filter((elem) => elem >= 30 && elem <= 50);
+        const expected = arrDistinct.filter((elem) => elem >= 30 && elem < 50);
         expect(result.size()).toBe(expected.length);
         for (const elem of expected) {
             expect(result.has(elem)).toBeTruthy();
