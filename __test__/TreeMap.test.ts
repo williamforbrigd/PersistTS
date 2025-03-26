@@ -1,19 +1,5 @@
 import TreeMap from "../src/Trees/TreeMap";
-
-// use this helper function when deleting nodes from the tree
-function shuffleArray<T>(array: T[]): T[] {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
-
-function createRandomIntArray(size: number, min: number = 0, max: number = 100): number[] {
-    return Array.from({ length: size }, () => Math.floor(Math.random() * (max - min + 1)) + min);
-}
-
-
+import {createRandomIntArray, shuffleArray} from "../src/Utils/Utils";
 
 describe("TreeMap", () => {
     const compare = (a: number, b: number) => a-b;
@@ -848,8 +834,8 @@ describe("TreeMap", () => {
 
     test('cut()', () => {
         const result = treeMap.cut(((k: number) => k%3), 1, 2);
-        const expected = [10, 20, 25, 40, 50, 55, 100];
-        expect(result.size()).toBe(7);
+        const expected = [10, 25, 40, 55, 100];
+        expect(result.size()).toBe(expected.length);
         for (const elem of expected) {
             expect(result.has(elem)).toBeTruthy();
         }
@@ -875,7 +861,7 @@ describe("TreeMap", () => {
 
     test('rangeFromTo()', () => {
         const result = treeMap.rangeFromTo(30, 50);
-        const expected = arrDistinct.filter((elem) => elem >= 30 && elem <= 50);
+        const expected = arrDistinct.filter((elem) => elem >= 30 && elem < 50);
         expect(result.size()).toBe(expected.length);
         for (const elem of expected) {
             expect(result.has(elem)).toBeTruthy();

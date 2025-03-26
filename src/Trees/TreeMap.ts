@@ -122,7 +122,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         return this.root === null;
     }
 
-    isDoubleBlackLeaf(): boolean {
+    private isDoubleBlackLeaf(): boolean {
         return this.root === null && this.color === Color.BB;
     }
 
@@ -138,47 +138,47 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         return new TreeMap<K, V>(this.compare, Color.BB, null, null, null);
     }
 
-    keyValue(): [K, V] {
+    private keyValue(): [K, V] {
         if (this.isEmpty()) throw new Error("Tree is empty. Cannot get the root key value pair");
         return this.root!;
     }
 
-    key(): K {
+    private key(): K {
         return this.keyValue()[0];
     }
 
-    value(): V {
+    private value(): V {
         return this.keyValue()[1];
     }
 
-    left(): TreeMap<K, V> {
+    private left(): TreeMap<K, V> {
         if (!this.leftTree) return this.empty();
         return this.leftTree;
     }
 
-    right(): TreeMap<K, V> {
+    private right(): TreeMap<K, V> {
         if (!this.rightTree) return this.empty();
         return this.rightTree;
     }
 
-    isB(): boolean {
+    private isB(): boolean {
         return !this.isEmpty() && this.color === Color.B;
     }
 
-    isR(): boolean {
+    private isR(): boolean {
         return !this.isEmpty() && this.color === Color.R;
     }
 
-    isBB(): boolean {
+    private isBB(): boolean {
         if (this.isDoubleBlackLeaf()) return true;
         return !this.isEmpty() && this.color === Color.BB;
     }
 
-    isNB(): boolean {
+    private isNB(): boolean {
         return !this.isEmpty() && this.color === Color.NB;
     }
 
-    getNode(x: K): [K, V] | null {
+    private getNode(x: K): [K, V] | null {
         if (this.isEmpty()) return null;
         const y = this.key();
         const cmp = this.compare(x, y);
@@ -187,19 +187,19 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         return this.keyValue();
     }
 
-    redden(): TreeMap<K, V> {
+    private redden(): TreeMap<K, V> {
         if (this.isEmpty()) throw new Error("cannto redden empty tree");
         else if (this.isDoubleBlackLeaf()) throw new Error("cannot redden double black tree");
         return this.paint(Color.R);
     }
 
-    blacken(): TreeMap<K, V> {
+    private blacken(): TreeMap<K, V> {
         if (this.isEmpty()) return this.empty();
         else if (this.isDoubleBlackLeaf()) this.empty();
         return this.paint(Color.B);
     }
 
-    blacker(c: Color): Color {
+    private blacker(c: Color): Color {
         switch (c) {
             case Color.B: return Color.BB;
             case Color.R: return Color.B;
@@ -208,7 +208,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         }
     }
 
-    redder(c: Color): Color {
+    private redder(c: Color): Color {
         switch (c) {
             case Color.BB: return Color.B;
             case Color.B: return Color.R;
@@ -217,12 +217,12 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         }
     }
 
-    blackerTree(): TreeMap<K, V> {
+    private blackerTree(): TreeMap<K, V> {
         if (this.isEmpty()) return this.doubleBlackLeaf();
         return this.from(this.blacker(this.color), this.left(), this.keyValue(), this.right());
     }
 
-    redderTree(): TreeMap<K, V> {
+    private redderTree(): TreeMap<K, V> {
         if (this.isDoubleBlackLeaf()) return this.empty();
         return this.from(this.redder(this.color), this.left(), this.keyValue(), this.right())
     }
@@ -642,7 +642,10 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
     }
 
     has(key: K): boolean {
-        return this.get(key) !== undefined;
+        for (const [k, _] of this) {
+            if (k === key) return true;
+        }
+        return false;
     }
 
     hasValue(value: V): boolean {
@@ -694,13 +697,17 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
 
     }
 
+    /**
+     * The hashcode is computed lazily, which means that it is only computed once and then cached.
+     * Hashcode accounts for the order of the elements in the TreeMap.
+     * @returns the hash code of the TreeMap
+     */
     hashCode(): number {
         if (this._hashCode === null) {
-            let hash = 0;
+            let hash = 1;
             for (const [k, v] of this) {
-                const entryKeyHash = HashCode.hashCode(k);
-                const entryValueHash = HashCode.hashCode(v);
-                hash += entryKeyHash ^ entryValueHash;
+                const entryHash = 31 * HashCode.hashCode(k) + HashCode.hashCode(v);
+                hash = 31 * hash + entryHash;
             }
             this._hashCode = hash;
         }
@@ -798,13 +805,13 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
     }
 
     // Higher Order Functions
-    every(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): this is Map<K, V>;
-    every(predicate: (value: V, key: K, map: this) => unknown, thisArg?: any): boolean;
-    every(predicate: (value: V, key: K, map: this) => unknown, thisArg?: any): unknown {
+    every(predicate: (value: V, key: K, map: this) => boolean, thisArg?: unknown): this is Map<K, V>;
+    every(predicate: (value: V, key: K, map: this) => unknown, thisArg?: unknown): boolean;
+    every(predicate: (value: V, key: K, map: this) => unknown, thisArg?: unknown): unknown {
         return super.every(predicate, thisArg);
     }
 
-    some(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): boolean {
+    some(predicate: (value: V, key: K, map: this) => boolean, thisArg?: unknown): boolean {
         return super.some(predicate, thisArg);
     }
 
@@ -855,15 +862,15 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         return newTree;
       }
 
-    forEach(callback: (value: V, key: K, map: this) => void, thisArg?: any) {
+    forEach(callback: (value: V, key: K, map: this) => void, thisArg?: unknown) {
         for (const [k, v] of this) {
             callback.call(thisArg, v, k, this);
         }
     }
 
-    find(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): V | undefined {
+    find(predicate: (value: V, key: K, map: this) => boolean, thisArg?: unknown): V | undefined {
         for (const [k, v] of this) {
-            if (predicate(v, k, this)) {
+            if (predicate.call(thisArg, v, k, this)) {
                 return v;
             }
         }
@@ -1387,7 +1394,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
 
         for (const [k, v] of this) {
             const cutValue = cutFunction(k);
-            if (cutValue >= lower && cutValue <= upper) {
+            if (cutValue >= lower && cutValue < upper) {
                 newTree = newTree.set(k, v);
             }
         }
@@ -1414,7 +1421,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
     rangeFromTo(fromKey: K, toKey: K): TreeMap<K, V> {
         let newTree = new TreeMap<K, V>(this.compare);
         for (const [k, v] of this) {
-            if (this.compare(k, fromKey) >= 0 && this.compare(k, toKey) <= 0) {
+            if (this.compare(k, fromKey) >= 0 && this.compare(k, toKey) < 0) {
                 newTree = newTree.set(k, v);
             }
         }
