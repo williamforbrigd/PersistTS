@@ -231,7 +231,7 @@ describe("TreeMap", () => {
         expect(copy.hashCode()).toEqual(treeMap.hashCode());
     })
 
-    test('check that hashCode() does not change', () => {
+    test('hashCode() is cached and does not change', () => {
         const tree = new TreeMap<number, string>(compare);
         const tree1 = tree.set(1, "1");
         const tree2 = tree1.set(2, "2");

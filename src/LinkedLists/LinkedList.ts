@@ -7,6 +7,7 @@ import { Comparator } from '../Interfaces/Comparator';
 // This class represents a singly linked list that is immutable.
 // This list is recursively defined.
 export default class LinkedList<T> extends AbstractSequentialList<T> implements List<T>, Queue<T> {
+    private _hashCode: number | null = null;
     
     constructor(
         private readonly head: T | null = null,
@@ -568,7 +569,10 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
     }
 
     hashCode(): number {
-        return HashCode.hashCodeArray(this.toArray());
+        if (this._hashCode === null) {
+            this._hashCode = HashCode.hashCodeArray(this.toArray());
+        }
+        return this._hashCode;
     }
 
     toString(): string {

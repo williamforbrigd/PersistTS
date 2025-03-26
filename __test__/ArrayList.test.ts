@@ -337,6 +337,21 @@ describe("ArrayList", () => {
         expect(result3).not.toBe(result);
     });
 
+    test('hashCode() is cached and does not change', () => {
+        const list1 = new ArrayList([11, 22, 33]);
+        const list2 = list1.add(44);
+        const list3 = list2.remove(44);
+        const hashCodeList3 = list3.hashCode();
+
+        const list4 = list3.add(4454);
+        const list5 = list4.add(777).remove(4454);
+
+        const hashCodeList3Pram = list3.hashCode();
+
+        expect(hashCodeList3).toBe(hashCodeList3Pram);
+        expect(hashCodeList3).not.toBe(list5.hashCode());
+    })
+
     test('equals()', () => {
         const arr2 = new ArrayList([1, 2, 3]);
         const result = arr.equals(arr2);

@@ -5,6 +5,7 @@ import AbstractList from "../AbstractClasses/AbstractList";
 import Collection from "../Interfaces/Collection";
 
 class ArrayList<T> extends AbstractList<T> implements List<T> {
+    private _hashCode: number | null = null;
     readonly items: T[];
     readonly length: number;
 
@@ -454,7 +455,10 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
     }
 
     hashCode(): number {
-        return HashCode.hashCodeArray(this.items);
+        if (this._hashCode === null) {
+            this._hashCode = HashCode.hashCodeArray(this.items);
+        }
+        return this._hashCode;
     }
 
     equals(o: Object): boolean {

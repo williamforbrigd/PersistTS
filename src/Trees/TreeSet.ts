@@ -12,7 +12,7 @@ import { Speed } from '../Enums/Speed';
  * A red-black tree should also be a binary search tree, and the tree is ordered according to the comparator provided. 
  */
 export default class TreeSet<T> implements SortedSet<T> {
-    _hashCode: number | null = null;
+    private _hashCode: number | null = null;
     private readonly tree: TreeMap<T, undefined>;
 
     constructor(

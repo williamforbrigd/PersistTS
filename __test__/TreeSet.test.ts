@@ -134,6 +134,27 @@ describe("TreeMap", () => {
         expect(tree2.hashCode()).not.toBe(hash);
     })
 
+    test('hashCode() is cached and does not change', () => {
+        const newTree = new TreeSet<number>((a, b) => a-b);
+        const tree1 = newTree.add(1); 
+        const tree2 = tree1.add(2); 
+        const tree3 = tree2.add(3); 
+        const tree4 = tree3.add(4); 
+        const tree5 = tree4.add(5);
+        const tree6 = tree5.add(6);
+        const tree7 = tree6.add(7);
+        const hashCodeOfTree7 = tree7.hashCode();
+
+        const tree8 = tree7.add(8);
+        const tree9 = tree8.add(9);
+        const tree10 = tree9.add(10);
+
+        const hashCodeOfTree7Pram = tree7.hashCode();
+
+        expect(hashCodeOfTree7).toBe(hashCodeOfTree7Pram);
+        expect(hashCodeOfTree7).not.toBe(tree10.hashCode());
+    })
+
     test('every()', () => {
         const res = tree.every((value) => value.length > 0);
         expect(res).toBeTruthy();

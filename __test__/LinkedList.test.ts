@@ -58,6 +58,21 @@ describe('LinkedList', () => {
         expect(result.equals(result2)).toBe(true);
     });
 
+    test('hashcode() is cached and does not change', () => {
+        const list1 = LinkedList.of([1,2,3])
+        const list2 = list1.add(22);
+        const list3 = list2.add(222);
+        const hashCodeList3 = list3.hashCode();
+            
+        const list4 = list3.remove(222);
+        const list5 = list4.add(756);
+
+        const hashCodeList3Pram = list3.hashCode();
+
+        expect(hashCodeList3).toBe(hashCodeList3Pram);
+        expect(hashCodeList3).not.toBe(list5.hashCode());
+    })
+
     test('clear()', () => {
         const result = list.addAll([1, 2, 3]);
         const result2 = result.clear();
