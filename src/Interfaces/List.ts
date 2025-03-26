@@ -1,3 +1,4 @@
+import { Speed } from "../Enums/Speed";
 import Collection from "./Collection";
 import SequencedCollection from "./SequencedCollection";
 
@@ -31,7 +32,11 @@ interface List<T> extends SequencedCollection<T>  {
     shift(): Collection<T>;
     unshift(...items: T[]): Collection<T>;
 
-
+    // Speed
+    indexingSpeed(): Speed;
+    hasSpeed(): Speed;
+    addSpeed(): Speed;
+    removeSpeed(): Speed;
 
     // List view methods and fields
     /*

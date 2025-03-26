@@ -11,7 +11,6 @@ export default interface Set<T> extends Iterable<T>  {
     addAll(values: Iterable<T>): Set<T>;
     has(value: T): boolean;
     hasAll(values: Iterable<T>): boolean;
-    containsSpeed(): Speed;
     delete(value: T): Set<T>;
     deleteAll(values: Iterable<T>): Set<T>;
     clear(): Set<T>;
@@ -19,6 +18,11 @@ export default interface Set<T> extends Iterable<T>  {
 
     values(): Array<T>;
     toArray(): Array<T>;
+
+    // Speed
+    hasSpeed(): Speed;
+    addSpeed(): Speed;
+    removeSpeed(): Speed;
 
     // HOFs
 

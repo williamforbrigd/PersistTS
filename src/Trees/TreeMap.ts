@@ -666,10 +666,6 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         return true
     }
 
-    public containsSpeed(): Speed {
-        return Speed.Log;
-    }
-
 
     deleteAll(keys: Iterable<K>): TreeMap<K, V> {
         let newTree: TreeMap<K, V> = this;
@@ -695,6 +691,20 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
             return otherValue !== undefined && value === otherValue;
         });
 
+    }
+
+    // Speed of different types of operations
+
+    hasSpeed(): Speed {
+        return Speed.Log;
+    }
+
+    addSpeed(): Speed {
+        return Speed.Log;
+    }
+
+    removeSpeed(): Speed {
+        return Speed.Log;
     }
 
     /**

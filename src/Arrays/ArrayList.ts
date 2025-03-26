@@ -3,6 +3,7 @@ import {Comparator} from "../Interfaces/Comparator";
 import HashCode from "../Hashing/HashCode";
 import AbstractList from "../AbstractClasses/AbstractList";
 import Collection from "../Interfaces/Collection";
+import { Speed } from "../Enums/Speed";
 
 class ArrayList<T> extends AbstractList<T> implements List<T> {
     private _hashCode: number | null = null;
@@ -41,7 +42,6 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
     get(index: number): T | undefined {
         return this.items[index];
     }
-
 
 
     FIFO(): boolean {
@@ -452,6 +452,23 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
             newItems.push(zipper(...values));
         }
         return new ArrayList<Z>(newItems);
+    }
+
+    // Speed for different types of operations
+    indexingSpeed(): Speed {
+        return Speed.Constant;
+    }
+
+    hasSpeed(): Speed {
+        return Speed.Linear;
+    }
+
+    addSpeed(): Speed {
+        return Speed.Linear;
+    }
+
+    removeSpeed(): Speed {
+        return Speed.Linear;
     }
 
     hashCode(): number {

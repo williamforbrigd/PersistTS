@@ -82,6 +82,10 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
 
     abstract getOrDefault(key: K, defaultValue: V): V;
 
+    abstract hasSpeed(): Speed;
+    abstract addSpeed(): Speed;
+    abstract removeSpeed(): Speed;
+
     abstract hashCode(): number;
     abstract equals(o: Object): boolean;
 
@@ -108,8 +112,6 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     }
     abstract sort(compare?: Comparator<K>): Map<K, V>;
     abstract sortBy<C>(comparatorValueMapper: (value: V, key: K, map: this) => C, compare?: Comparator<C>): Map<K | C, V>;
-
-    abstract containsSpeed(): Speed;
 
     abstract updateOrAdd(key: K, callback: (value: V) => V): Map<K, V>;
     abstract updateOrAdd(key: K, callback: (value: V | undefined) => V | undefined): Map<K, V | undefined>;
