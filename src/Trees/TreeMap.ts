@@ -1261,46 +1261,6 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         return this.delete(max[0]);
     }
 
-    tryPredecessor(key: K, out: [K, V]): boolean {
-        const pred = this.predecessor(key);
-        if (pred !== undefined) {
-            out[0] = pred[0];
-            out[1] = pred[1];
-            return true;
-        }
-        return false;
-    }
-
-    trySuccessor(key: K, out: [K, V]): boolean {
-        const succ = this.successor(key);
-        if (succ !== undefined) {
-            out[0] = succ[0];
-            out[1] = succ[1];
-            return true;
-        }
-        return false;
-    }
-
-    tryWeakPredecessor(key: K, out: [K, V]): boolean {
-        const pred = this.weakPredecessor(key);
-        if (pred !== undefined) {
-            out[0] = pred[0];
-            out[1] = pred[1];
-            return true;
-        }
-        return false;
-    }
-
-    tryWeakSuccessor(key: K, out: [K, V]): boolean {
-        const succ = this.weakSuccessor(key);
-        if (succ !== undefined) {
-            out[0] = succ[0];
-            out[1] = succ[1];
-            return true;
-        }
-        return false;
-    }
-
     /**
      * Return the predecessor of given key
      * Predecessor is the largest element in the tree strictly less than the given

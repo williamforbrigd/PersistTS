@@ -498,22 +498,6 @@ describe("TreeMap", () => {
         expect(weakPred).toBeUndefined();
     })
 
-    test('tryPredecessor()', () => {
-        const keyvalue: [number, string] = [-1, "-1"];
-        const result = treeMap.tryPredecessor(50, keyvalue);
-        expect(result).toBeTruthy();
-        expect(keyvalue[0]).toBe(45);
-        expect(keyvalue[1]).toBe("45");
-    })
-
-    test('tryWeakPredecessor()', () => {
-        const keyvalue: [number, string] = [-1, "-1"];
-        const result = treeMap.tryWeakPredecessor(50, keyvalue);
-        expect(result).toBeTruthy();
-        expect(keyvalue[0]).toBe(50);
-        expect(keyvalue[1]).toBe("50");
-    })
-
     test('successor()', () => {
         const succ = treeMap.successor(0);
         expect(succ?.[0]).toBe(10);
@@ -537,22 +521,6 @@ describe("TreeMap", () => {
     test('weakSuccessor() returns undefined if there is no successor', () => {
         const weakSucc = treeMap.weakSuccessor(110);
         expect(weakSucc).toBeUndefined();
-    })
-
-    test('trySuccessor()', () => {
-        const keyvalue: [number, string] = [-1, "-1"];
-        const result = treeMap.trySuccessor(0, keyvalue);
-        expect(result).toBeTruthy();
-        expect(keyvalue[0]).toBe(10);
-        expect(keyvalue[1]).toBe("10");
-    })
-
-    test('tryWeakSuccessor()', () => {
-        const keyvalue: [number, string] = [-1, "-1"];
-        const result = treeMap.tryWeakSuccessor(0, keyvalue);
-        expect(result).toBeTruthy();
-        expect(keyvalue[0]).toBe(0);
-        expect(keyvalue[1]).toBe("0");
     })
 
     test('merge() with other treeMap', () => {
