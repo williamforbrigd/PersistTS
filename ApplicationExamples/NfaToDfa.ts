@@ -3,16 +3,23 @@ import TreeMap from "../src/Trees/TreeMap";
 import TreeSet from "../src/Trees/TreeSet";
 
 /**
+ * From NFA to DFA:
+ * 
  * Given a nondeterministic finite automaton (NFA) we can construct a DFA in two main steps:
  * 
  * (1) Construct a DFA each of whose states is composite, namely a set of NFA states. 
  * This is done by methods CompositeDfaTransition and EpsilonClose
  * 
- * (2) Replace each composite state (a Set<int>) by a simple state (an int). This is done by method
+ * (2) Replace each composite state (a TreeSet<number>) by a simple state (a number). This is done by method
  * MkRenamer, which creates a renamer, and method Rename, which applies the renamer to the composite-state
  * DFA created in step 1. 
  */
 
+/**
+ * A transition in the NFA.
+ * A transition has a label which is a string or null. If null label then we have an epsilon transition.
+ * It also has a target state which is a number.
+ */
 class Transition {
     private readonly label: string | null;
     private readonly target: number;
@@ -35,6 +42,9 @@ class Transition {
     }
 }
 
+/**
+ * Nested class for creating distinctly named states when constructing NFAs
+ */
 class NameSource {
     private static _nextName: number = 0;
 
@@ -43,6 +53,10 @@ class NameSource {
     }
 }
 
+/**
+ * Nondeterministic finite automaton (NFA) is represented as a mapping between the state number (int) to an
+ * ArrayList of transitions.
+ */
 class NFA {
     transitions: TreeMap<number, ArrayList<Transition>>;
 
@@ -72,6 +86,16 @@ class NFA {
 
     /**
      * Builds and returns the transition relation of a composite-state DFA equivalent to a transition relation of the given NFA.
+     * 
+     * Create an epsilon closure S0 (a TreeMap of ints) of the start state s0, and put it in a worklist (queue).
+     * Create an empty DFA transition relation (a TreeMap of TreeSet<int>). This is mapping of a composite state (an epsilon
+     * closed state of numbers) to a mapping between a label (a non-null string) to a composite state. 
+     * 
+     * Repeatedly choose composite state S from the worklist. If it is not already in the TreeSet of the DFA transition relation,
+     * compute for every non-epsilon label the set T of states reachable by that label from state s in S.
+     * Compute the epsilon closure tClose of every such state T and put it in the worklist. 
+     * Then add the transition S -lab-> tClose to the DFA transition relation for every label.
+     * 
      * @param s0 NFA's start state
      * @param transitions NFA's transition relation
      */
@@ -134,6 +158,12 @@ class NFA {
      * in transition relation.
      * 
      * Epsilon closure is the set of all NFA states that are reachable from s by epsilon transitions. 
+     * 
+     * The algorithm is as follows:
+     * Given a set of states S, we initialize a worklist with all states in S.
+     * Repeatedly choose a state from s from the worklist, and consider all epsilon transitions s -eps-> s' from s. If s' is in S already,
+     * then do nothing; otherwise add s' to S and the worklist. 
+     * When the worklist is empty, S is an epsilon-closure; return S. 
      */
     private epsilonClose(states: TreeSet<number>, transitions: TreeMap<number, ArrayList<Transition>>): TreeSet<number> {
         // the worklist initially contains all states in the set
@@ -164,6 +194,10 @@ class NFA {
 
     /**
      * Creates and returns a renamer, a TreeMap that maps TreeSet<number> to number. 
+     * 
+     * Given a tree mapping form a set of int to something, create an injective mapping from a set of int to int,
+     * by choosing a fresh int for every key in the TreeMap.
+     *
      * @param states 
      */
     makeRenamer(states: Array<TreeSet<number>>): TreeMap<TreeSet<number>, number> {
@@ -179,11 +213,12 @@ class NFA {
 
     /**
      * Creates and returns a DFA whose states are simple (number) states.
+     * 
      * Given a renamer constructed by the makeRenamer() method, and given the composite-state DFA's transition relation,
-     * create and return a new transition relation as a dictionary in which every TreeSet<number> has been replaced by a number,
+     * create and return a new transition relation as a TreeMap in which every TreeSet<number> has been replaced by a number,
      * as dictated by the renamer.
      * @param renamer 
-     * @param transitions 
+     * @param transitions composite state DFA transition relation
      */
     rename(renamer: TreeMap<TreeSet<number>, number>, transitions: TreeMap<TreeSet<number>, TreeMap<string, TreeSet<number>>>): TreeMap<number, TreeMap<string, number>> {
         let newTr = new TreeMap<number, TreeMap<string, number>>((a: number, b: number) => a-b);
@@ -202,7 +237,13 @@ class NFA {
         return newTr;
     }
 
-    // private static HashSet<int> AcceptStates(ICollectionValue<HashSet<int>> states, IDictionary<HashSet<int>, int> renamer, int exit)
+    /**
+     * Creates a set of accept states in the DFA 
+     * @param states 
+     * @param renamer 
+     * @param exit 
+     * @returns 
+     */
     acceptStates(states: Array<TreeSet<number>>, renamer: TreeMap<TreeSet<number>, number>, exit: number): TreeSet<number> {
         let acceptStates = new TreeSet<number>();
 
@@ -216,6 +257,12 @@ class NFA {
         return acceptStates;
     }
 
+
+
+    /**
+     * Does the transformation from NFA to DFA.
+     * @returns the DFA
+     */
     public toDfa(): DFA {
         // 1. Construct composite-state DFA
         const compositeDfaTransition = this.compositeDfaTransition(this.startState, this.transitions); 
@@ -352,6 +399,9 @@ class Sym extends RegexBase {
     }
 }
 
+/**
+ * Represents a sequence of two regular expressions.
+ */
 class Seq extends RegexBase {
 
     constructor(
@@ -380,6 +430,9 @@ class Seq extends RegexBase {
     }
 }
 
+/**
+ * Represents an alternation (union) of two regular expressions.
+ */
 class Alt extends RegexBase {
 
     constructor(
@@ -413,6 +466,9 @@ class Alt extends RegexBase {
     }
 }
 
+/**
+ * Represents the Kleene star operation on a regular expression.
+ */
 class Star extends RegexBase {
     constructor(
         private readonly _r: RegexBase
@@ -436,6 +492,11 @@ class Star extends RegexBase {
     }
 }
 
+/**
+ * Write the NFA and DFA to dot files for visualization.
+ * @param filePrefix 
+ * @param r 
+ */
 function buildAndShow(filePrefix: string, r: RegexBase): void {
     const nfa = r.makeNfa(new NameSource());
     console.log(nfa.toString());
