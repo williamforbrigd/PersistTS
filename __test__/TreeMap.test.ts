@@ -211,6 +211,48 @@ describe("TreeMap", () => {
         expect(otherTreeMap.equals(otherTreeMap2)).toBeTruthy();
     });
 
+    test("compareTo() advanced", () => {
+        let mapA = new TreeMap<number, string>((a, b) => a - b)
+          .set(10, "ten")
+          .set(20, "twenty")
+          .set(30, "thirty");
+      
+        let mapB = new TreeMap<number, string>((a, b) => a - b)
+          .set(10, "ten")
+          .set(20, "twenty")
+          .set(30, "thirty");
+
+        // mapA and mapB are identical  
+        let cmp = mapA.compareTo(mapB);
+        expect(cmp).toBe(0);
+      
+        // mapC and mapA have different sizes
+        let mapC = new TreeMap<number, string>((a, b) => a - b)
+          .set(10, "ten")
+          .set(20, "twenty");
+        cmp = mapA.compareTo(mapC);
+        // should be greater since mapA has more entries
+        expect(cmp).toBeGreaterThan(0);
+      
+        // mapA and mapD have different keys
+        let mapD = new TreeMap<number, string>((a, b) => a - b)
+          .set(10, "ten")
+          .set(40, "forty")
+          .set(50, "fifty");
+        cmp = mapA.compareTo(mapD);
+        // Both have 3 entries, but at the first differing key
+        expect(cmp).toBeLessThan(0);
+      
+        // mapE and mapF have the same key but different values
+        let mapE = new TreeMap<number, string>((a, b) => a - b)
+          .set(1, "abc");
+        let mapF = new TreeMap<number, string>((a, b) => a - b)
+          .set(1, "xyz");
+        cmp = mapE.compareTo(mapF);
+        // comparing the values
+        expect(cmp).toBeLessThan(0);
+      });
+
     test('hashCode() same', () => {
         let otherTreeMap = new TreeMap<number, string>(compare);
         for (const elem of arr) {

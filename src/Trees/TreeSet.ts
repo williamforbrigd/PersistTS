@@ -115,9 +115,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      */
     has(value: T): boolean {
         for (const _value of this) {
-            if (value === _value) {
-                return true;
-            }
+            if (value === _value) return true;
         }
         return false;
     }
@@ -239,6 +237,30 @@ export default class TreeSet<T> implements SortedSet<T> {
         return true;
     } 
 
+    compareTo(o: TreeSet<T>): number {
+        // Check if the are the same object
+        if (this === o) return 0;
+    
+        // Compare the size
+        const sizeDiff = this.size() - o.size();
+        if (sizeDiff !== 0) return sizeDiff;
+
+        // Compare each element
+        const iter1 = this[Symbol.iterator]();
+        const iter2 = o[Symbol.iterator]();
+        while (true) {
+            const a = iter1.next();
+            const b = iter2.next();
+            if (a.done && b.done) {
+                return 0;
+            }
+            if (a.done) return -1; // 'this' ended first
+            if (b.done) return 1;  // 'other' ended first
+            // Compare the elements:
+            const cmp = this.compare(a.value, b.value);
+            if (cmp !== 0) return cmp;
+        }
+    }
 
     // Speed of different types of operations
 
@@ -987,4 +1009,3 @@ export default class TreeSet<T> implements SortedSet<T> {
         return this.tree.validateRedBlackTree();
     }
 }
-

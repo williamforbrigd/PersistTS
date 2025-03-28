@@ -693,6 +693,36 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
 
     }
 
+    compareTo(o: TreeMap<K, V>): number {
+        if (this === o) return 0;
+
+        const sizeDiff = this.size() - o.size();
+        if (sizeDiff !== 0) return sizeDiff;
+
+        const iter1 = this[Symbol.iterator]();
+        const iter2 = o[Symbol.iterator]();
+        while (true) {
+            const a = iter1.next();
+            const b = iter2.next();
+            if (a.done && b.done) return 0;
+
+            if (a.done) return -1;
+            if (b.done) return 1;
+
+            const [ak, av] = a.value;
+            const [bk, bv] = b.value;
+            const keyCompare = this.compare(ak, bk);
+            if (keyCompare !== 0) return keyCompare;
+
+            // If keys match, compare values with a naive “default” ordering
+            // (You can improve this if you have a comparator for values.)
+            const valCompare = av < bv ? -1 : av > bv ? 1 : 0;
+            if (valCompare !== 0) {
+                return valCompare;
+            }
+        }
+    }   
+
     // Speed of different types of operations
 
     hasSpeed(): Speed {
