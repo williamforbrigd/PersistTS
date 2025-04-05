@@ -114,10 +114,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns true if the set has the value or false otherwise.
      */
     has(value: T): boolean {
-        for (const _value of this) {
-            if (value === _value) return true;
-        }
-        return false;
+        return this.tree.has(value);
     }
 
     /**

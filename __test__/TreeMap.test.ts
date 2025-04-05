@@ -33,6 +33,12 @@ describe("TreeMap", () => {
             expect(newTree.validateRedBlackTree()).toBeTruthy();
         }
 
+        // Check that it contains all the elements after they have been added
+        for (const elem of elements) {
+            expect(newTree.has(elem)).toBeTruthy();
+            expect(newTree.get(elem)).not.toBe(undefined);
+        }
+
         const elementsToDelete = shuffleArray(elements);
         for (const elem of elementsToDelete) {
             newTree = newTree.delete(elem);
@@ -124,6 +130,13 @@ describe("TreeMap", () => {
     test('has()', () => {
         const hasKey = treeMap.has(0);
         expect(hasKey).toBeTruthy();
+    })
+
+    test('has() and get()', () => {
+        for (const elem of arrDistinct) {
+            expect(treeMap.has(elem)).toBeTruthy();
+            expect(treeMap.get(elem)).toBeTruthy();
+        }
     })
 
     test('getRoot()', () => {

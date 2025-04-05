@@ -642,10 +642,8 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
     }
 
     has(key: K): boolean {
-        for (const [k, _] of this) {
-            if (k === key) return true;
-        }
-        return false;
+        const node = this.getNode(key);
+        return node !== null
     }
 
     hasValue(value: V): boolean {
