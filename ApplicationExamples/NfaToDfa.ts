@@ -141,8 +141,7 @@ class NFA {
                 for (const [key, states] of stateTr.entries()) {
                     const tClose = this.epsilonClose(states, transitions);
                     stateTrClosed = stateTrClosed.set(key, tClose);
-                    // if (!res.has(tClose)) {
-                    if (res.get(tClose) === undefined) { //TODO: has method does not quite work
+                    if (!res.has(tClose)) {
                         worklist.push(tClose);
                     }
                 }
