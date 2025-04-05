@@ -7,6 +7,10 @@ export default interface SortedSet<T> extends Set<T> {
     findMax(): T | undefined;
     deleteMin(): SortedSet<T>;
     deleteMax(): SortedSet<T>;
+    tryPredecessor(value: T): [boolean, T | undefined];
+    trySuccessor(value: T): [boolean, T | undefined];
+    tryWeakPredecessor(value: T): [boolean, T | undefined];
+    tryWeakSuccessor(value: T): [boolean, T | undefined];
     predecessor(value: T): T | undefined;
     successor(value: T): T | undefined;
     weakSuccessor(value: T): T | undefined;

@@ -361,6 +361,69 @@ describe("TreeMap", () => {
         expect(res.has("55")).toBeFalsy();
     })
 
+    test('tryPredecessor()', () => {
+        const [found, res] = treeNumbers.tryPredecessor(100);
+        expect(found).toBeTruthy();
+        expect(res).toBe(55);
+
+        const [found2, res2] = treeNumbers.tryPredecessor(55);
+        expect(found2).toBeTruthy();
+        expect(res2).toBe(50);
+
+        const [found3, res3] = treeNumbers.tryPredecessor(10);
+        expect(found3).toBeTruthy();
+        expect(res3).toBe(0);
+
+    })
+
+    test('trySuccessor()', () => {
+        const [found, res] = treeNumbers.trySuccessor(100);
+        expect(found).toBeFalsy();
+        expect(res).toBeUndefined();
+
+        const [found2, res2] = treeNumbers.trySuccessor(55);
+        expect(found2).toBeTruthy();
+        expect(res2).toBe(100);
+
+        const [found3, res3] = treeNumbers.trySuccessor(10);
+        expect(found3).toBeTruthy();
+        expect(res3).toBe(15);
+
+
+    })
+
+    test('tryWeakPredecessor()', () => {
+        const [found, res] = treeNumbers.tryWeakPredecessor(105);
+        expect(found).toBeTruthy();
+        expect(res).toBe(100);
+
+        const [found2, res2] = treeNumbers.tryWeakPredecessor(53);
+        expect(found2).toBeTruthy();
+        expect(res2).toBe(50);
+
+        const [found3, res3] = treeNumbers.tryWeakPredecessor(10);
+        expect(found3).toBeTruthy();
+        expect(res3).toBe(10);
+    })
+   
+    test('tryWeakSuccessor()', () => {
+        const [found, res] = treeNumbers.tryWeakSuccessor(105);
+        expect(found).toBeFalsy();
+        expect(res).toBeUndefined();
+
+        const [found2, res2] = treeNumbers.tryWeakSuccessor(53);
+        expect(found2).toBeTruthy();
+        expect(res2).toBe(55);
+
+        const [found3, res3] = treeNumbers.tryWeakSuccessor(10);
+        expect(found3).toBeTruthy();
+        expect(res3).toBe(10);
+
+        const [found4, res4] = treeNumbers.tryWeakSuccessor(7);
+        expect(found4).toBeTruthy();
+        expect(res4).toBe(10);
+    })
+
     test('predecessor()', () => {
         const res = treeNumbers.predecessor(100);
         expect(res).toBe(55);

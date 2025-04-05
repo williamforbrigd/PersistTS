@@ -10,6 +10,10 @@ export default interface SortedMap<K, V> extends Map<K, V> {
     findMax(key?: K): [K, V] | undefined;
     deleteMin(): SortedMap<K, V>;
     deleteMax(): SortedMap<K, V>;
+    tryPredecessor(key: K): [boolean, [K, V] | undefined];
+    trySuccessor(key: K): [boolean, [K, V] | undefined];
+    tryWeakPredecessor(key: K): [boolean, [K, V] | undefined];
+    tryWeakSuccessor(key: K): [boolean, [K, V] | undefined];
     predecessor(key: K): [K, V] | undefined;
     successor(key: K): [K, V] | undefined;
     weakSuccessor(key: K): [K, V] | undefined;
