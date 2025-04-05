@@ -116,6 +116,31 @@ describe("TreeMap", () => {
         expect(tree1.equals(tree2)).toBeFalsy();
     })
 
+    test('compareTo()', () => {
+        let set1 = new TreeSet<number>((a, b) => a - b);
+        let set2 = new TreeSet<number>((a, b) => a - b);
+        let set3 = new TreeSet<number>((a, b) => a - b);
+    
+        // same elements in the same order
+        set1 = set1.add(10).add(20).add(30);
+        set2 = set2.add(10).add(20).add(30);
+    
+        // different elements in the same order
+        set3 = set3.add(10).add(20).add(40);
+    
+        expect(set1.compareTo(set2)).toBe(0);
+        expect(set2.compareTo(set1)).toBe(0);
+    
+        expect(set1.compareTo(set3)).toBeLessThan(0);
+    
+        expect(set3.compareTo(set1)).toBeGreaterThan(0);
+
+        // different sizes
+        let set4 = new TreeSet<number>((a, b) => a - b);
+        set4 = set4.add(10).add(20);
+        expect(set1.compareTo(set4)).toBeGreaterThan(0);
+    });
+
     test('hashCode() that accounts for order of the elements', () => {
         const hash = tree.hashCode();
 
