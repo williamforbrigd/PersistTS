@@ -1300,13 +1300,16 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
     }
 
     /**
-     * Return the predecessor of given key
-     * Predecessor is the largest element in the tree strictly less than the given
-     * @param key 
-     * @returns the predecessor of the key in the tree or undefined if the key is not in the tree.
+     * Try to get the predecessor of the given key
+     * Predecessor is the largest element in the tree strictly less than the given key
+     * If the predecessor is found, return true and the predecessor
+     * If the predecessor is not found, return false and undefined
+     * 
+     * @param key to find the predecessor of
+     * @returns true and the predecessor if found, false and undefined if not found
      */
-    predecessor(key: K): [K, V] | undefined {
-        if (!this.has(key)) return undefined;
+    tryPredecessor(key: K): [boolean, [K, V] | undefined] {
+        if (!this.has(key))  return [false, undefined];
 
         let pred: [K, V] | undefined = undefined;
         let current: TreeMap<K, V> = this;
@@ -1321,13 +1324,49 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
             }
         }
 
-        return pred;
+        return [pred !== undefined, pred];
     }
 
-    weakPredecessor(key: K): [K, V] | undefined {
-        let pred: [K, V] | undefined = undefined;
+    /**
+     * Try to get the successor of the given key
+     * Successor is the smallest element in the tree strictly greater than the given key
+     * If the successor is found, return true and the successor
+     * If the successor is not found, return false and undefined
+     * 
+     * @param key to find the successor of
+     * @returns true and the successor if found, false and undefined if not found
+     */
+    trySuccessor(key: K): [boolean, [K, V] | undefined] {
+        if (!this.has(key)) return [false, undefined];
+
+        let succ: [K, V] | undefined = undefined;
         let current: TreeMap<K, V> = this;
 
+        while (!current.isEmpty()) {
+            const cmp = this.compare(key, current.key());
+            if (cmp < 0) {
+                succ = current.keyValue();
+                current = current.left();
+            } else {
+                current = current.right();
+            }
+        }
+
+        return [succ !== undefined, succ];
+    }
+
+    /**
+     * Try to get the weak predecessor of the given key
+     * Weak predecessor is the largest element in the tree less than or equal to the given key
+     * If the weak predecessor is found, return true and the weak predecessor
+     * If the weak predecessor is not found, return false and undefined
+     * 
+     * @param key to find weak predecessor of
+     * @returns true and the weak predecessor if found, false and undefined if not found
+     */
+    tryWeakPredecessor(key: K): [boolean, [K, V] | undefined] {
+        let pred: [K, V] | undefined = undefined;
+        let current: TreeMap<K, V> = this;
         while (!current.isEmpty()) {
             const cmp = this.compare(key, current.key());
             if (cmp < 0) {
@@ -1337,38 +1376,21 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
                 current = current.right();
             }
         }
-        return pred;
+        return [pred !== undefined, pred];
     }
-
 
     /**
-     * Return the successor of the given key
-     * Successor is the smallest element in the tree strictly greater than the given key
-     * @param key
-     * @returns the successor of the given key or undefined if the key is the maximum key in the tree 
+     * Try to get the weak successor of the given key
+     * Weak successor is the smallest element in the tree greater than or equal to the given key
+     * If the weak successor is found, return true and the weak successor
+     * If the weak successor is not found, return false and undefined
+     * 
+     * @param key to find weak successor of
+     * @returns true and the weak successor if found, false and undefined if not found
      */
-    successor(key: K): [K, V] | undefined {
-        if (!this.has(key)) return undefined;
-
+    tryWeakSuccessor(key: K): [boolean, [K, V] | undefined] {
         let succ: [K, V] | undefined = undefined;
         let current: TreeMap<K, V> = this;
-
-        while (!current.isEmpty()) {
-            const cmp = this.compare(key, current.key());
-            if (cmp < 0) {
-                succ = current.keyValue();
-                current = current.left();
-            } else {
-                current = current.right();
-            }
-        }
-        return succ;
-    }
-
-    weakSuccessor(key: K): [K, V] | undefined {
-        let succ: [K, V] | undefined = undefined;
-        let current: TreeMap<K, V> = this;
-
         while (!current.isEmpty()) {
             const cmp = this.compare(key, current.key());
             if (cmp > 0) {
@@ -1378,7 +1400,57 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
                 current = current.left();
             }
         }
-        return succ;
+        return [succ !== undefined, succ];
+    }
+
+    /**
+     * Return the predecessor of given key
+     * Predecessor is the largest element in the tree strictly less than the given
+     * 
+     * @param key to find the predecessor of
+     * @returns the predecessor of the key in the tree or undefined if the key is not in the tree.
+     */
+    predecessor(key: K): [K, V] | undefined {
+        const [found, result] = this.tryPredecessor(key);
+        return found ? result : undefined;
+    }
+
+    /**
+     * Return the weak predecessor of the given key
+     * Weak predecessor is the largest element in the tree less than or equal to the given key
+     * 
+     * @param key to find the weak predecessor of
+     * @returns the weak predecessor of the key in the tree or undefined if the key is not in the tree.
+     */
+    weakPredecessor(key: K): [K, V] | undefined {
+        const [found, result] = this.tryWeakPredecessor(key);
+        return found ? result : undefined;
+    }
+
+    /**
+     * Return the successor of the given key
+     * Successor is the smallest element in the tree strictly greater than the given key
+     * 
+     * @param key to find the successor of
+     * @returns the successor of the given key or undefined if the key is the maximum key in the tree 
+     */
+    successor(key: K): [K, V] | undefined {
+        const [found, result] = this.trySuccessor(key);
+        return found ? result : undefined;
+    }
+
+    /**
+     * Return the weak successor of the given key
+     * Weak successor is the smallest element in the tree greater than or equal to the given key
+     * If the weak successor is found, return true and the weak successor
+     * If the weak successor is not found, return false and undefined
+     * 
+     * @param key to find the weak successor of
+     * @returns the weak successor of the key in the tree or undefined if the key is the maximum key in the tree
+     */
+    weakSuccessor(key: K): [K, V] | undefined {
+        const [found, result] = this.tryWeakSuccessor(key);
+        return found ? result : undefined;
     }
 
     getComparator(): Comparator<K> {

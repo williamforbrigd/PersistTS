@@ -768,6 +768,62 @@ export default class TreeSet<T> implements SortedSet<T> {
     }
 
     /**
+     * Try to get the predecessor of the given value
+     * Predecessor is the largest element in the tree strictly less than the given value
+     * If the predecessor is found, return true and the predecessor
+     * If the predecessor is not found, return false and undefined
+     * 
+     * @param value to find the predecessor of
+     * @returns true and the predecessor if found, false and undefined if not found
+     */
+    tryPredecessor(value: T): [boolean, T | undefined] {
+        const [found, pair] = this.tree.tryPredecessor(value);
+        return [found, pair?.[0]];
+    }
+    
+    /**
+     * Try to get the successor of the given value
+     * Successor is the smallest element in the tree strictly greater than the given value
+     * If the successor is found, return true and the successor
+     * If the successor is not found, return false and undefined
+     * 
+     * @param value to find the successor of
+     * @returns true and the successor if found, false and undefined if not found
+     */
+    trySuccessor(value: T): [boolean, T | undefined] {
+        const [found, pair] = this.tree.trySuccessor(value);
+        return [found, pair?.[0]];
+    }
+
+    /**
+     * Try to get the weak predecessor of the given value
+     * Weak predecessor is the largest element in the tree less than or equal to the given value
+     * If the weak predecessor is found, return true and the weak predecessor
+     * If the weak predecessor is not found, return false and undefined
+     * 
+     * @param value to find weak predecessor of
+     * @returns true and the weak predecessor if found, false and undefined if not found
+     */
+    tryWeakPredecessor(value: T): [boolean, T | undefined] {
+        const [found, pair] = this.tree.tryWeakPredecessor(value);
+        return [found, pair?.[0]];
+    }
+    
+    /**
+     * Try to get the weak successor of the given value
+     * Weak successor is the smallest element in the tree greater than or equal to the given value
+     * If the weak successor is found, return true and the weak successor
+     * If the weak successor is not found, return false and undefined
+     * 
+     * @param value to find weak successor of
+     * @returns true and the weak successor if found, false and undefined if not found
+     */
+    tryWeakSuccessor(value: T): [boolean, T | undefined] {
+        const [found, pair] = this.tree.tryWeakSuccessor(value);
+        return [found, pair?.[0]];
+    }
+
+    /**
      * Returns the predecessor of a given value. 
      * The predecessor is defined as the element in the set whose value is strictly less than the provieded value,
      * according to the set's comparator.
@@ -778,8 +834,8 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns The predecessor of the given value or undefined if the predecessor does not exist.
      */
     predecessor(value: T): T | undefined {
-        const res = this.tree.predecessor(value);
-        return res ? res[0] : undefined;
+        const [found, result] = this.tryPredecessor(value);
+        return found ? result : undefined;
     }
 
     /**
@@ -793,8 +849,8 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns The successor of the given value or undefined if the successor does not exist.
      */
     successor(value: T): T | undefined {
-        const res = this.tree.successor(value);
-        return res ? res[0] : undefined;
+        const [found, result] = this.trySuccessor(value);
+        return found ? result : undefined;
     }
 
     /**
@@ -808,8 +864,8 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns The weak successor of the given value, or undefined if no such element exists.
     */
     weakSuccessor(value: T): T | undefined {
-        const res = this.tree.weakSuccessor(value);
-        return res ? res[0] : undefined;
+        const [found, result] = this.tryWeakSuccessor(value);
+        return found ? result : undefined;
     }
 
     /**
@@ -822,8 +878,8 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns The weak predecessor of the given value, or undefined if no such element exists.
     */
     weakPredecessor(value: T): T | undefined {
-        const res = this.tree.weakPredecessor(value);
-        return res ? res[0] : undefined;
+        const [found, result] = this.tryWeakPredecessor(value);
+        return found ? result : undefined;
     }
 
     /**

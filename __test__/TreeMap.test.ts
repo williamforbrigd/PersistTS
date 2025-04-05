@@ -528,6 +528,62 @@ describe("TreeMap", () => {
     })
      */
 
+    test('tryPredecessor()', () => {
+        const [res, out] = treeMap.tryPredecessor(50);
+        expect(res).toBeTruthy();
+        expect(out?.[0]).toBe(45);
+        expect(out?.[1]).toBe("45");
+
+        const [res2, out2] = treeMap.tryPredecessor(2);
+        expect(res2).toBeFalsy();
+        expect(out2).toBeUndefined();
+
+        const [res3, out3] = treeMap.tryPredecessor(40);
+        expect(res3).toBeTruthy();
+        expect(out3?.[0]).toBe(30);
+        expect(out3?.[1]).toBe("30");
+    })
+
+    test('trySuccessor()', () => {
+        const [res, out] = treeMap.trySuccessor(0);
+        expect(res).toBeTruthy();
+        expect(out?.[0]).toBe(10);
+        expect(out?.[1]).toBe("10");
+
+        const [res2, out2] = treeMap.trySuccessor(2);
+        expect(res2).toBeFalsy();
+        expect(out2).toBeUndefined();
+
+        const [res3, out3] = treeMap.trySuccessor(20);
+        expect(res3).toBeTruthy();
+        expect(out3?.[0]).toBe(25);
+        expect(out3?.[1]).toBe("25");
+    })
+
+    test('tryWeakPredecessor()', () => {
+        const [res, out] = treeMap.tryWeakPredecessor(50);
+        expect(res).toBeTruthy();
+        expect(out?.[0]).toBe(50);
+        expect(out?.[1]).toBe("50");
+
+        const [res2, out2] = treeMap.tryWeakPredecessor(35);
+        expect(res2).toBeTruthy();
+        expect(out2?.[0]).toBe(30);
+        expect(out2?.[1]).toBe("30");
+    })
+
+    test('tryWeakSuccessor()', () => {
+        const [res, out] = treeMap.tryWeakSuccessor(0);
+        expect(res).toBeTruthy();
+        expect(out?.[0]).toBe(0);
+        expect(out?.[1]).toBe("0");
+
+        const [res2, out2] = treeMap.tryWeakSuccessor(2);
+        expect(res2).toBeTruthy();
+        expect(out2?.[0]).toBe(10);
+        expect(out2?.[1]).toBe("10");
+    })
+
     test('predecessor()', () => {
         const pred = treeMap.predecessor(50);
         expect(pred?.[0]).toBe(45);
