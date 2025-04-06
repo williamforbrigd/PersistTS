@@ -1,3 +1,4 @@
+import Sorting from "../src/Sorting/Sorting";
 import TreeMap from "../src/Trees/TreeMap";
 import {createRandomIntArray, shuffleArray} from "../src/Utils/Utils";
 
@@ -407,6 +408,18 @@ describe("TreeMap", () => {
         expect(sortedByValue.firstKey()).toBe("0")
         expect(sortedByValue.lastKey()).toBe("100")
         expect(sortedByValue.validateRedBlackTree()).toBeTruthy();
+    })
+
+    test('sortBy() on large random array', () => {
+        const rndShuffled = shuffleArray(createRandomIntArray(1_000, 1, 1000));
+        const entries: Iterable<[number, string]> = rndShuffled.map((value) => [value, value.toString()])
+        const tree = new TreeMap<number, string>(compare).setAll(entries);
+        
+        const sortedByKey = tree.sortBy((value, key) => key,
+            (a: number, b: number) => a-b
+        );
+
+        expect(Sorting.isSorted(sortedByKey.keys(), compare)).toBeTruthy();
     })
 
     test('forEach() keys', () => {
