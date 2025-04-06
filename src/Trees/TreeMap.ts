@@ -65,18 +65,18 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         }
     }
 
-    *preOrderTraversal(node: [K, V] | null): MapIterator<[K, V]> {
+    *preOrderTraversal(): MapIterator<[K, V]> {
         if (!this.isEmpty()) {
             yield this.keyValue();
-            yield* this.left().inOrderTraversal();
-            yield* this.right().inOrderTraversal();
+            yield* this.left().preOrderTraversal();
+            yield* this.right().preOrderTraversal();
         }
     }
 
-    *postOrderTraversal(node: [K, V] | null): MapIterator<[K, V]> {
+    *postOrderTraversal(): MapIterator<[K, V]> {
         if (!this.isEmpty()) {
-            yield* this.left().inOrderTraversal();
-            yield* this.right().inOrderTraversal();
+            yield* this.left().postOrderTraversal();
+            yield* this.right().postOrderTraversal();
             yield this.keyValue();
         }
     }
