@@ -1,5 +1,7 @@
 import ArrayList from "../src/Arrays/ArrayList";
 import LinkedList from "../src/LinkedLists/LinkedList";
+import { createRandomIntArray, shuffleArray } from "../src/Utils/Utils";
+import Sorting from "../src/Sorting/Sorting";
 
 describe("ArrayList", () => {
     let arr: ArrayList<number>;
@@ -260,11 +262,34 @@ describe("ArrayList", () => {
         const result = arr.sort((a: number, b: number) => a - b);
         expect(result).toStrictEqual(new ArrayList([1, 2, 3]));
     });
+
+    test('sort() method that uses the timSort method to sort large array in ascending and descending order', () => {
+        const rndShuffled = shuffleArray(createRandomIntArray(1_000_000, 1, 10000));
+        const arr = new ArrayList(rndShuffled);
+
+        const compareAscending = (a: number, b: number) => a - b;
+        const compareDescending = (a: number, b: number) => b - a;
+
+        const sortedAscending = arr.sort(compareAscending);
+        const sortedDescending = arr.sort(compareDescending);
+
+        expect(Sorting.isSorted(sortedAscending.toArray(), compareAscending)).toBeTruthy();
+        expect(Sorting.isSorted(sortedDescending.toArray(), compareDescending)).toBeTruthy();
+    })
+
     test('sortedBy', () => {
         const arr = new ArrayList<number>([3, 1, 2]);
         const result = arr.sortedBy(x => x);
         expect(result).toStrictEqual(new ArrayList([1, 2, 3]));
     });
+
+    test('sortedBy() on large array', () => {
+        const rndShuffled = shuffleArray(createRandomIntArray(1_000_000, 1, 10000));
+        const arr = new ArrayList(rndShuffled);
+
+        const sorted = arr.sortedBy(x => x*x);
+        expect(Sorting.isSorted(sorted.toArray(), (a: number, b: number) => a - b)).toBeTruthy();
+    })
 
     test('splice', () => {
         const arr = new ArrayList<number>([1, 2, 3]);

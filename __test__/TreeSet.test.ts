@@ -1,5 +1,6 @@
+import Sorting from "../src/Sorting/Sorting";
 import TreeSet from "../src/Trees/TreeSet";
-import {shuffleArray, createRandomStringArray} from "../src/Utils/Utils";
+import {shuffleArray, createRandomStringArray, createRandomIntArray} from "../src/Utils/Utils";
 
 
 describe("TreeMap", () => {
@@ -224,6 +225,23 @@ describe("TreeMap", () => {
             const diff = b.length - a.length;
             return diff !== 0 ? diff : a.localeCompare(b)
         })
+        expect(res.toArray()).toEqual(expected);
+    })
+
+    test('sortBy() on large array', () => {
+        let rndShuffled = shuffleArray(createRandomIntArray(1_000, 1, 1000));
+        const compareNumber = (a: number, b: number) => b-a;
+        const tree = new TreeSet<number>(compareNumber).addAll(rndShuffled);
+        
+        
+        const res = tree.sortBy((value, key) => key,
+            compareNumber
+        );
+
+        // Sort the expeceted result and compare to the treeset result
+        const expected = Array.from(new Set(rndShuffled))
+        Sorting.timSort(expected, compareNumber);
+
         expect(res.toArray()).toEqual(expected);
     })
 

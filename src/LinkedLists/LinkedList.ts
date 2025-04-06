@@ -4,6 +4,7 @@ import Queue from '../Interfaces/Queue';
 import HashCode from '../Hashing/HashCode';
 import { Comparator } from '../Interfaces/Comparator';
 import { Speed } from '../Enums/Speed';
+import Sorting from '../Sorting/Sorting';
 
 // This class represents a singly linked list that is immutable.
 // This list is recursively defined.
@@ -420,31 +421,28 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
 
     }
 
-    sort(compareFn?: Comparator<T>): LinkedList<T> {
+    sort(compare?: Comparator<T>): LinkedList<T> {
         const array = this.toArray();
-        array.sort(compareFn);
-
-        let newList = new LinkedList<T>();
-        for (const item of array) {
-            newList = newList.addLast(item);
+        // array.sort(compare);
+        const defaultComparator = (a: T, b: T) => {
+            if (a < b) return -1;
+            if (a > b) return 1;
+            return 0;
         }
-        return newList;
+        Sorting.timSort(array, compare ?? defaultComparator);
+
+        return new LinkedList<T>().addAll(array);
     }
 
     sortedBy<U>(keySelector: (value: T) => U, compareFn?: ((a: U, b: U) => number)): LinkedList<T> {
-        const array = this.toArray();
-        array.sort((a,b) => {
+        const mutableArray = this.toArray();
+        Sorting.timSort(mutableArray, (a,b) => {
             const keyA = keySelector(a);
             const keyB = keySelector(b);
             return compareFn ? compareFn(keyA, keyB) : (keyA < keyB ? -1 : keyA > keyB ? 1 : 0);
         })
 
-        const newList = new LinkedList<T>();
-        for (const item of array) {
-            newList.addLast(item);
-        }
-
-        return newList;
+        return new LinkedList<T>().addAll(mutableArray);
     }
 
     splice(start: number, deleteCount?: number): LinkedList<T>;

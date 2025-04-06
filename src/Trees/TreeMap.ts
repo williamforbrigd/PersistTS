@@ -6,6 +6,7 @@ import SortedMap from "../Interfaces/SortedMap"
 
 import AbstractMap from "../AbstractClasses/AbstractMap";
 import EqualityComparer from "../Interfaces/EqualityComparer";
+import Sorting from "../Sorting/Sorting";
 
 enum Color {
     R, // Red
@@ -64,18 +65,18 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         }
     }
 
-    *preOrderTraversal(node: [K, V] | null): MapIterator<[K, V]> {
+    *preOrderTraversal(): MapIterator<[K, V]> {
         if (!this.isEmpty()) {
             yield this.keyValue();
-            yield* this.left().inOrderTraversal();
-            yield* this.right().inOrderTraversal();
+            yield* this.left().preOrderTraversal();
+            yield* this.right().preOrderTraversal();
         }
     }
 
-    *postOrderTraversal(node: [K, V] | null): MapIterator<[K, V]> {
+    *postOrderTraversal(): MapIterator<[K, V]> {
         if (!this.isEmpty()) {
-            yield* this.left().inOrderTraversal();
-            yield* this.right().inOrderTraversal();
+            yield* this.left().postOrderTraversal();
+            yield* this.right().postOrderTraversal();
             yield this.keyValue();
         }
     }
@@ -879,7 +880,8 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
       
         // Sort the mapped entries using the provided comparator if given,
         // otherwise use a default comparator that can compare values of type K | C.
-        mappedEntries.sort((a, b) => {
+        // mappedEntries.sort((a, b) => {
+        Sorting.timSort(mappedEntries, (a,b) => {
           if (compare) {
             return compare(a[0] as C, b[0] as C);
           } else {

@@ -4,6 +4,7 @@ import HashCode from "../Hashing/HashCode";
 import AbstractList from "../AbstractClasses/AbstractList";
 import Collection from "../Interfaces/Collection";
 import { Speed } from "../Enums/Speed";
+import Sorting from "../Sorting/Sorting";
 
 class ArrayList<T> extends AbstractList<T> implements List<T> {
     private _hashCode: number | null = null;
@@ -358,13 +359,15 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         return super.some(callback, thisArg);
     }
 
-    sort(comparator: Comparator<T>): Collection<T> {
-        const newItems = this.items.slice().sort(comparator);
-        return new ArrayList(newItems);
+    sort(compare: Comparator<T>): Collection<T> {
+        const mutableArray = this.toArray();
+        Sorting.timSort(mutableArray, compare);
+        return new ArrayList(mutableArray);
     }
 
     sortedBy<U>(keySelector: (value: T) => U, compareFn?: ((a: U, b: U) => number) | undefined): ArrayList<T> {
-        const newItems = this.items.slice().sort((a, b) => {
+        const newItems = this.items.slice();
+        Sorting.timSort(newItems, (a, b) => {
             const keyA = keySelector(a);
             const keyB = keySelector(b);
             return compareFn ? compareFn(keyA, keyB) : keyA < keyB ? -1 : keyA > keyB ? 1 : 0;
