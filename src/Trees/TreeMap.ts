@@ -30,9 +30,6 @@ enum Color {
 export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> {
     // private static readonly EMPTY = new TreeMap<any, any>(TreeMap.defaultComparator, Color.B, null, null, null);
     private _hashCode: number | null = null; // cache the hashcode which is computed only once
-    private iterator: Iterator<[K, V]> | null = null;
-
-    equalityComparer: EqualityComparer<K>;
 
     constructor(
         private readonly compare: Comparator<K> = TreeMap.defaultComparator<K>,
@@ -42,14 +39,6 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         private readonly rightTree: TreeMap<K, V> | null = null,
         ) {
         super();
-
-        // this.root = root;
-        // this.compare = compare;
-
-        this.equalityComparer = {
-            equals: (a: K, b: K) => this.compare(a, b) === 0,
-            hashCode: (a: K) => HashCode.hashCode(a)
-        }
     }
     
     //Iterator methods
@@ -81,41 +70,15 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         }
     }
 
-    
-    next(...[value]: [] | [unknown]): IteratorResult<[K, V], BuiltinIteratorReturn> {
-        if (this.iterator === null) {
-            this.iterator = this[Symbol.iterator]();
-        }
-
-        const result = this.iterator.next(value);
-        if (result.done) {
-            this.iterator = null;
-        }
-        return result;
-    }
-    throw(e?: any): IteratorResult<[K, V], BuiltinIteratorReturn> {
-        if (this.iterator !== null && typeof this.iterator.throw === 'function') {
-            return this.iterator.throw(e);
-        }
-        return e;
-    }
-    return(value?: BuiltinIteratorReturn): IteratorResult<[K, V], BuiltinIteratorReturn> {
-        if (this.iterator !== null && typeof this.iterator.return === 'function') {
-            return this.iterator.return(value);
-        }
-        return {done: true, value: value as BuiltinIteratorReturn};
-    }
-    // end iterator methods
-
 
     // Red-Black Tree methods
     from(color: Color, left: TreeMap<K, V>, root: [K, V], right: TreeMap<K, V>): TreeMap<K, V> {
-        // if (!left.isEmpty() && this.compare(left.key(), root.key) >= 0) {
-        //     throw new Error("left subtree value must be less than root value");
-        // }
-        // if (!right.isEmpty() && this.compare(right.key(), root.key) <= 0) {
-        //     throw new Error("right subtree value must be greater than root value");
-        // }
+        if (!left.isEmpty() && this.compare(left.key(), root[0]) >= 0) {
+            throw new Error("left subtree value must be less than root value");
+        }
+        if (!right.isEmpty() && this.compare(right.key(), root[0]) <= 0) {
+            throw new Error("right subtree value must be greater than root value");
+        }
         return new TreeMap(this.compare, color, left, root, right);
     }
 

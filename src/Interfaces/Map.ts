@@ -7,7 +7,6 @@ export default interface Map<K, V> extends Iterable<[K, V]> {
     // Iterable<T>
     [Symbol.iterator](): MapIterator<[K, V]>;
 
-    equalityComparer: EqualityComparer<K>;
     [k: number]: V | undefined;
     get(key: K): V | undefined;
     keys(): K[];
