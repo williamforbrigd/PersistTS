@@ -3,7 +3,7 @@ import { Speed } from "../Enums/Speed";
 import {Comparator} from "./Comparator";
 
 // this is a dictionary (map) interface
-export default interface Map<K, V> extends MapIterator<[K, V]> {
+export default interface Map<K, V> extends Iterable<[K, V]> {
     // Iterable<T>
     [Symbol.iterator](): MapIterator<[K, V]>;
 

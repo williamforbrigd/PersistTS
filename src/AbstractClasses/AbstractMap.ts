@@ -9,9 +9,9 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
 
     abstract equalityComparer: EqualityComparer<K>;
     abstract [Symbol.iterator](): MapIterator<[K, V]>;
-    abstract next(...[value]: [] | [unknown]): IteratorResult<[K, V], BuiltinIteratorReturn>;
-    abstract return(value?: BuiltinIteratorReturn): IteratorResult<[K, V], BuiltinIteratorReturn>;
-    abstract throw(e?: any): IteratorResult<[K, V], BuiltinIteratorReturn>;
+    // abstract next(...[value]: [] | [unknown]): IteratorResult<[K, V], BuiltinIteratorReturn>;
+    // abstract return(value?: BuiltinIteratorReturn): IteratorResult<[K, V], BuiltinIteratorReturn>;
+    // abstract throw(e?: any): IteratorResult<[K, V], BuiltinIteratorReturn>;
 
     abstract size(): number;
 
