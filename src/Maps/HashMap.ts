@@ -328,5 +328,5 @@ for (const elem of arr) {
 }
 
 map.printContents();
-console.log("size: " + map._size);
+console.log("size: " + map.size());
 console.log(map.entries())

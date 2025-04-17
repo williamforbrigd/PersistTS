@@ -14,7 +14,7 @@ describe('HashMap', () => {
             map = map.assoc(elem, elem.toString());
         }
 
-        expect(map._size).toBe(size);
+        expect(map.size()).toBe(size);
 
         // check that it has 1000 entries
         expect(map.entries().length).toBe(size);
@@ -26,7 +26,7 @@ describe('HashMap', () => {
 
         // updating an existing key should not change the size but change the value
         const map2 = map.assoc(0, "1234");
-        expect(map2._size).toBe(size);
+        expect(map2.size()).toBe(size);
         expect(map2.get(0)).toBe("1234");
         expect(map.get(0)).toBe("0");
     })
