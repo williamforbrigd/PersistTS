@@ -11,7 +11,7 @@ describe('HashMap', () => {
 
 
         for (const elem of arr) {
-            map = map.assoc(elem, elem.toString());
+            map = map.put(elem, elem.toString());
         }
 
         expect(map.size()).toBe(size);
@@ -25,7 +25,7 @@ describe('HashMap', () => {
         expect(new Set(keys).size).toBe(size);
 
         // updating an existing key should not change the size but change the value
-        const map2 = map.assoc(0, "1234");
+        const map2 = map.put(0, "1234");
         expect(map2.size()).toBe(size);
         expect(map2.get(0)).toBe("1234");
         expect(map.get(0)).toBe("0");

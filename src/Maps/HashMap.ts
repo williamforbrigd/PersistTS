@@ -24,12 +24,14 @@ function index(bitmap: number, bit: number) {
 }
 
 interface INode<K, V> {
-    assoc(shift: number, hash: number, key: K, value: V): Node<K, V> | null;
+    assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null;
     find(hash: number, key: K): LeafNode<K, V> | null;
     getHash(): number;
 }
 
-type Node<K, V> = EmptyNode<K, V> | LeafNode<K, V> | FullNode<K, V> | HashCollisionNode<K, V> | BitmapIndexedNode<K, V>; 
+type Node<K, V> = EmptyNode<K, V> | LeafNode<K, V> | FullNode<K, V> | HashCollisionNode<K, V> | BitmapIndexedNode<K, V>;
+
+interface Box<T> {val: T  | null}
 
 class EmptyNode<K, V> implements INode<K, V> {
 
@@ -41,8 +43,10 @@ class EmptyNode<K, V> implements INode<K, V> {
         return new EmptyNode<K, V>(0);
     }
 
-    assoc(shift: number, hash: number, key: K, value: V): Node<K, V> | null {
-        return new LeafNode(hash, key, value);
+    assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
+        const leaf = new LeafNode(hash, key, value);
+        addedLeaf.val = leaf;
+        return leaf; 
     }
 
     find(hash: number, key: K): LeafNode<K, V> | null {
@@ -66,7 +70,7 @@ class LeafNode<K, V> implements INode<K, V> {
         return new LeafNode(0, 0, 0);
     }
 
-    assoc(shift: number, hash: number, key: K, value: V): Node<K, V> | null {
+    assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
         if (hash === this._hash) {
             if (equals(this._key, key)) {
                 if (value === this._value) return this;
@@ -76,9 +80,10 @@ class LeafNode<K, V> implements INode<K, V> {
             }
             // hash collision - same hash different keys
             const newLeaf = new LeafNode(hash, key, value);
+            addedLeaf.val = newLeaf;
             return new HashCollisionNode(hash, [this, newLeaf]);
         }
-        return BitmapIndexedNode.create2<K, V>(shift, this, hash, key, value);
+        return BitmapIndexedNode.create2<K, V>(shift, this, hash, key, value, addedLeaf);
     }
     find(hash: number, key: K): LeafNode<K, V> | null {
         if (hash == this._hash && equals(this._key, key)) {
@@ -101,10 +106,10 @@ class FullNode<K, V> implements INode<K, V> {
         this._hash = this._nodes[0].getHash();
     }
 
-    assoc(shift: number, hash: number, key: K, value: V): Node<K, V> | null {
+    assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
         const idx = mask(hash, shift);
 
-        const n = this._nodes[idx].assoc(shift + 5, hash, key, value);
+        const n = this._nodes[idx].assoc(shift + 5, hash, key, value, addedLeaf);
         if (n === null || n === this._nodes[idx]) {
             return this;
         } else {
@@ -130,7 +135,7 @@ class HashCollisionNode<K, V> implements INode<K, V> {
         readonly _leaves: LeafNode<K, V>[],
     ) {}
 
-    assoc(shift: number, hash: number, key: K, value: V): Node<K, V> | null {
+    assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
         if (hash === this._hash) {
             const idx = this.findIndex(hash, key);
             if (idx !== -1) {
@@ -142,11 +147,14 @@ class HashCollisionNode<K, V> implements INode<K, V> {
                 return new HashCollisionNode(hash, newLeaves);
             }
             const newLeaves: LeafNode<K, V>[] = [...this._leaves];
-            newLeaves[newLeaves.length] = new LeafNode(hash, key, value);
+            const leaf = new LeafNode(hash, key, value);
+            newLeaves[newLeaves.length] = leaf;
+            addedLeaf.val = leaf;
+            // addedLeaf.val = newLeaves[newLeaves.length] = new LeafNode(hash, key, value);
             return new HashCollisionNode(hash, newLeaves);
         }
 
-        return BitmapIndexedNode.create2<K, V>(shift, this, hash, key, value);
+        return BitmapIndexedNode.create2<K, V>(shift, this, hash, key, value, addedLeaf);
     }
     find(hash: number, key: K): LeafNode<K, V> | null {
         const idx = this.findIndex(hash, key);
@@ -191,16 +199,16 @@ class BitmapIndexedNode<K, V> implements INode<K, V> {
         return new BitmapIndexedNode(bitmap, nodes, shift);
     }
 
-    static create2<K, V>(shift: number, branch: Node<K, V>, hash: number, key: K, value: V): Node<K, V> | null {
+    static create2<K, V>(shift: number, branch: Node<K, V>, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
         return (new BitmapIndexedNode(bitpos(branch.getHash(), shift), [branch], shift))
-            .assoc(shift, hash, key, value);
+            .assoc(shift, hash, key, value, addedLeaf);
     }
 
-    assoc(shift: number, hash: number, key: K, value: V): Node<K, V> | null {
+    assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
         const bit = bitpos(hash, shift);
         const idx = index(this._bitmap, bit);
         if ((this._bitmap & bit) !== 0) {
-            const n = this._nodes[idx].assoc(shift + 5, hash, key, value);
+            const n = this._nodes[idx].assoc(shift + 5, hash, key, value, addedLeaf);
             if (n === null || n === this._nodes[idx]) {
                 return this;
             } else {
@@ -211,6 +219,7 @@ class BitmapIndexedNode<K, V> implements INode<K, V> {
         } else {
             const newNodes = [...this._nodes];
             newNodes.splice(idx, 0, new LeafNode(hash, key, value));
+            addedLeaf.val = newNodes[idx] as LeafNode<K, V>;
             //newNodes[idx] = new LeafNode(hash, key, value);
             return BitmapIndexedNode.create1(this._bitmap | bit, newNodes, shift);
         }
@@ -287,15 +296,20 @@ export default class HashMap<K, V> {
         return this._size;
     }
 
-    assoc(key: K, value: V): HashMap<K, V> {
-        const newRoot = this._root.assoc(this._shift, HashCode.hashCode(key), key, value);
+    private assoc(key: K, value: V): HashMap<K, V> {
+        const addedLeaf: Box<LeafNode<K, V>> = {val: null};
+        const newRoot = this._root.assoc(this._shift, HashCode.hashCode(key), key, value, addedLeaf);
         if (newRoot === null || newRoot === this._root) {
             return this;
         }
-        return new HashMap(this._size + 1, this._shift, newRoot);
+        return new HashMap(addedLeaf.val === null ? this._size : this._size + 1, this._shift, newRoot);
     }
 
-    find(hash: number, key: K): LeafNode<K, V> | null {
+    put(key: K, value: V): HashMap<K, V> {
+        return this.assoc(key, value);
+    }
+
+    private find(hash: number, key: K): LeafNode<K, V> | null {
         return this._root.find(HashCode.hashCode(key), key);
     }
 
@@ -320,7 +334,7 @@ const arr = shuffleArray(Array.from({ length: 1000 }, (_, i) => i));
 let map = HashMap.empty<number, number>();
 
 for (const elem of arr) {
-    map = map.assoc(elem, elem);
+    map = map.put(elem, elem);
 }
 
 for (const elem of arr) {
