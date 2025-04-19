@@ -439,6 +439,8 @@ export default class HashMap<K, V> {
     private readonly _shift: number;
     private readonly _root: Node<K, V>;
 
+    private _hash: number | null = null;
+
     private constructor(size: number, shift: number, root: Node<K, V>) {
         this._size = size;
         this._shift = shift;
@@ -457,6 +459,10 @@ export default class HashMap<K, V> {
         return map;
     }
 
+    /**
+     * Helper method to recursively get the entries of the map.
+     * @param node
+     */
     *entriesNode(node: Node<K, V>): IterableIterator<[K, V]> {
         if (node instanceof LeafNode) {
             yield [node._key, node._value];
@@ -471,26 +477,51 @@ export default class HashMap<K, V> {
         }
     }
 
+    /**
+     * How the HashMap is iterated.
+     */
     *[Symbol.iterator](): IterableIterator<[K, V]> {
         yield* this.entriesNode(this._root);
     }
 
+    /**
+     * Get the entries of the HashMap
+     */
     entries(): [K, V][] {
         return Array.from(this);
     }
 
+    /**
+     * Extracting the keys from the iterator.
+     */
     keys(): K[] {
         return Array.from(this, ([k]) => k);
     }
 
+    /**
+     * Extracting the values from the iterator.
+     */
     values(): V[] {
         return Array.from(this, ([_, v]) => v);
     }
 
+    /**
+     * Get the size of the HashMap.
+     */
     size(): number {
         return this._size;
     }
 
+    /**
+     * Method to associate a key with a value.
+     * Calls the appropriate `assoc` method for the root.
+     *
+     * Also hashes the key to get the hash code using the `HashCode` class.
+     *
+     * @param key The key be added to the map
+     * @param value The value to be associated with the key
+     * @private because helper method used within the class.
+     */
     private assoc(key: K, value: V): HashMap<K, V> {
         const addedLeaf: Box<LeafNode<K, V>> = {val: null};
         const newRoot = this._root.assoc(this._shift, HashCode.hashCode(key), key, value, addedLeaf);
@@ -500,14 +531,34 @@ export default class HashMap<K, V> {
         return new HashMap(addedLeaf.val === null ? this._size : this._size + 1, this._shift, newRoot);
     }
 
+    /**
+     * Method to put a key-value pair in the HashMap.
+     * This is a helper method to call the `assoc` method.
+     *
+     * @param key The key to be added to the map
+     * @param value The value to be associated with the key
+     */
     put(key: K, value: V): HashMap<K, V> {
         return this.assoc(key, value);
     }
 
+    /**
+     * Method to find a key in the HashMap.
+     * This calls the `find` method of the root node.
+     *
+     * @param hash The hash code of the key.
+     * @param key The key to be found in the map.
+     * @private
+     */
     private find(hash: number, key: K): LeafNode<K, V> | null {
         return this._root.find(HashCode.hashCode(key), key);
     }
 
+    /**
+     * Method to get a value from the HashMap.
+     * This calls the `find` method of the root node.
+     * @param key The key to get the value from.
+     */
     get(key: K): V | null {
         const find = this.find(HashCode.hashCode(key), key);
         if (find !== null) {
@@ -516,6 +567,20 @@ export default class HashMap<K, V> {
         return null;
     }
 
+    hashCode(): number {
+        if (this._hash === null) {
+            let hash = 0;
+            for (const [key, value] of this.entries()) {
+                hash ^= HashCode.hashCode(key) ^ HashCode.hashCode(value);
+            }
+            this._hash = hash;
+        }
+        return this._hash;
+    }
+
+    /**
+     * Helper method to print the contents of the HashMap.
+     */
     printContents(): void {
         for (const [key, value] of this.entries()) {
             console.log(`${key}: ${value}`);
