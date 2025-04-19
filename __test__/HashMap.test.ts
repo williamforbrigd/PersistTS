@@ -1,12 +1,12 @@
 import HashMap from "../src/Maps/HashMap";
-import { createRandomIntArray, shuffleArray } from "../src/Utils/Utils";
+import {createRandomIntArray, shuffleArray} from "../src/Utils/Utils";
 import Sorting from "../src/Sorting/Sorting";
 
 describe('HashMap', () => {
     let map = HashMap.empty<number, string>();
     
     test('check that the hashmap works as expeted', () => {
-        const size = 1000;
+        const size = 1_000_000;
         const arr = shuffleArray(Array.from({length: size}, (_, i) => i));
 
 

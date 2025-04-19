@@ -1,5 +1,5 @@
 import HashCode from "../Hashing/HashCode";
-import {equals, createRandomIntArray, shuffleArray} from "../Utils/Utils";
+import {Utils, createRandomIntArray, shuffleArray} from "../Utils/Utils";
 
 /**
  * Counts the number of set bits (Hamming weight) in a 32‑bit integer.
@@ -11,28 +11,119 @@ function popcount(x: number): number {
     return (((x + (x >>> 4)) & 0x0F0F0F0F) * 0x01010101) >>> 24;
 }
 
+/**
+ * Returns the **5-bit slice** of `hash` that begins at position `shift`.
+ *
+ * In a hash-array-mapped-trie (HAMT) each level consumes 5-bits of the hash, because 2**5 = 32.
+ * This is the maximum branching factor of 32 children.
+ * level 0 to 5 where the rightmost bits are used for the root.
+ * [00][00000][00000][00000][00000]
+ *
+ * When you want to obtain some bits corresponding to a level n. You obtain this number by first moving those bits
+ * to the right until it is the right-most block (right shift). Then you null out the other bits (mask).
+ *
+ * `mask` isolates those 5 bits so that they can be used as an index into the node's child array.
+ *
+ * @param hash 32-bit unsigned hashcode.
+ * @param shift How many bits to shift to the right before doing the masking. For level 0 it is 0, for level 1 it is 5,
+ * for level 2 it is 10, and so on.
+ */
 function mask(hash: number, shift: number): number {
     return (hash >>> shift) & 0x01f;
 }
 
+/**
+ * Function to map numbers in the range [0, 31] to numbers in the range [0, N) where N is the number of children.
+ *
+ * This method maps numbers in the range [0, 31] to powers of 2. That is numbers that have binary representation
+ * of the form: {10**N | N >= 0}
+ *
+ * This method is used by the BitmapIndexedNode class to check if a child exists for a certain hash code. BitmapIndexedNode
+ * maintains a field `bitmap` which tells us how many children a node has, and what their indexes are in the child
+ * array. To check if a child exists for a certain hash code:
+ * 1. first compute `mask(hash, level)` to get a number in the range [0, 31]
+ * 2. Then compute `bitpos` of this to get a number in the range [0, N) which is a number in the form 10**N.
+ * 3. Match that with `bitmap` field to check whether there is a 1 in the n'th position. This match is simply
+ * bitwise AND with the bitmap.
+ *
+ * @param hash
+ * @param shift
+ */
 function bitpos(hash: number, shift: number): number {
     return 1 << mask(hash, shift);
 }
 
+/**
+ * Index of a child is the number if 1's to the right of the child's `bitpos` in the `bitmap`.
+ *
+ * Use the `popcount` to count the 1's.
+ * If we subtract 1 from the `bitpos` 10^N, we get 01^N, and then binary AND with the `bitmap` gives us the same
+ * `bitmap`, but where only the 1's to the right of the `bitpos` are set.
+ *
+ * @param bitmap The number of children that a node has, and their indexes in the child array.
+ * @param bit The bit position of the child in the bitmap.
+ */
 function index(bitmap: number, bit: number) {
     return popcount(bitmap & (bit - 1));
 }
 
+/**
+ * Interface to represent a node in the hash array mapped trie (HAMT).
+ */
 interface INode<K, V> {
+    /**
+     * Associates a key with a value. This adds a pair to the HashMap.
+     *
+     * Key-value pairs are only added as leaf nodes.
+     *
+     * @param shift The shift corresponding to the level. Shift is a multiple of 5.
+     * @param hash The hash code of the key.
+     * @param key The key itself.
+     * @param value The value to associate with a key.
+     * @param addedLeaf An **out-parameter** must be set to the new leaf node. If the key already existed,
+     * it will be present in the out variable.
+     */
     assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null;
+
+    /**
+     * Retrieve a leaf that holds key if it exists in the subtree.
+     *
+     * The search follows: at each level we mask the hash, choose the child and continue until we hold a LeafNode
+     * which holds the key or empty slot (null).
+     *
+     * @param hash The has code of the key.
+     * @param key The key itself.
+     */
     find(hash: number, key: K): LeafNode<K, V> | null;
+
+    /**
+     * Returns the hash code of the node.
+     */
     getHash(): number;
 }
 
+/**
+ * A node in the hash array mapped trie (HAMT).
+ *
+ * This is a union type of all possible nodes in the HAMT.
+ * The nodes are:
+ * 1. EmptyNode - empty node
+ * 2. LeafNode - a leaf node that holds a key-value pair
+ * 3. FullNode - a full node that holds children nodes
+ * 4. HashCollisionNode - a node that holds multiple leaves with the same hash code
+ * 5. BitmapIndexedNode - a node that holds children nodes and a bitmap to represent their indexes.
+ */
 type Node<K, V> = EmptyNode<K, V> | LeafNode<K, V> | FullNode<K, V> | HashCollisionNode<K, V> | BitmapIndexedNode<K, V>;
 
+/**
+ * Out variable to keep track of whether a leaf was added or not.
+ */
 interface Box<T> {val: T  | null}
 
+/**
+ * Empty node in the hash array mapped trie (HAMT).
+ * The root is initially empty.
+ */
 class EmptyNode<K, V> implements INode<K, V> {
 
     constructor(
@@ -43,6 +134,9 @@ class EmptyNode<K, V> implements INode<K, V> {
         return new EmptyNode<K, V>(0);
     }
 
+    /**
+     * `assoc` of empty node yields a LeafNode.
+     */
     assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
         const leaf = new LeafNode(hash, key, value);
         addedLeaf.val = leaf;
@@ -58,6 +152,9 @@ class EmptyNode<K, V> implements INode<K, V> {
     }
 }
 
+/**
+ * Leaf node holds the key-value pairs.
+ */
 class LeafNode<K, V> implements INode<K, V> {
 
     constructor(
@@ -70,10 +167,21 @@ class LeafNode<K, V> implements INode<K, V> {
         return new LeafNode(0, 0, 0);
     }
 
+    /**
+     * We have the following cases:
+     *
+     * Same hash and equal key. And if the value is the same then return this, or update the value.
+     *
+     * Same hash but unequal keys. Then we have a hash collision and we create HashCollisionNode that contains
+     * both leaves. Set the boxed value to the new leaf.
+     *
+     * Different hash - keys diverge higher in the trie. Create a BitmapIndexedNode shared by the two leaves.
+     *
+     */
     assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
         if (hash === this._hash) {
-            if (equals(this._key, key)) {
-                if (value === this._value) return this;
+            if (Utils.equals(this._key, key)) {
+                if (Utils.equals(this._value, value)) return this;
 
                 // note do not set added leaf since we are replacing
                 return new LeafNode(hash, key, value);
@@ -85,8 +193,16 @@ class LeafNode<K, V> implements INode<K, V> {
         }
         return BitmapIndexedNode.create2<K, V>(shift, this, hash, key, value, addedLeaf);
     }
+
+    /**
+     * If the hash is the same and the keys are equal, then the key exists.
+     * Or else return null.
+     *
+     * @param hash
+     * @param key
+     */
     find(hash: number, key: K): LeafNode<K, V> | null {
-        if (hash == this._hash && equals(this._key, key)) {
+        if (hash === this._hash && Utils.equals(this._key, key)) {
             return this;
         }
         return null;
@@ -97,6 +213,9 @@ class LeafNode<K, V> implements INode<K, V> {
     }
 }
 
+/**
+ * FullNode holds 32 children.
+ */
 class FullNode<K, V> implements INode<K, V> {
     _hash: number;
     constructor(
@@ -106,6 +225,12 @@ class FullNode<K, V> implements INode<K, V> {
         this._hash = this._nodes[0].getHash();
     }
 
+    /**
+     * Associate a key with a value for a FullNode that already has 32 children.
+     *
+     * If it is the same, then return this.
+     * Else it has changed, so assign that new node to the child at the index and return a new FullNode.
+     */
     assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
         const idx = mask(hash, shift);
 
@@ -119,6 +244,9 @@ class FullNode<K, V> implements INode<K, V> {
         }
     }
 
+    /**
+     * Recursively call the find to get the leaf node.
+     */
     find(hash: number, key: K): LeafNode<K, V> | null {
         return this._nodes[mask(hash, this._shift)].find(hash, key);
     }
@@ -129,17 +257,26 @@ class FullNode<K, V> implements INode<K, V> {
 }
 
 
+/**
+ * HashCollisionNode holds multiple leaves with the same hash code, but different keys (which is a rare case).
+ *
+ * It stores an array of leaf nodes that have the same hash code.
+ */
 class HashCollisionNode<K, V> implements INode<K, V> {
     constructor(
         readonly _hash: number,
         readonly _leaves: LeafNode<K, V>[],
     ) {}
 
+    /**
+     * Associates a key with a value for a HashCollisionNode that already has multiple leaves with the same hash code.
+     */
     assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
         if (hash === this._hash) {
             const idx = this.findIndex(hash, key);
             if (idx !== -1) {
-                if (this._leaves[idx]._value === value) {
+                //if (this._leaves[idx]._value === value) {
+                if (Utils.equals(this._leaves[idx]._value, value)) {
                     return this;
                 }
                 const newLeaves = [...this._leaves];
@@ -147,15 +284,21 @@ class HashCollisionNode<K, V> implements INode<K, V> {
                 return new HashCollisionNode(hash, newLeaves);
             }
             const newLeaves: LeafNode<K, V>[] = [...this._leaves];
-            const leaf = new LeafNode(hash, key, value);
-            newLeaves[newLeaves.length] = leaf;
-            addedLeaf.val = leaf;
-            // addedLeaf.val = newLeaves[newLeaves.length] = new LeafNode(hash, key, value);
+            //const leaf = new LeafNode(hash, key, value);
+            //newLeaves[newLeaves.length] = leaf;
+            //addedLeaf.val = leaf;
+            addedLeaf.val = newLeaves[newLeaves.length] = new LeafNode(hash, key, value);
             return new HashCollisionNode(hash, newLeaves);
         }
 
         return BitmapIndexedNode.create2<K, V>(shift, this, hash, key, value, addedLeaf);
     }
+
+    /**
+     * Liner scan the leaf nodes to check if the key exists.
+     * @param hash
+     * @param key
+     */
     find(hash: number, key: K): LeafNode<K, V> | null {
         const idx = this.findIndex(hash, key);
         if (idx !== -1) {
@@ -164,6 +307,11 @@ class HashCollisionNode<K, V> implements INode<K, V> {
         return null;
     }
 
+    /**
+     * Helper method to find the index of the LeafNode in the leaves array.
+     * @param hash
+     * @param key
+     */
     findIndex(hash: number, key: K): number {
         for (let i=0; i < this._leaves.length; i++) {
             if (this._leaves[i].find(hash, key) !== null) {
@@ -178,11 +326,18 @@ class HashCollisionNode<K, V> implements INode<K, V> {
     }
 }
 
+/**
+ * BitmapIndexedNode holds children nodes and a bitmap to represent their indexes.
+ *
+ * The bitmap is a 32-bit integer that tells us how many children a node has, and what their indexes are in the child array.
+ */
 class BitmapIndexedNode<K, V> implements INode<K, V> {
-    _bitmap: number;
-    _nodes: Node<K, V>[];
-    _shift: number;
-    _hash: number;
+    // field bitmap tells us how many children this node has, also what their indexes are in the child array.
+    // the number of childre is the number of 1's in the binary representation.
+    private readonly _bitmap: number;
+    private readonly _nodes: Node<K, V>[];
+    private readonly _shift: number;
+    private readonly _hash: number;
 
 
     constructor(bitmap: number, nodes: Node<K, V>[], shift: number) {
@@ -204,12 +359,32 @@ class BitmapIndexedNode<K, V> implements INode<K, V> {
             .assoc(shift, hash, key, value, addedLeaf);
     }
 
+    /**
+     * Associates a key with a value for a BitmapIndexedNode that already has children.
+     *
+     * First computes the `mask(hash, shift)` to get the number in range [0, 31].
+     * Then computes the bit position of this with `bitpos(hash, shift)` to get the number in range [0, N).
+     * Gets the index of this using the bitwise and with the bitmap, and count the number of 1's to the right.
+     *
+     * If the node already exists (bitwise AND on the bit position and the bitmap), it checks if the nodes are identical,
+     * and if that is the case then return same node.
+     * Else it will create a new BitmapIndexedNode with the new node.
+     *
+     * If the node does not exist, it will assign that new LeafNode to the child at the index and return a new
+     * BitmapIndexedNode where the bitmap is updated with the bit position (bitmap | bit).
+     *
+     * @param shift
+     * @param hash
+     * @param key
+     * @param value
+     * @param addedLeaf
+     */
     assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
         const bit = bitpos(hash, shift);
         const idx = index(this._bitmap, bit);
         if ((this._bitmap & bit) !== 0) {
             const n = this._nodes[idx].assoc(shift + 5, hash, key, value, addedLeaf);
-            if (n === null || n === this._nodes[idx]) {
+            if (n === null || Utils.equals(n, this._nodes[idx])) {
                 return this;
             } else {
                 const newNodes = [...this._nodes];
@@ -225,6 +400,14 @@ class BitmapIndexedNode<K, V> implements INode<K, V> {
         }
     }
 
+    /**
+     * Recursively call the find to get the leaf node.
+     *
+     * The method will continue until it finds the bit position of the has in the bitmap (bitwise AND).
+     *
+     * @param hash
+     * @param key
+     */
     public find(hash: number, key: K): LeafNode<K, V> | null {
         const bit = bitpos(hash, this._shift);
         if ((this._bitmap & bit) !== 0) {
@@ -239,10 +422,22 @@ class BitmapIndexedNode<K, V> implements INode<K, V> {
     }
 }
 
+/**
+ * **Persistent HashMap** - a fully immutable, Hash Array Mapped Trie (HAMT). adapted from Clojure's implementation.
+ * Link to Clojure implementation:
+ *
+ * It is a persistent implementation of Phil Bagwell's Hash Array Mapped Trie (HAMT).
+ * This preserves structural sharing where most of the data can be re-used between updates.
+ *
+ * Most operations have the complexity of O(log32 N) where N is the number of elements in the map.
+ *
+ * @see Phil Bagwell, "Ideal Hash Trees", EPFL, 2000.
+ * @see https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/PersistentHashMap.java
+ */
 export default class HashMap<K, V> {
-    private _size: number;
-    private _shift: number;
-    private _root: Node<K, V>;
+    private readonly _size: number;
+    private readonly _shift: number;
+    private readonly _root: Node<K, V>;
 
     private constructor(size: number, shift: number, root: Node<K, V>) {
         this._size = size;
@@ -327,20 +522,3 @@ export default class HashMap<K, V> {
         }
     }
 }
-
-// const arr  = shuffleArray(createRandomIntArray(1000));
-const arr = shuffleArray(Array.from({ length: 1000 }, (_, i) => i));
-//const arr  = [65, 398, 1922];
-let map = HashMap.empty<number, number>();
-
-for (const elem of arr) {
-    map = map.put(elem, elem);
-}
-
-for (const elem of arr) {
-    console.log(map.get(elem));
-}
-
-map.printContents();
-console.log("size: " + map.size());
-console.log(map.entries())
