@@ -1,14 +1,35 @@
 import HashCode from "../Hashing/HashCode";
 import {Utils, createRandomIntArray, shuffleArray} from "../Utils/Utils";
+import AbstractMap from "../AbstractClasses/AbstractMap";
+
+
+const SK5 = 0x55555555, SK3 = 0x33333333;
+const SKF0=0xF0F0F0F,SKFF=0xFF00FF;
 
 /**
  * Counts the number of set bits (Hamming weight) in a 32‑bit integer.
  * Implementation taken from "Hacker's Delight".
  */
 function popcount(x: number): number {
-    x = x - ((x >>> 1) & 0x55555555);
-    x = (x & 0x33333333) + ((x >>> 2) & 0x33333333);
+    x = x - ((x >>> 1) & SK5);
+    x = (x & SK3) + ((x >>> 2) & SK3);
     return (((x + (x >>> 4)) & 0x0F0F0F0F) * 0x01010101) >>> 24;
+}
+
+/**
+ * CTPOP (count population) is available on most modern computer architectures.
+ * It counts the selected bits (number of 1's) in a bit map.
+ *
+ * @param map The map to count the bits from
+ *
+ * @see Phil Bagwell, "Ideal Hash Trees", EPFL, 2000.
+ */
+export function ctpop(map: number): number {
+    map -= ((map >>> 1) & SK5);
+    map = (map & SK3) + ((map >>> 2) & SK3);
+    map = (map & SKF0) + ((map >>> 4) & SKF0);
+    map += map >>> 8;
+    return (map + (map >>> 16)) & 0x3F;
 }
 
 /**
@@ -56,7 +77,7 @@ function bitpos(hash: number, shift: number): number {
 /**
  * Index of a child is the number if 1's to the right of the child's `bitpos` in the `bitmap`.
  *
- * Use the `popcount` to count the 1's.
+ * Use the `ctpop` to count the 1's.
  * If we subtract 1 from the `bitpos` 10^N, we get 01^N, and then binary AND with the `bitmap` gives us the same
  * `bitmap`, but where only the 1's to the right of the `bitpos` are set.
  *
@@ -64,7 +85,7 @@ function bitpos(hash: number, shift: number): number {
  * @param bit The bit position of the child in the bitmap.
  */
 function index(bitmap: number, bit: number) {
-    return popcount(bitmap & (bit - 1));
+    return ctpop(bitmap & (bit - 1));
 }
 
 /**
@@ -84,6 +105,24 @@ interface INode<K, V> {
      * it will be present in the out variable.
      */
     assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null;
+
+    /**
+     * Remove key (and its value) from the sub‑trie rooted at this
+     * node, returning **either**:
+     *
+     * * this – nothing changed
+     * * a **new node – structure changed for immutability
+     * * null – node became empty and can be pruned
+     *
+     * Implementations **must not** mutate existing nodes; they create and
+     * return new nodes when necessary, preserving structural sharing.
+     *
+     * @param hash 32‑bit hash of {@code key}.
+     * @param key - Key to remove.
+     * @returns - A replacement node or null if the subtree is now empty
+     * (or this if the key was absent).
+     */
+    without(hash: number, key: K): Node<K, V> | null;
 
     /**
      * Retrieve a leaf that holds key if it exists in the subtree.
@@ -143,6 +182,13 @@ class EmptyNode<K, V> implements INode<K, V> {
         return leaf; 
     }
 
+    /**
+     * Nothing to return from an empty node, always returns null.
+     */
+    without(hash: number, key: K): Node<K, V> | null {
+        return null;
+    }
+
     find(hash: number, key: K): LeafNode<K, V> | null {
         return null;
     }
@@ -195,6 +241,20 @@ class LeafNode<K, V> implements INode<K, V> {
     }
 
     /**
+     * Opposite of the `find` method. So if the hash is the same and the keys are equal, then we return
+     * null for the node. Otherwise return this,
+     *
+     * @param hash The hash of the key.
+     * @param key The key to be removed.
+     */
+    without(hash: number, key: K): Node<K, V> | null {
+        if (hash === this._hash && Utils.equals(this._key, key)) {
+            return null;
+        }
+        return this;
+    }
+
+    /**
      * If the hash is the same and the keys are equal, then the key exists.
      * Or else return null.
      *
@@ -231,17 +291,47 @@ class FullNode<K, V> implements INode<K, V> {
      * If it is the same, then return this.
      * Else it has changed, so assign that new node to the child at the index and return a new FullNode.
      */
-    assoc(shift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
-        const idx = mask(hash, shift);
+    assoc(levelShift: number, hash: number, key: K, value: V, addedLeaf: Box<LeafNode<K, V>>): Node<K, V> | null {
+        const idx = mask(hash, this._shift);
 
-        const n = this._nodes[idx].assoc(shift + 5, hash, key, value, addedLeaf);
+        const n = this._nodes[idx].assoc(this._shift + 5, hash, key, value, addedLeaf);
         if (n === null || n === this._nodes[idx]) {
             return this;
         } else {
             const newNodes = [...this._nodes];
             newNodes[idx] = n;
-            return new FullNode(newNodes, shift);
+            return new FullNode(newNodes, levelShift);
         }
+    }
+
+    /**
+     * Remove key and its value from the sub-trie rooted at this node.
+     * This will either return:
+     * * this if nothing has changed.
+     * * a new node structure changed for immutability
+     * * Node is removed and is null.
+     *
+     * @param hash 32-bit hash of the key.
+     * @param key Key to remove
+     * @returns Replacement node or null if the subtree is now empty or this if the key was absent.
+     */
+    without(hash: number, key: K): Node<K, V> | null {
+        const idx = mask(hash, this._shift);
+
+        const n = this._nodes[idx].without(hash, key);
+
+        if (!Utils.equals(n, this._nodes[idx])) {
+            if (n === null) {
+                // copy every element of the array except nodes[idx]
+                const newNodes: Node<K, V>[] = [
+                    ...this._nodes.slice(0, idx),
+                    ...this._nodes.slice(idx + 1)
+                ];
+                // clear the bit that marked the removed child
+                return new BitmapIndexedNode(~bitpos(hash, this._shift), newNodes, this._shift);
+            }
+        }
+        return this;
     }
 
     /**
@@ -292,6 +382,34 @@ class HashCollisionNode<K, V> implements INode<K, V> {
         }
 
         return BitmapIndexedNode.create2<K, V>(shift, this, hash, key, value, addedLeaf);
+    }
+
+    /**
+     * Remove key from HashCollisionNode
+     *
+     * * Scan `_leaves` for the key.
+     * * If absent -> return this.
+     * * If present ->
+     *      size === 1 -> return null
+     *      size === 2 -> return the *other* leaf
+     *      else       -> copy array, `splice(idx, 1)`, return the new bucket node.
+     * @param hash
+     * @param key
+     */
+    without(hash: number, key: K): Node<K, V> | null {
+        const idx = this.findIndex(hash, key);
+        if (idx === -1) {
+            return this;
+        }
+        if (this._leaves.length === 2) {
+            return idx === 0 ? this._leaves[1] : this._leaves[0];
+        }
+        // copy the leaves without the node itself
+        const newLeaves = [
+            ...this._leaves.slice(0, idx),
+            ...this._leaves.slice(idx + 1)
+        ]
+        return new HashCollisionNode(hash, newLeaves);
     }
 
     /**
@@ -401,6 +519,47 @@ class BitmapIndexedNode<K, V> implements INode<K, V> {
     }
 
     /**
+     * Remove key from BitmapIndexedNode
+     *
+     * * **Bit not set** - key absent -> return this
+     * * **Bit set**     - recurse into child:
+     *      * Child unchanged -> return this
+     *      * Child became null -> clone nodes and remove child,
+     *          clear `bit` in `bitmap`:
+     *          * if the resulting bitmap has one bit left, then collapse the node to that single child
+     *          * else return a new BitmapIndexedNode with the new bitmap and nodes.
+     *      * Child replaced -> clone nodes, overwrite the slot index, and return new node.
+     * @param hash
+     * @param key
+     */
+    without(hash: number, key: K): Node<K, V> | null {
+        const bit = bitpos(hash, this._shift);
+
+        if ((this._bitmap & bit) !== 0) {
+            const idx = index(this._bitmap, bit);
+            const n = this._nodes[idx].without(hash, key);
+            if (!Utils.equals(n, this._nodes[idx])) {
+                if (n === null) {
+                    if (this._bitmap === bit) {
+                        return null;
+                    }
+                    // copy every element of the array except nodes[idx]
+                    const newNodes = [
+                        ...this._nodes.slice(0, idx),
+                        ...this._nodes.slice(idx + 1)
+                    ];
+                    // clear the bit that marked the removed child
+                    return new BitmapIndexedNode(this._bitmap & ~bit, newNodes, this._shift);
+                }
+                const newNodes = [...this._nodes];
+                newNodes[idx] = n;
+                return new BitmapIndexedNode(this._bitmap, newNodes, this._shift);
+            }
+        }
+        return this;
+    }
+
+    /**
      * Recursively call the find to get the leaf node.
      *
      * The method will continue until it finds the bit position of the has in the bitmap (bitwise AND).
@@ -463,7 +622,7 @@ export default class HashMap<K, V> {
      * Helper method to recursively get the entries of the map.
      * @param node
      */
-    *entriesNode(node: Node<K, V>): IterableIterator<[K, V]> {
+    *entriesKeyValue(node: Node<K, V>): IterableIterator<[K, V]> {
         if (node instanceof LeafNode) {
             yield [node._key, node._value];
         } else if (node instanceof HashCollisionNode) {
@@ -472,7 +631,25 @@ export default class HashMap<K, V> {
             }
         } else if (node instanceof BitmapIndexedNode || node instanceof FullNode) {
             for (const child of (node as any)._nodes as Node<K, V>[]) {
-                yield* this.entriesNode(child);
+                yield* this.entriesKeyValue(child);
+            }
+        }
+    }
+
+    /**
+     * Get the entries of the map as nodes
+     * @param node
+     */
+    *entriesNodeHelper(node: Node<K, V>): IterableIterator<Node<K, V>> {
+        if (node instanceof LeafNode) {
+            yield node;
+        } else if (node instanceof HashCollisionNode) {
+            for (const leaf of node._leaves) {
+                yield leaf;
+            }
+        } else if (node instanceof BitmapIndexedNode || node instanceof FullNode) {
+            for (const child of (node as any)._nodes as Node<K, V>[]) {
+                yield* this.entriesNodeHelper(child);
             }
         }
     }
@@ -481,7 +658,7 @@ export default class HashMap<K, V> {
      * How the HashMap is iterated.
      */
     *[Symbol.iterator](): IterableIterator<[K, V]> {
-        yield* this.entriesNode(this._root);
+        yield* this.entriesKeyValue(this._root);
     }
 
     /**
@@ -489,6 +666,10 @@ export default class HashMap<K, V> {
      */
     entries(): [K, V][] {
         return Array.from(this);
+    }
+
+    entriesNode(): Node<K, V>[] {
+        return Array.from(this.entriesNodeHelper(this._root));
     }
 
     /**
@@ -543,6 +724,36 @@ export default class HashMap<K, V> {
     }
 
     /**
+     * Method to remove a key from the HashMap.
+     * This calls the `without` method of the root node.
+     *
+     * If the root did not change after the key has been removed, return this.
+     * Else if the root is null, return an empty HashMap.
+     * Else return a new HashMap with the size decremented by 1.
+     *
+     * @param key To be removed from the HashMap
+     * @private
+     */
+    private without(key: K): HashMap<K, V> {
+        const newRoot = this._root.without(HashCode.hashCode(key), key);
+        if (Utils.equals(newRoot, this._root)) {
+            return this;
+        }
+        if (newRoot === null) {
+            return HashMap.empty<K, V>();
+        }
+        return new HashMap<K, V>(this._size - 1, this._shift, newRoot);
+    }
+
+    /**
+     * Method to remove a key from the HashMap.
+     * @param key The key to be removed from the map
+     */
+    delete(key: K): HashMap<K, V> {
+        return this.without(key);
+    }
+
+    /**
      * Method to find a key in the HashMap.
      * This calls the `find` method of the root node.
      *
@@ -567,6 +778,9 @@ export default class HashMap<K, V> {
         return null;
     }
 
+    /**
+     * Method to get the hash code of the entries in the HashMap.
+     */
     hashCode(): number {
         if (this._hash === null) {
             let hash = 0;
