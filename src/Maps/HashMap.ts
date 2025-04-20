@@ -1,6 +1,9 @@
 import HashCode from "../Hashing/HashCode";
 import {Utils, createRandomIntArray, shuffleArray} from "../Utils/Utils";
 import AbstractMap from "../AbstractClasses/AbstractMap";
+import Map from "../Interfaces/Map";
+import {Speed} from "../Enums/Speed";
+import {Comparator} from "../Interfaces/Comparator";
 
 
 const SK5 = 0x55555555, SK3 = 0x33333333;
@@ -593,7 +596,8 @@ class BitmapIndexedNode<K, V> implements INode<K, V> {
  * @see Phil Bagwell, "Ideal Hash Trees", EPFL, 2000.
  * @see https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/PersistentHashMap.java
  */
-export default class HashMap<K, V> {
+export default class HashMap<K, V> extends AbstractMap<K, V>
+                                    implements Map<K, V> {
     private readonly _size: number;
     private readonly _shift: number;
     private readonly _root: Node<K, V>;
@@ -601,6 +605,7 @@ export default class HashMap<K, V> {
     private _hash: number | null = null;
 
     private constructor(size: number, shift: number, root: Node<K, V>) {
+        super();
         this._size = size;
         this._shift = shift;
         this._root = root;
@@ -610,12 +615,16 @@ export default class HashMap<K, V> {
         return new HashMap<K, V>(0, 0, EmptyNode.empty<K, V>());
     }
 
-    static of<K, V>(...entries: [K, V][]): HashMap<K, V> {
+    static ofThisOne<K, V>(...entries: [K, V][]): HashMap<K, V> {
         let map: HashMap<K, V> = HashMap.empty<K, V>();
         for (const [key, value] of entries) {
             map = map.assoc(key, value);
         }
         return map;
+    }
+
+    getRoot(): [K, V] | null {
+        return null;
     }
 
     /**
@@ -734,7 +743,7 @@ export default class HashMap<K, V> {
      * @param key To be removed from the HashMap
      * @private
      */
-    private without(key: K): HashMap<K, V> {
+    delete(key: K, value?: V): HashMap<K, V> {
         const newRoot = this._root.without(HashCode.hashCode(key), key);
         if (Utils.equals(newRoot, this._root)) {
             return this;
@@ -745,12 +754,13 @@ export default class HashMap<K, V> {
         return new HashMap<K, V>(this._size - 1, this._shift, newRoot);
     }
 
-    /**
-     * Method to remove a key from the HashMap.
-     * @param key The key to be removed from the map
-     */
-    delete(key: K): HashMap<K, V> {
-        return this.without(key);
+
+    deleteAll(keys: Iterable<K>): HashMap<K, V> {
+        let map: HashMap<K, V> = this;
+        for (const key of keys) {
+            map = map.delete(key);
+        }
+        return map;
     }
 
     /**
@@ -761,7 +771,7 @@ export default class HashMap<K, V> {
      * @param key The key to be found in the map.
      * @private
      */
-    private find(hash: number, key: K): LeafNode<K, V> | null {
+    private findLeafNode(hash: number, key: K): LeafNode<K, V> | null {
         return this._root.find(HashCode.hashCode(key), key);
     }
 
@@ -770,12 +780,59 @@ export default class HashMap<K, V> {
      * This calls the `find` method of the root node.
      * @param key The key to get the value from.
      */
-    get(key: K): V | null {
-        const find = this.find(HashCode.hashCode(key), key);
+    get(key: K): V | undefined {
+        const find = this.findLeafNode(HashCode.hashCode(key), key);
         if (find !== null) {
             return find._value;
         }
-        return null;
+        return undefined;
+    }
+
+    set(key: K, value: V): HashMap<K, V> {
+
+        return this;
+    }
+
+    setAll(entries: Iterable<[K, V]>): HashMap<K, V> {
+
+        return this;
+    }
+
+    has(key: K): boolean {
+        return false;
+    }
+    hasValue(value: V): boolean {
+        return true;
+    }
+
+    hasAll<H extends K>(keys: Iterable<H>): boolean {
+        return false;
+    }
+
+    isEmpty(): boolean {
+        return this._size === 0;
+    }
+
+    clear(): HashMap<K, V> {
+        return HashMap.empty<K, V>();
+    }
+
+    // Speed methods
+    hasSpeed(): Speed {
+        return Speed.Log;
+    }
+    addSpeed(): Speed {
+        return Speed.Log;
+    }
+    removeSpeed(): Speed {
+        return Speed.Log;
+    }
+
+
+    equals(o: Object): boolean {
+
+
+        return false;
     }
 
     /**
@@ -791,6 +848,184 @@ export default class HashMap<K, V> {
         }
         return this._hash;
     }
+
+    getOrDefault(key: K, defaultValue: V): V {
+        throw new Error("not")
+    }
+    computeIfAbsent(key: K, func: (key: K) => V): [HashMap<K, V>, V] {
+        throw new Error("not")
+    }
+    computeIfPresent(key: K, func: (key: K, value: V) => V): [HashMap<K, V>, V] {
+        throw new Error("not")
+    }
+    compute(key: K, func: (key: K, value: V | undefined) => V): [HashMap<K, V>, V] {
+        throw new Error("not")
+    }
+
+    of(k: K, v: V): HashMap<K, V> {
+        throw new Error("not")
+    }
+    ofEntries(...entries: [K, V][]): HashMap<K, V> {
+        throw new Error("not")
+    }
+    entry(k: K, v: V): [K, V] {
+        throw new Error("not")
+    }
+    copyOf(map: Map<K, V>): HashMap<K, V> {
+        throw new Error("not")
+    }
+
+    // HOFs defined in Map.ts
+    every(predicate: (value: V, key: K, map: this) => boolean, thisArg?: unknown): this is HashMap<K, V>;
+    every(predicate: (value: V, key: K, map: this) => unknown, thisArg?: unknown): boolean;
+    every(predicate: (value: V, key: K, map: this) => unknown, thisArg?: unknown): unknown {
+        return super.every(predicate, thisArg);
+    }
+
+    some(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): boolean {
+        throw new Error("not implementewd")
+    }
+    sort(compare?: Comparator<K>): HashMap<K, V> {
+        throw new Error("not implementewd")
+    }
+    sortBy<C>(
+        comparatorValueMapper: (value: V, key: K, map: this) => C,
+        compare?: Comparator<C>
+    ): HashMap<K | C, V> {
+        throw new Error("not implementewd")
+    }
+    forEach(callback: (value: V, key: K, map: this) => void, thisArg?: any): void {
+        throw new Error("not implementewd")
+    }
+    find(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): V | undefined {
+        throw new Error("not implementewd")
+    }
+
+    reduce(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
+    reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
+    reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R {
+        throw new Error("not implementewd")
+    }
+    reduceRight(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
+    reduceRight<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
+    reduceRight<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R {
+        throw new Error("not implementewd")
+    }
+
+
+    // HOFs inspired by immutable.js
+    updateOrAdd(key: K, callback: (value: V) => V): HashMap<K, V>;
+    updateOrAdd(key: K, callback: (value: V | undefined) => V | undefined): HashMap<K, V | undefined>;
+    updateOrAdd(key: K, newValue: V): HashMap<K, V>;
+    updateOrAdd(key: K, callbackOrValue: ((value: any) => any) | V): HashMap<K, any> {
+        throw new Error("not implementewd")
+    }
+
+    merge<KC, VC>(
+        ...collections: Array<Iterable<[KC, VC]>>
+    ): HashMap<K | KC, Exclude<V, VC> | VC>;
+    merge<C>(
+        ...collections: Array<{ [key: string]: C }>
+    ): HashMap<K | string, Exclude<V, C> | C>;
+    merge<KC, VC>(other: Map<KC, VC>): HashMap<K | KC, V | VC>;
+    merge(...collections: any[]): HashMap<any, any> {
+        throw new Error("not")
+    }
+
+    concat<KC, VC>(
+        ...collections: Array<Iterable<[KC, VC]>>
+    ): HashMap<K | KC, Exclude<V, VC> | VC>;
+    concat<C>(
+        ...collections: Array<{ [key: string]: C }>
+    ): HashMap<K | string, Exclude<V, C> | C>;
+    concat(...collections: any[]): HashMap<any, any> {
+        throw new Error("not implementewd")
+    }
+
+    mergeWith<KC, VC, VCC>(
+        callback: (oldVal: V, newVal: VC, key: K) => VCC,
+        ...collections: Array<Iterable<[KC, VC]>>
+    ): HashMap<K | KC, V | VC | VCC>;
+    mergeWith<C, CC>(
+        callback: (oldVal: V, newVal: C, key: string) => CC,
+        ...collections: Array<{ [key: string]: C }>
+    ): HashMap<K | string, V | C | CC>;
+    mergeWith(
+        callback: (oldVal: V, newVal: any, key: any) => any,
+        ...collections: any[]
+    ): HashMap<any, any> {
+        throw new Error("not implementewd")
+    }
+
+    map<M>(
+        callback: (value: V, key: K, map: this) => M,
+        thisArg?: unknown
+    ): HashMap<K, M> {
+        throw new Error("not implementewd")
+    }
+
+    mapKeys<M>(
+        callback: (key: K, value: V, map: this) => M,
+        thisArg?: unknown,
+        compare?: Comparator<M>
+    ): HashMap<M, V> {
+        throw new Error("not implementewd")
+    }
+
+    mapEntries<KM, VM>(
+        mapper: (
+            entry: [K, V],
+            index: number,
+            map: this
+        ) => [KM, VM] | undefined,
+        thisArg?: unknown,
+        compare?: Comparator<KM>
+    ): HashMap<KM, VM> {
+        throw new Error("not implementewd")
+    }
+
+    flatMap<KM, VM>(
+        callback: (value: V, key: K, map: this) => Iterable<[KM, VM]>,
+        thisArg?: unknown,
+        compare?: Comparator<KM>
+    ): HashMap<KM, VM> {
+        throw new Error("not implementewd")
+    }
+
+    filter<F extends V>(
+        predicate: (value: V, key: K, map: this) => value is F,
+        thisArg?: unknown,
+    ): HashMap<K, F>;
+    filter(
+        predicate: (value: V, key: K, map: this) => unknown,
+        thisArg?: unknown
+    ): HashMap<K, V>;
+    filter(
+        predicate: (value: V, key: K, map: this) => unknown,
+        thisArg?: unknown
+    ): HashMap<any, any> {
+        throw new Error("not implementewd")
+    }
+
+    partition<F extends V, C>(
+        predicate: (this: C, value: V, key: K, map: this) => value is F,
+        thisArg?: C
+    ): [HashMap<K, V>, HashMap<K, F>];
+    partition<C>(
+        predicate: (this: C, value: V, key: K, map: this) => unknown,
+        thisArg?: C
+    ): [HashMap<K, V>, HashMap<K, V>];
+    partition(
+        predicate: (value: V, key: K, map: this) => unknown,
+        thisArg?: unknown
+    ): [HashMap<K, V>, HashMap<K, V>] {
+        throw new Error("not implementewd")
+    }
+
+    flip(): HashMap<V, K> {
+        throw new Error("not implementewd")
+    }
+
 
     /**
      * Helper method to print the contents of the HashMap.
