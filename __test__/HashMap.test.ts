@@ -67,7 +67,7 @@ describe('HashMap', () => {
         expect(map.get(5)).toBe('5');
         const updatedMap = map.delete(5);
         expect(updatedMap.size()).toBe(arr.length - 1);
-        expect(updatedMap.get(5)).toBeNull();
+        expect(updatedMap.get(5)).toBeUndefined();
     })
 
     test('delete() removes all the elements from an array', () => {
@@ -81,7 +81,7 @@ describe('HashMap', () => {
         }
         expect(updatedMap.size()).toBe(0);
         for (const key of keys) {
-            expect(updatedMap.get(key)).toBeNull();
+            expect(updatedMap.get(key)).toBeUndefined();
         }
     })
 

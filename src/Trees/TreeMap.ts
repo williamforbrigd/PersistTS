@@ -775,17 +775,6 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         return [newTree, newValue];
     }
 
-    of(key: K, value: V): TreeMap<K, V> {
-        return this.set(key, value);
-    }
-    ofEntries(...entries: [K, V][]): TreeMap<K, V> {
-        let newTree = new TreeMap<K, V>(this.compare);
-        for (const [k, v] of entries) {
-            newTree = newTree.set(k, v);
-        }
-        return newTree;
-    }
-
     static of<K, V>(comparer: Comparator<K>, ...entries: [K, V][]): TreeMap<K, V> {
         let newTree = new TreeMap<K, V>(comparer);
         for (const [k, v] of entries) {

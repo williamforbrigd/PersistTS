@@ -86,9 +86,6 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     abstract equals(o: Object): boolean;
 
 
-    abstract of(k: K, v: V): Map<K, V>;
-    abstract ofEntries(...entries: [K, V][]): Map<K, V>;
-
     abstract reduce(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
     abstract reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
     abstract reduce(callback: any, initialValue?: any): any;

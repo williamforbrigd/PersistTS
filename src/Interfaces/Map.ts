@@ -35,8 +35,6 @@ export default interface Map<K, V> extends Iterable<[K, V]> {
     computeIfAbsent(key: K, func: (key: K) => V): [Map<K, V>, V];
     computeIfPresent(key: K, func: (key: K, value: V) => V): [Map<K, V>, V];
     compute(key: K, func: (key: K, value: V | undefined) => V): [Map<K, V>, V];
-    of(k: K, v: V): Map<K, V>;
-    ofEntries(...entries: [K, V][]): Map<K, V>;
     entry(k: K, v: V): [K, V];
     copyOf(map: Map<K, V>): Map<K, V>;
 
