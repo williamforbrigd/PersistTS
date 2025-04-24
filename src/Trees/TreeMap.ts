@@ -214,8 +214,8 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         }
     }
 
-    delete(key: K, value?: V): TreeMap<K, V> {
-        return this.del([key, value as any]).paint(Color.B);
+    delete(key: K): TreeMap<K, V> {
+        return this.del([key, undefined as unknown as V]).paint(Color.B); // undefined is used as a placeholder
     }
 
     private del(x: [K, V]): TreeMap<K, V> {

@@ -17,7 +17,7 @@ export default interface Map<K, V> extends Iterable<[K, V]> {
     has(key: K): boolean;
     hasValue(value: V): boolean;
     hasAll<H extends K>(keys: Iterable<H>): boolean;
-    delete(key: K, value?: V): Map<K, V>;
+    delete(key: K): Map<K, V>;
     deleteAll(keys: Iterable<K>):  Map<K,V>;
     isEmpty(): boolean;
     clear(): Map<K, V>;

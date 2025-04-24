@@ -48,7 +48,7 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
         return true;
     }
 
-    abstract delete(key: K, value?: V): Map<K, V>;
+    abstract delete(key: K): Map<K, V>;
     abstract deleteAll(keys: Iterable<K>): Map<K, V>;
 
     isEmpty(): boolean {

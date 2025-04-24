@@ -752,7 +752,7 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
      * @param key To be removed from the HashMap
      * @private
      */
-    delete(key: K, value?: V): HashMap<K, V> {
+    delete(key: K): HashMap<K, V> {
         const newRoot = this._root.without(HashCode.hashCode(key), key);
         if (Utils.equals(newRoot, this._root)) {
             return this;
