@@ -1,4 +1,3 @@
-import EqualityComparer from "./EqualityComparer";
 import { Speed } from "../Enums/Speed";
 import {Comparator} from "./Comparator";
 
@@ -18,7 +17,7 @@ export default interface Map<K, V> extends Iterable<[K, V]> {
     has(key: K): boolean;
     hasValue(value: V): boolean;
     hasAll<H extends K>(keys: Iterable<H>): boolean;
-    delete(key: K, value?: V): Map<K, V>;
+    delete(key: K): Map<K, V>;
     deleteAll(keys: Iterable<K>):  Map<K,V>;
     isEmpty(): boolean;
     clear(): Map<K, V>;
@@ -30,14 +29,12 @@ export default interface Map<K, V> extends Iterable<[K, V]> {
 
     size(): number;
     equals(o: Object): boolean;
+    compareTo(o: Object): number;
     hashCode(): number;
     getOrDefault(key: K, defaultValue: V): V;
     computeIfAbsent(key: K, func: (key: K) => V): [Map<K, V>, V];
     computeIfPresent(key: K, func: (key: K, value: V) => V): [Map<K, V>, V];
     compute(key: K, func: (key: K, value: V | undefined) => V): [Map<K, V>, V];
-    of(k: K, v: V): Map<K, V>;
-    ofEntries(...entries: [K, V][]): Map<K, V>;
-    entry(k: K, v: V): [K, V];
     copyOf(map: Map<K, V>): Map<K, V>;
 
     // higher order functions HOFs
@@ -45,11 +42,6 @@ export default interface Map<K, V> extends Iterable<[K, V]> {
     every(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): this is Map<K, V>;
     every(predicate: (value: V, key: K, map: this) => unknown, thisArg?: any): boolean;
     some(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): boolean;
-    sort(compare?: Comparator<K>): Map<K, V>;
-    sortBy<C>(
-        comparatorValueMapper: (value: V, key: K, map: this) => C,
-        compare?: Comparator<C>
-    ): Map<K | C, V>;
     forEach(callback: (value: V, key: K, map: this) => void, thisArg?: any): void;
     find(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): V | undefined;
     reduce(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
