@@ -1,7 +1,7 @@
 import Map from '../Interfaces/Map';
-import EqualityComparer from "../Interfaces/EqualityComparer";
 import {Comparator} from "../Interfaces/Comparator";
 import {Speed} from "../Enums/Speed";
+import {Utils} from "../Utils/Utils";
 
 
 export default abstract class AbstractMap<K, V> implements Map<K, V> {
@@ -15,34 +15,40 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     abstract get(key: K): V | undefined;
 
     keys(): K[] {
-        const keys = [];
-        for (const [k, _] of this) {
-            keys.push(k);
-        }
-        return keys;
+        return Array.from(this, ([k, _]) => k);
     }
     values(): V[] {
-        const values = [];
-        for (const [_, v] of this) {
-            values.push(v);
-        }
-        return values;
+        return Array.from(this, ([_, v]) => v);
     }
 
     entries(): [K, V][] {
-        const entries = [];
-        for (const entry of this) {
-            entries.push(entry);
-        }
-        return entries;
+        return Array.from(this);
     }
 
     abstract set(key: K, value: V): Map<K, V>;
     abstract setAll(entries: Iterable<[K, V]>): Map<K, V>;
 
-    abstract has(key: K): boolean;
-    abstract hasValue(value: V): boolean;
-    abstract hasAll<H extends K>(keys: Iterable<H>): boolean;
+    abstract update(key: K, newValue: V): Map<K, V>;
+
+    has(key: K): boolean {
+        return this.get(key) !== undefined;
+    }
+    hasValue(value: V): boolean {
+        for (const [_, v] of this) {
+            if (Utils.equals(value, v)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    hasAll<H extends K>(keys: Iterable<H>): boolean {
+        for (const key of keys) {
+            if (!this.has(key)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     abstract delete(key: K, value?: V): Map<K, V>;
     abstract deleteAll(keys: Iterable<K>): Map<K, V>;
@@ -53,13 +59,49 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
 
     abstract clear(): Map<K, V>;
 
-    abstract compute(key: K, func: (key: K, value: (V | undefined)) => V): [Map<K, V>, V];
-    abstract computeIfAbsent(key: K, func: (key: K) => V): [Map<K, V>, V];
-    abstract computeIfPresent(key: K, func: (key: K, value: V) => V): [Map<K, V>, V];
+    /**
+     * Compute the value for a key using the function.
+     * @param key
+     * @param func
+     */
+    compute(key: K, func: (key: K, value: (V | undefined)) => V): [Map<K, V>, V] {
+        const value = this.get(key);
+        const newValue = func(key, value);
+        const newTree = this.set(key, newValue);
+        return [newTree, newValue];
+    }
+    /**
+     * If a key-value pair is absent in the map, compute it using the function.
+     * Else just return the key-value pair.
+     * @param key
+     * @param func
+     */
+    computeIfAbsent(key: K, func: (key: K) => V): [Map<K, V>, V] {
+        const value = this.get(key);
+        if (value === undefined) {
+            const newValue = func(key);
+            const newTree = this.set(key, newValue);
+            return [newTree, newValue];
+        }
+        return [this, value!];
+    }
+    /**
+     * If a key-value pair is present in the map, compute it using the function.
+     * Else just return the key-value pair.
+     * @param key
+     * @param func
+     */
+    computeIfPresent(key: K, func: (key: K, value: V) => V): [Map<K, V>, V] {
+        const value = this.get(key);
+        if (value !== undefined) {
+            const newValue = func(key, value);
+            const newTree = this.set(key, newValue);
+            return [newTree, newValue];
+        }
+        return [this, value!];
+    }
 
     abstract copyOf(map: Map<K, V>): Map<K, V>;
-
-    abstract entry(k: K, v: V): [K, V];
 
     every(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): this is Map<K, V>;
     every(predicate: (value: V, key: K, map: this) => unknown, thisArg?: any): boolean;
@@ -72,11 +114,25 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
         return true;
     }
 
-    abstract find(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): V | undefined;
+    find(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): V | undefined {
+        for (const [k, v] of this) {
+            if (predicate.call(thisArg, v, k, this)) {
+                return v;
+            }
+        }
+        return undefined;
+    }
 
-    abstract forEach(callback: (value: V, key: K, map: this) => void, thisArg?: any): void;
+    forEach(callback: (value: V, key: K, map: this) => void, thisArg?: any): void {
+        for (const [k, v] of this) {
+            callback.call(thisArg, v, k, this);
+        }
+    }
 
-    abstract getOrDefault(key: K, defaultValue: V): V;
+    getOrDefault(key: K, defaultValue: V): V {
+        const value = this.get(key);
+        return value ?? defaultValue;
+    }
 
     abstract hasSpeed(): Speed;
     abstract addSpeed(): Speed;
@@ -86,13 +142,26 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     abstract equals(o: Object): boolean;
 
 
-    abstract reduce(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
-    abstract reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
-    abstract reduce(callback: any, initialValue?: any): any;
+    reduce(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
+    reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
+    reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R {
+        let acc: R = initialValue as R;
+        for (const [k, v] of this) {
+            acc = callback(acc, v, k, this);
+        }
+        return acc;
+    }
 
-    abstract reduceRight(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
-    abstract reduceRight<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
-    abstract reduceRight(callback: any, initialValue?: any): any;
+    reduceRight(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
+    reduceRight<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
+    reduceRight<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R {
+        let acc: R = initialValue as R;
+        const entries = [...this.entries()];
+        for (let i = entries.length - 1; i >= 0; i--) {
+            acc = callback(acc, entries[i][1], entries[i][0], this);
+        }
+        return acc;
+    }
 
 
     some(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): boolean {
@@ -106,38 +175,148 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     abstract sort(compare?: Comparator<K>): Map<K, V>;
     abstract sortBy<C>(comparatorValueMapper: (value: V, key: K, map: this) => C, compare?: Comparator<C>): Map<K | C, V>;
 
-    abstract updateOrAdd(key: K, callback: (value: V) => V): Map<K, V>;
-    abstract updateOrAdd(key: K, callback: (value: V | undefined) => V | undefined): Map<K, V | undefined>;
-    abstract updateOrAdd(key: K, newValue: V): Map<K, V>;
+    updateOrAdd(key: K, callback: (value: V) => V): Map<K, V>;
+    updateOrAdd(key: K, callback: (value: V | undefined) => V | undefined): Map<K, V | undefined>;
+    updateOrAdd(key: K, newValue: V): Map<K, V>;
+    updateOrAdd(key: K, callbackOrValue: ((value: any) => any) | V): Map<K, any> {
+        if (typeof callbackOrValue === 'function') {
+            const callback = callbackOrValue as (value: V) => V;
+            if (this.has(key)) {
+                return this.update(key, callback(this.get(key)!));
+            } else {
+                return this.set(key, callback(this.get(key) as any))
+            }
+        } else {
+            const newValue = callbackOrValue as V;
+            if (this.has(key)) {
+                return this.update(key, newValue);
+            } else {
+                return this.set(key, newValue);
+            }
+        }
+    }
 
-    abstract merge<KC, VC>(
-            ...collections: Array<Iterable<[KC, VC]>>
-        ): Map<K | KC, Exclude<V, VC> | VC>;
-    abstract merge<C>(
+    isCustomMap(obj: any): obj is Map<any, any> {
+        return obj && typeof obj.set === "function" && typeof obj.entries === "function";
+    }
+
+    merge<KC, VC>(
+        ...collections: Array<Iterable<[KC, VC]>>
+    ): Map<K | KC, Exclude<V, VC> | VC>;
+    merge<C>(
         ...collections: Array<{ [key: string]: C }>
     ): Map<K | string, Exclude<V, C> | C>;
-    abstract merge<KC, VC>(other: Map<KC, VC>): Map<K | KC, V | VC>;
+    merge<KC, VC>(other: Map<KC, VC>): Map<K | KC, V | VC>;
+    merge(...collections: any[]): Map<any, any> {
+        let newMap = this as Map<any, any>;
 
-    abstract concat<KC, VC>(
-            ...collections: Array<Iterable<[KC, VC]>>
-    ): Map<K | KC, Exclude<V, VC> | VC>;    
-    abstract concat<C>(
+        for (const collection of collections) {
+            if (this.isCustomMap(collection)) {
+                for (const [key, value] of collection.entries()) {
+                    newMap = newMap.set(key, value);
+                }
+            } else if (Array.isArray(collection)) {
+                for (const [key, value] of collection) {
+                    newMap = newMap.set(key, value);
+                }
+            } else if (typeof collection === 'object' && collection !== null) {
+                for (const key in collection) {
+                    if (collection.hasOwnProperty(key)) {
+                        newMap = newMap.set(key as any, collection[key]);
+                    }
+                }
+            }
+        }
+
+        return newMap;
+    }
+
+    concat<KC, VC>(
+        ...collections: Array<Iterable<[KC, VC]>>
+    ): Map<K | KC, Exclude<V, VC> | VC>;
+    concat<C>(
         ...collections: Array<{ [key: string]: C }>
     ): Map<K | string, Exclude<V, C> | C>;
+    concat(...collections: any[]): Map<any, any> {
+        return this.merge(...collections);
+    }
 
-    abstract mergeWith<KC, VC, VCC>(
+    /**
+     * Merge entries from a plain object into the map, coercing
+     * string keys to numbers when the numeric form already exists.
+     */
+    private mergeWithObject<C>(
+        newMap: Map<any, any>,
+        collection: Record<string, C>,
+        callback: (oldVal: V, newVal: C, key: any) => any
+    ): Map<any, any> {
+        const objEntries: [any, C][] = Object.entries(collection).map(([k, v]) => {
+            const num = Number(k);
+            const actualKey = !Number.isNaN(num) ? num : k;
+            return [actualKey, v];
+        });
+
+        for (const [key, value] of objEntries) {
+            if (newMap.has(key as any)) {
+                const merged = callback(newMap.get(key as any)!, value, key);
+                newMap = newMap.update(key as any, merged);
+            } else {
+                newMap = newMap.set(key as any, value);
+            }
+        }
+
+        return newMap;
+    }
+
+    mergeWith<KC, VC, VCC>(
         callback: (oldVal: V, newVal: VC, key: K) => VCC,
         ...collections: Array<Iterable<[KC, VC]>>
     ): Map<K | KC, V | VC | VCC>;
-    abstract mergeWith<C, CC>(
+    mergeWith<C, CC>(
         callback: (oldVal: V, newVal: C, key: string) => CC,
         ...collections: Array<{ [key: string]: C }>
     ): Map<K | string, V | C | CC>;
-   
-    abstract map<M>(
+    mergeWith(
+        callback: (oldVal: V, newVal: any, key: any) => any,
+        ...collections: any[]
+    ): Map<any, any> {
+        let newMap = this as Map<any, any>;
+        for (const collection of collections) {
+            if (this.isCustomMap(collection)) {
+                for (const [key, value] of collection.entries()) {
+                    if (newMap.has(key as any)) {
+                        const merged = callback(newMap.get(key as any)!, value, key);
+                        newMap = newMap.update(key as any, merged);
+                    } else {
+                        newMap = newMap.set(key as any, value);
+                    }
+                }
+            } else if (Array.isArray(collection)) {
+                for (const [key, value] of collection) {
+                    if (newMap.has(key as any)) {
+                        const merged = callback(newMap.get(key as any)!, value, key);
+                        newMap = newMap.update(key as any, merged);
+                    } else {
+                        newMap = newMap.set(key as any, value);
+                    }
+                }
+            } else if (typeof collection === 'object' && collection !== null) {
+                newMap = this.mergeWithObject(newMap, collection, callback);
+            }
+        }
+        return newMap;
+    }
+
+    map<M>(
         callback: (value: V, key: K, map: this) => M,
         thisArg?: unknown
-    ): Map<K, M>;
+    ): Map<K, M> {
+        let newMap: Map<K, M> = this as unknown as Map<K, M>;
+        for (const [k, v] of this) {
+            newMap = newMap.update(k, callback.call(thisArg, v, k, this));
+        }
+        return newMap;
+    }
 
     abstract mapKeys<M>(
         callback: (key: K, value: V, map: this) => M,

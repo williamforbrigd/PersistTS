@@ -1,4 +1,3 @@
-import EqualityComparer from "./EqualityComparer";
 import { Speed } from "../Enums/Speed";
 import {Comparator} from "./Comparator";
 
@@ -15,6 +14,7 @@ export default interface Map<K, V> extends Iterable<[K, V]> {
     // set method adds or updates an entry in this map
     set(key: K, value: V): Map<K, V>;
     setAll(entries: Iterable<[K, V]>): Map<K, V>;
+    update(key: K, newValue: V): Map<K, V>;
     has(key: K): boolean;
     hasValue(value: V): boolean;
     hasAll<H extends K>(keys: Iterable<H>): boolean;
@@ -35,7 +35,6 @@ export default interface Map<K, V> extends Iterable<[K, V]> {
     computeIfAbsent(key: K, func: (key: K) => V): [Map<K, V>, V];
     computeIfPresent(key: K, func: (key: K, value: V) => V): [Map<K, V>, V];
     compute(key: K, func: (key: K, value: V | undefined) => V): [Map<K, V>, V];
-    entry(k: K, v: V): [K, V];
     copyOf(map: Map<K, V>): Map<K, V>;
 
     // higher order functions HOFs
