@@ -1,23 +1,14 @@
 import HashCode from "../Hashing/HashCode";
-import {Utils, createRandomIntArray, shuffleArray} from "../Utils/Utils";
+import {Utils} from "../Utils/Utils";
 import AbstractMap from "../AbstractClasses/AbstractMap";
 import Map from "../Interfaces/Map";
 import {Speed} from "../Enums/Speed";
 import {Comparator} from "../Interfaces/Comparator";
+import Sorting from "../Sorting/Sorting";
 
 
 const SK5 = 0x55555555, SK3 = 0x33333333;
 const SKF0=0xF0F0F0F,SKFF=0xFF00FF;
-
-/**
- * Counts the number of set bits (Hamming weight) in a 32‑bit integer.
- * Implementation taken from "Hacker's Delight".
- */
-function popcount(x: number): number {
-    x = x - ((x >>> 1) & SK5);
-    x = (x & SK3) + ((x >>> 2) & SK3);
-    return (((x + (x >>> 4)) & 0x0F0F0F0F) * 0x01010101) >>> 24;
-}
 
 /**
  * CTPOP (count population) is available on most modern computer architectures.
@@ -591,7 +582,9 @@ class BitmapIndexedNode<K, V> implements INode<K, V> {
  * It is a persistent implementation of Phil Bagwell's Hash Array Mapped Trie (HAMT).
  * This preserves structural sharing where most of the data can be re-used between updates.
  *
- * Most operations have the complexity of O(log32 N) where N is the number of elements in the map.
+ * **Complexity**:
+ * Operations such as `set`, `delete`, and `get` are O(log_32 N) where N is the number of elements in the map.
+ * This is because the Hash Array Mapped Trie (HAMT) has a branching factor of 32 (where each level consumes 5 bits).
  *
  * @see Phil Bagwell, "Ideal Hash Trees", EPFL, 2000.
  * @see https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/PersistentHashMap.java
@@ -615,7 +608,7 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         return new HashMap<K, V>(0, 0, EmptyNode.empty<K, V>());
     }
 
-    static ofThisOne<K, V>(...entries: [K, V][]): HashMap<K, V> {
+    static of<K, V>(...entries: [K, V][]): HashMap<K, V> {
         let map: HashMap<K, V> = HashMap.empty<K, V>();
         for (const [key, value] of entries) {
             map = map.assoc(key, value);
@@ -674,7 +667,7 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
      * Get the entries of the HashMap
      */
     entries(): [K, V][] {
-        return Array.from(this);
+        return super.entries();
     }
 
     entriesNode(): Node<K, V>[] {
@@ -685,14 +678,14 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
      * Extracting the keys from the iterator.
      */
     keys(): K[] {
-        return Array.from(this, ([k]) => k);
+        return super.keys();
     }
 
     /**
      * Extracting the values from the iterator.
      */
     values(): V[] {
-        return Array.from(this, ([_, v]) => v);
+        return super.values();
     }
 
     /**
@@ -725,11 +718,53 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
      * Method to put a key-value pair in the HashMap.
      * This is a helper method to call the `assoc` method.
      *
+     * Complexity O(log_32 N)
+     *
      * @param key The key to be added to the map
      * @param value The value to be associated with the key
      */
-    put(key: K, value: V): HashMap<K, V> {
+    set(key: K, value: V): HashMap<K, V> {
         return this.assoc(key, value);
+    }
+
+    /**
+     * Set multiple key-value pairs in the map
+     * @param entries
+     */
+    setAll(entries: Iterable<[K, V]>): HashMap<K, V> {
+        let map: HashMap<K, V> = this;
+        for (const [key, value] of entries) {
+            map = map.set(key, value);
+        }
+        return map;
+    }
+
+    /**
+     * Private helper method to update an already existing key in the hashmap.
+     *
+     * If the key does not exist, it is treated as a no-op for update.
+     * @param key
+     * @param newValue
+     * @private
+     */
+    update(key: K, newValue: V): HashMap<K, V> {
+        const addedLeaf: Box<LeafNode<K, V>> = {val: null};
+
+        const newRoot = this._root.assoc(this._shift, HashCode.hashCode(key), key, newValue, addedLeaf);
+
+        // no change, same map
+        if (newRoot === null || newRoot === this._root) {
+            return this;
+        }
+
+        // addedLeaf.val !== null means that the key did not exist in the map from before.
+        // In an update, we treat that as a no-op
+        if (addedLeaf.val !== null) {
+            return this;
+        }
+
+        return new HashMap<K, V>(this._size, this._shift, newRoot);
+
     }
 
     /**
@@ -739,6 +774,8 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
      * If the root did not change after the key has been removed, return this.
      * Else if the root is null, return an empty HashMap.
      * Else return a new HashMap with the size decremented by 1.
+     *
+     * Complexity: O(log_32 N)
      *
      * @param key To be removed from the HashMap
      * @private
@@ -755,6 +792,10 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
     }
 
 
+    /**
+     * Method to remove all keys from the HashMap.
+     * @param keys
+     */
     deleteAll(keys: Iterable<K>): HashMap<K, V> {
         let map: HashMap<K, V> = this;
         for (const key of keys) {
@@ -772,12 +813,15 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
      * @private
      */
     private findLeafNode(hash: number, key: K): LeafNode<K, V> | null {
-        return this._root.find(HashCode.hashCode(key), key);
+        return this._root.find(hash, key);
     }
 
     /**
      * Method to get a value from the HashMap.
      * This calls the `find` method of the root node.
+     *
+     * Complexity O(log_32 N)
+     *
      * @param key The key to get the value from.
      */
     get(key: K): V | undefined {
@@ -788,51 +832,83 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         return undefined;
     }
 
-    set(key: K, value: V): HashMap<K, V> {
-
-        return this;
-    }
-
-    setAll(entries: Iterable<[K, V]>): HashMap<K, V> {
-
-        return this;
-    }
-
+    /**
+     * Check if the map has a key.
+     * @param key
+     */
     has(key: K): boolean {
-        return false;
+        return this.findLeafNode(HashCode.hashCode(key), key) !== null;
     }
+
+    /**
+     * Check if the map has a value.
+     * @param value
+     */
     hasValue(value: V): boolean {
-        return true;
+        return super.hasValue(value);
     }
 
+    /**
+     * Check if the map has all the keys.
+     * @param keys
+     */
     hasAll<H extends K>(keys: Iterable<H>): boolean {
-        return false;
+        return super.hasAll(keys);
     }
 
+    /**
+     * Check if the map is empty.
+     */
     isEmpty(): boolean {
-        return this._size === 0;
+        return super.isEmpty();
     }
 
+    /**
+     * Clear the map. Return an empty instance.
+     */
     clear(): HashMap<K, V> {
         return HashMap.empty<K, V>();
     }
 
     // Speed methods
+    /**
+     * Complexity O(log_32 N) where N is the number of elements in the map
+     */
     hasSpeed(): Speed {
         return Speed.Log;
     }
+
+    /**
+     * Complexity O(log_32 N) where N is the number of elements in the map
+     */
     addSpeed(): Speed {
         return Speed.Log;
     }
+
+    /**
+     * Complexity O(log_32 N) where N is the number of elements in the map
+     */
     removeSpeed(): Speed {
         return Speed.Log;
     }
 
-
+    /**
+     * Check whether an object instance is the same as the current hash map instance.
+     * @param o
+     */
     equals(o: Object): boolean {
+        if (o === this) return true;
+        if (!(o instanceof HashMap)) return false;
 
+        const other = o as HashMap<K, V>;
+        if (this.size() !== other.size()) return false;
+        for (const [key, value] of this) {
+            const otherValue = other.get(key as any);
 
-        return false;
+            if(otherValue === undefined && !other.has(key as any)) return false;
+            if (!Utils.equals(value, otherValue)) return false;
+        }
+        return true;
     }
 
     /**
@@ -849,78 +925,182 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         return this._hash;
     }
 
+    /**
+     * Get a value from the map or return a default value.
+     * @param key
+     * @param defaultValue
+     */
     getOrDefault(key: K, defaultValue: V): V {
-        throw new Error("not")
-    }
-    computeIfAbsent(key: K, func: (key: K) => V): [HashMap<K, V>, V] {
-        throw new Error("not")
-    }
-    computeIfPresent(key: K, func: (key: K, value: V) => V): [HashMap<K, V>, V] {
-        throw new Error("not")
-    }
-    compute(key: K, func: (key: K, value: V | undefined) => V): [HashMap<K, V>, V] {
-        throw new Error("not")
+        return super.getOrDefault(key, defaultValue);
     }
 
-    of(k: K, v: V): HashMap<K, V> {
-        throw new Error("not")
+    /**
+     * If a key-value pair is absent in the map, compute it using the function.
+     * Else just return the key-value pair.
+     * @param key
+     * @param func
+     */
+    computeIfAbsent(key: K, func: (key: K) => V): [HashMap<K, V>, V] {
+        return super.computeIfAbsent(key, func) as [HashMap<K, V>, V];
     }
-    ofEntries(...entries: [K, V][]): HashMap<K, V> {
-        throw new Error("not")
+
+    /**
+     * If a key-value pair is present in the map, compute it using the function.
+     * Else just return the key-value pair.
+     * @param key
+     * @param func
+     */
+    computeIfPresent(key: K, func: (key: K, value: V) => V): [HashMap<K, V>, V] {
+        return super.computeIfPresent(key, func) as [HashMap<K, V>, V];
     }
-    entry(k: K, v: V): [K, V] {
-        throw new Error("not")
+
+    /**
+     * Compute the value for a key using the function.
+     * @param key
+     * @param func
+     */
+    compute(key: K, func: (key: K, value: V | undefined) => V): [HashMap<K, V>, V] {
+        return super.compute(key, func) as [HashMap<K, V>, V];
     }
+
+    /**
+     * Copy the map to a new HashMap.
+     * @param map
+     */
     copyOf(map: Map<K, V>): HashMap<K, V> {
-        throw new Error("not")
+        return HashMap.of(...map.entries());
     }
 
     // HOFs defined in Map.ts
+    /**
+     * Check that all elements in the map satisfy the predicate.
+     * @param predicate
+     * @param thisArg
+     */
     every(predicate: (value: V, key: K, map: this) => boolean, thisArg?: unknown): this is HashMap<K, V>;
     every(predicate: (value: V, key: K, map: this) => unknown, thisArg?: unknown): boolean;
     every(predicate: (value: V, key: K, map: this) => unknown, thisArg?: unknown): unknown {
         return super.every(predicate, thisArg);
     }
 
+    /**
+     * Check that at least one element in the map satisfies the predicate.
+     * @param predicate
+     * @param thisArg
+     */
     some(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): boolean {
-        throw new Error("not implementewd")
+        return super.some(predicate, thisArg);
     }
+
+    /**
+     * Sort using the default `Timsort` method.
+     * If a compare function is defined, use that one or use the default compare function.
+     * @param compare
+     */
     sort(compare?: Comparator<K>): HashMap<K, V> {
-        throw new Error("not implementewd")
+        const entries: [K, V][] = [...this.entries()];
+
+        if (compare) {
+            const tupleCompare: Comparator<[K, V]> = (a, b) => compare(a[0], b[0]);
+            Sorting.timSort(entries, tupleCompare);
+        } else {
+            const tupleCompare: Comparator<[K, V]> = (a, b) =>
+                a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
+            Sorting.timSort(entries, tupleCompare);
+        }
+        return HashMap.of(...entries);
     }
+
+    /**
+     * Returns a new map whose entries are ordered by the *derived* key returned
+     * from `comparatorValueMapper`.  Sorting is stable and performed with
+     * `Sorting.timSort`.  Supply an optional `compare` to override the default
+     * ordering of the derived keys.
+     * @param comparatorValueMapper
+     * @param compare
+     */
     sortBy<C>(
         comparatorValueMapper: (value: V, key: K, map: this) => C,
         compare?: Comparator<C>
-    ): HashMap<K | C, V> {
-        throw new Error("not implementewd")
-    }
-    forEach(callback: (value: V, key: K, map: this) => void, thisArg?: any): void {
-        throw new Error("not implementewd")
-    }
-    find(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): V | undefined {
-        throw new Error("not implementewd")
+    ): HashMap<any, any> {
+        const entries: [K, V][] = [...this.entries()];
+        const entryCompare: Comparator<[K, V]> = compare
+            ? (a, b) => compare(
+                comparatorValueMapper(a[1], a[0], this),
+                comparatorValueMapper(b[1], b[0], this)
+            )
+            : (a, b) => {
+                const va = comparatorValueMapper(a[1], a[0], this);
+                const vb = comparatorValueMapper(b[1], b[0], this);
+                return va < vb ? -1 : va > vb ? 1 : 0;
+            };
+        Sorting.timSort(entries, entryCompare);
+        return HashMap.of(...entries);
     }
 
+    /**
+     * Iterate over the map and call the callback for each element.
+     * @param callback
+     * @param thisArg
+     */
+    forEach(callback: (value: V, key: K, map: this) => void, thisArg?: any): void {
+        super.forEach(callback, thisArg);
+    }
+
+    /**
+     * Find the first element that satisfies the predicate.
+     * @param predicate
+     * @param thisArg
+     */
+    find(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): V | undefined {
+        return super.find(predicate, thisArg);
+    }
+
+    /**
+     * Fold the map's values from left to right, calling `callback` for every entry and accumulate the result.
+     * @param callback
+     * @param initialValue
+     */
     reduce(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
     reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
     reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R {
-        throw new Error("not implementewd")
+        return super.reduce(callback, initialValue);
     }
+
+
+    /**
+     * Fold the map's values from right to left, calling `callback` for every entry and accumulate the result.
+     * @param callback
+     * @param initialValue
+     */
     reduceRight(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
     reduceRight<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
     reduceRight<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R {
-        throw new Error("not implementewd")
+        return super.reduceRight(callback, initialValue);
     }
 
 
     // HOFs inspired by immutable.js
+    /**
+    * Update an existing entry or add a new one in a single call.
+    * If given a function, it is called with the current value (or `undefined`)
+    * and its result becomes the new value. If given a direct value, that
+    * value is set (replacing or inserting).
+    *
+    * @returns a new HashMap with the updated or added entry
+    */
     updateOrAdd(key: K, callback: (value: V) => V): HashMap<K, V>;
     updateOrAdd(key: K, callback: (value: V | undefined) => V | undefined): HashMap<K, V | undefined>;
     updateOrAdd(key: K, newValue: V): HashMap<K, V>;
-    updateOrAdd(key: K, callbackOrValue: ((value: any) => any) | V): HashMap<K, any> {
-        throw new Error("not implementewd")
+    updateOrAdd(key: K, callbackOrValue: any): HashMap<K, any> {
+        return super.updateOrAdd(key, callbackOrValue) as HashMap<K, any>;
     }
 
+    /**
+     * Merge multiple maps into this map.
+     * The other collections can either be iterables or a map.
+     * @param collections
+     */
     merge<KC, VC>(
         ...collections: Array<Iterable<[KC, VC]>>
     ): HashMap<K | KC, Exclude<V, VC> | VC>;
@@ -929,9 +1109,14 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
     ): HashMap<K | string, Exclude<V, C> | C>;
     merge<KC, VC>(other: Map<KC, VC>): HashMap<K | KC, V | VC>;
     merge(...collections: any[]): HashMap<any, any> {
-        throw new Error("not")
+        return super.merge(...collections) as HashMap<any, any>;
     }
 
+    /**
+     * Concatenate multiple maps into this map.
+     * The other collections can either be iterables or a map.
+     * @param collections
+     */
     concat<KC, VC>(
         ...collections: Array<Iterable<[KC, VC]>>
     ): HashMap<K | KC, Exclude<V, VC> | VC>;
@@ -939,9 +1124,19 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         ...collections: Array<{ [key: string]: C }>
     ): HashMap<K | string, Exclude<V, C> | C>;
     concat(...collections: any[]): HashMap<any, any> {
-        throw new Error("not implementewd")
+        return super.concat(...collections) as HashMap<any, any>;
     }
 
+
+    /**
+     * Merge multiple collections into this map, combining values with `callback` when keys collide.
+     * Later collections override earlier ones, but if a key exists in both, `callback(oldVal, newVal, key)`
+     * is used to compute the new value.
+     *
+     * @param callback – function(oldValue, newValue, key) ⇒ mergedValue
+     * @param collections – one or more iterables or objects of [key, value] entries
+     * @returns a new HashMap with the merged results
+    */
     mergeWith<KC, VC, VCC>(
         callback: (oldVal: V, newVal: VC, key: K) => VCC,
         ...collections: Array<Iterable<[KC, VC]>>
@@ -954,24 +1149,49 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         callback: (oldVal: V, newVal: any, key: any) => any,
         ...collections: any[]
     ): HashMap<any, any> {
-        throw new Error("not implementewd")
+        return super.mergeWith(callback, ...collections) as HashMap<any, any>;
     }
 
+    /**
+     * Map over the entries in the map and apply the callback function to each entry.
+     * @param callback
+     * @param thisArg
+     */
     map<M>(
         callback: (value: V, key: K, map: this) => M,
         thisArg?: unknown
     ): HashMap<K, M> {
-        throw new Error("not implementewd")
+        return super.map(callback, thisArg) as HashMap<K, M>;
     }
 
+    /**
+     * Transform each key in the map by applying `callback`, producing a new map
+     * with the transformed keys and the same values. If multiple original entries
+     * map to the same new key, later entries overwrite earlier ones.
+     *
+     * @param callback – function(key, value, map) ⇒ newKey
+     * @param thisArg – context to be used against the predicate function
+     * @param compare
+     * @returns a new HashMap with transformed keys
+     */
     mapKeys<M>(
         callback: (key: K, value: V, map: this) => M,
         thisArg?: unknown,
         compare?: Comparator<M>
     ): HashMap<M, V> {
-        throw new Error("not implementewd")
+        let newMap = HashMap.empty<M, V>();
+        for (const [k, v] of this) {
+            newMap = newMap.set(callback.call(thisArg, k, v, this), v);
+        }
+        return newMap;
     }
 
+    /**
+     * Transform each entry in the map by applying `callback`, producing a new map with the transformed entries.
+     * @param mapper
+     * @param thisArg
+     * @param compare
+     */
     mapEntries<KM, VM>(
         mapper: (
             entry: [K, V],
@@ -981,17 +1201,50 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         thisArg?: unknown,
         compare?: Comparator<KM>
     ): HashMap<KM, VM> {
-        throw new Error("not implementewd")
+        let newMap = HashMap.empty<KM, VM>();
+        let idx = 0;
+        for (const entry of this) {
+            const result = mapper.call(thisArg, entry, idx, this);
+            if (result !== undefined) {
+                const [newKey, newValue] = result;
+                newMap = newMap.set(newKey, newValue);
+            }
+            idx++;
+        }
+        return newMap;
     }
 
+    /**
+     * Transforms each element of the HashMap into an iterable of new values and flattens the result into a new HashMap.
+     *
+     * The mapper should return an iterable of values of type M.
+     * All values from each returned iterable are added to the set.
+     *
+     * @param callback A function that transforms an element of type T into an element of type M.
+     * @param thisArg Optional. An object to use as `this` context when executing the mapper function.
+     * @param compare Optional. A comparator function for the mapped values of type M. If not provided, the default comparator for M is used.
+     * @returns A new HashMap containing all the values produced by the mapper function, flattened into a single set.
+     */
     flatMap<KM, VM>(
         callback: (value: V, key: K, map: this) => Iterable<[KM, VM]>,
         thisArg?: unknown,
         compare?: Comparator<KM>
     ): HashMap<KM, VM> {
-        throw new Error("not implementewd")
+        let newMap = HashMap.empty<KM, VM>();
+        for (const [key, value] of this) {
+            for (const [newKey, newValue] of callback.call(thisArg, value, key, this)) {
+                newMap = newMap.set(newKey, newValue);
+            }
+        }
+        return newMap;
     }
 
+    /**
+     * Filters out all the elements in the map that does not satisfy the predicate.
+     * @param predicate Function that returns true if the element should be included in the new set.
+     * @param thisArg Optional. An object to use as `this` context when executing the predicate function.
+     * @returns A new HashMap containing only the elements that satisfy the predicate.
+     */
     filter<F extends V>(
         predicate: (value: V, key: K, map: this) => value is F,
         thisArg?: unknown,
@@ -1004,9 +1257,24 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         predicate: (value: V, key: K, map: this) => unknown,
         thisArg?: unknown
     ): HashMap<any, any> {
-        throw new Error("not implementewd")
+        let newMap = HashMap.empty<K, V>();
+        for (const [k, v] of this) {
+            if (predicate.call(thisArg, v, k, this)) {
+                newMap = newMap.set(k, v);
+            }
+        }
+        return newMap;
     }
 
+    /**
+     * Partitions the map into two map based on the predicate.
+     * All the values that satisfy the predicate are added to the true map, and the rest are added to the false map.
+     *
+     * @param predicate Function that returns true if the element should be included in the first map
+     * or false if the elements should be included in the second map.
+     * @param thisArg Optional. An object to use as `this` context when executing the predicate function.
+     * @returns An array with two map. The first map contains the values that satisfy the predicate, and the second map contains the rest.
+     */
     partition<F extends V, C>(
         predicate: (this: C, value: V, key: K, map: this) => value is F,
         thisArg?: C
@@ -1019,11 +1287,28 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         predicate: (value: V, key: K, map: this) => unknown,
         thisArg?: unknown
     ): [HashMap<K, V>, HashMap<K, V>] {
-        throw new Error("not implementewd")
+        let trueMap = HashMap.empty<K, V>();
+        let falseMap = HashMap.empty<K, V>();
+
+        for (const [k, v] of this) {
+            if (predicate.call(thisArg, v, k, this)) {
+                trueMap = trueMap.set(k, v);
+            } else {
+                falseMap = falseMap.set(k, v);
+            }
+        }
+        return [trueMap, falseMap];
     }
 
+    /**
+     * Flips the keys and values of the HashMap.
+     */
     flip(): HashMap<V, K> {
-        throw new Error("not implementewd")
+        let map = HashMap.empty<V, K>();
+        for (const [k, v] of this) {
+            map = map.set(v, k);
+        }
+        return map;
     }
 
 
