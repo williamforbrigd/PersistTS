@@ -576,6 +576,34 @@ describe('HashMap flip()', () => {
     });
 });
 
-
+describe("HashMap compareTo()", () => {
+    const mapA = HashMap.of([10, "ten"], [20, "twenty"], [30, "thirty"]);
+  
+    test("identical maps → 0", () => {
+        const mapB = HashMap.of([10, "ten"], [20, "twenty"], [30, "thirty"]);
+        expect(mapA.compareTo(mapB)).toBe(0);
+        expect(mapB.compareTo(mapA)).toBe(0);
+    });
+  
+    test("different sizes", () => {
+        const mapSmaller = HashMap.of([10, "ten"], [20, "twenty"]);
+        expect(mapA.compareTo(mapSmaller)).toBeGreaterThan(0);
+        expect(mapSmaller.compareTo(mapA)).toBeLessThan(0);
+    });
+  
+    test("same size, first key differs", () => {
+        const mapC = HashMap.of([10, "ten"], [40, "forty"], [50, "fifty"]);
+      // 30 vs 40 => mapA “smaller”
+        expect(mapA.compareTo(mapC)).toBeLessThan(0);
+        expect(mapC.compareTo(mapA)).toBeGreaterThan(0);
+    });
+  
+    test("same key, values differ", () => {
+        const mapE = HashMap.empty<number, string>().set(1, "abc");
+        const mapF = HashMap.empty<number, string>().set(1, "xyz");
+        expect(mapE.compareTo(mapF)).toBeLessThan(0);
+        expect(mapF.compareTo(mapE)).toBeGreaterThan(0);
+    });
+  });
 
 

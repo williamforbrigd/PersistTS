@@ -8,7 +8,7 @@ import Sorting from "../Sorting/Sorting";
 
 
 const SK5 = 0x55555555, SK3 = 0x33333333;
-const SKF0=0xF0F0F0F,SKFF=0xFF00FF;
+const SKF0=0xF0F0F0F//,SKFF=0xFF00FF;
 
 /**
  * CTPOP (count population) is available on most modern computer architectures.
@@ -585,6 +585,10 @@ class BitmapIndexedNode<K, V> implements INode<K, V> {
  * **Complexity**:
  * Operations such as `set`, `delete`, and `get` are O(log_32 N) where N is the number of elements in the map.
  * This is because the Hash Array Mapped Trie (HAMT) has a branching factor of 32 (where each level consumes 5 bits).
+ * Each node can have 32 distinct slots, and we know that log_2 32 = 5 bits of the key's hash to decide which child to follow. 
+ * Using fewer bits (e.g log_2 16 = 4 bits) would deepen the tree, while using more bits (e.g. log_2 64 = 6) would double 
+ * the bitmap to two words and leave most entries empty. 5 bits strikes a balance betweeen, wasted space and deepness. 
+ * It works well also on 64-bit machines, since you have one word per node. 
  *
  * @see Phil Bagwell, "Ideal Hash Trees", EPFL, 2000.
  * @see https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/PersistentHashMap.java
@@ -770,11 +774,7 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
      * @param keys
      */
     deleteAll(keys: Iterable<K>): HashMap<K, V> {
-        let map: HashMap<K, V> = this;
-        for (const key of keys) {
-            map = map.delete(key);
-        }
-        return map;
+        return super.deleteAll(keys) as HashMap<K, V>;
     }
 
     /**
@@ -882,6 +882,59 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
             if (!Utils.equals(value, otherValue)) return false;
         }
         return true;
+    }
+
+
+    /**
+     * Compare the map to another map.
+     * 
+     * First compare the reference, if that is the same then return 0.
+     * 
+     * Then compare the sizes, if they are different then return the size difference.
+     * 
+     * Then sort then `entries()` of both HashMaps and compare the hash codes of the keys.
+     * 
+     * @param o the HashMap to compareTo()
+     * @returns:
+     *      0 -> equal
+     *     <0 -> this < 0
+     *     >0 -> this > 0
+     */
+    compareTo(o: HashMap<K, V>): number {
+        // reference is the same
+        if (this === o) return 0;
+
+        const sizeDiff = this.size() - o.size();
+        if (sizeDiff !== 0) return sizeDiff;
+
+        const entriesA = this.entries();
+        const entriesB = o.entries();
+
+        const entryCmp = ([ka]: [K, V], [kb]: [K, V]): number => {
+            const ha = HashCode.hashCode(ka);
+            const hb = HashCode.hashCode(kb);
+            if (ha !== hb) return ha - hb;
+
+            if (ka < kb) return -1;
+            if (ka > kb) return 1;
+            return 0;
+        }
+
+        Sorting.timSort(entriesA, entryCmp);
+        Sorting.timSort(entriesB, entryCmp);
+
+        for (let i = 0; i < entriesA.length; i++) {
+            const [ka, va] = entriesA[i];
+            const [kb, vb] = entriesB[i];
+    
+            const kCmp = entryCmp([ka, va], [kb, vb]);
+            if (kCmp !== 0) return kCmp;
+    
+            if (va < vb) return -1;
+            if (va > vb) return 1;
+        }
+
+        return 0;
     }
 
     /**

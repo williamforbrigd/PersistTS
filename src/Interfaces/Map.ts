@@ -29,6 +29,7 @@ export default interface Map<K, V> extends Iterable<[K, V]> {
 
     size(): number;
     equals(o: Object): boolean;
+    compareTo(o: Object): number;
     hashCode(): number;
     getOrDefault(key: K, defaultValue: V): V;
     computeIfAbsent(key: K, func: (key: K) => V): [Map<K, V>, V];

@@ -9,7 +9,13 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
 
     abstract [Symbol.iterator](): MapIterator<[K, V]>;
 
-    abstract size(): number;
+    size(): number {
+        let count = 0;
+        for (const _ of this) {
+            count++;
+        }
+        return count;
+    }
 
     [k: number]: V | undefined;
     abstract get(key: K): V | undefined;
@@ -49,7 +55,13 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     }
 
     abstract delete(key: K): Map<K, V>;
-    abstract deleteAll(keys: Iterable<K>): Map<K, V>;
+    deleteAll(keys: Iterable<K>): Map<K, V> {
+        let map = this as Map<K, V>;
+        for (const key of keys) {
+            map = map.delete(key);    
+        }
+        return map;
+    }
 
     isEmpty(): boolean {
         return this.size() === 0;
@@ -138,6 +150,7 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
 
     abstract hashCode(): number;
     abstract equals(o: Object): boolean;
+    abstract compareTo(o: Object): number;
 
 
     reduce(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;

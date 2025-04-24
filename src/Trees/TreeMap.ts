@@ -533,11 +533,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
     }
 
     size(): number {
-        let count = 0;
-        for (const _ of this){
-            count++;
-        }
-        return count;
+        return super.size();
     }
 
     get(key: K): V | undefined {
@@ -590,34 +586,20 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
 
     has(key: K): boolean {
         const node = this.getNode(key);
-        return node !== null
+        return node !== null;
     }
 
     hasValue(value: V): boolean {
-        for (const [_, v] of this) {
-            if (v === value) {
-                return true;
-            }
-        }
-        return false;
+        return super.hasValue(value);
     }
 
     hasAll<H extends K>(keys: Iterable<H>): boolean {
-        for (const key of keys) {
-            if (!this.has(key)) {
-                return false;
-            }
-        }
-        return true
+        return super.hasAll(keys);
     }
 
 
     deleteAll(keys: Iterable<K>): TreeMap<K, V> {
-        let newTree: TreeMap<K, V> = this;
-        for (const key of keys) {
-            newTree = newTree.delete(key);
-        }
-        return newTree;
+        return super.deleteAll(keys) as TreeMap<K, V>;
     }
 
     clear(): TreeMap<K, V> {
@@ -638,6 +620,21 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
 
     }
 
+    /**
+     * Compare the map to another map.
+     * 
+     * First compare the reference, if that is the same then return 0.
+     * 
+     * Then compare the sizes, if they are different then return the size difference.
+     * 
+     * Then iterate over the TreeMap's and compare their keys and values. 
+     * 
+     * @param o the HashMap to compareTo()
+     * @returns:
+     *      0 -> equal
+     *     <0 -> this < 0
+     *     >0 -> this > 0
+     */
     compareTo(o: TreeMap<K, V>): number {
         if (this === o) return 0;
 
@@ -708,8 +705,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
     }
 
     getOrDefault(key: K, defaultValue: V): V {
-        const value = this.get(key);
-        return value !== undefined ? value : defaultValue;
+        return super.getOrDefault(key, defaultValue);
     }
 
     /**
@@ -719,13 +715,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
      * @param func
      */
     computeIfAbsent(key: K, func: (key: K) => V): [TreeMap<K, V>, V] {
-        const value = this.get(key);
-        if (value === undefined) {
-            const newValue = func(key);
-            const newTree = this.set(key, newValue);
-            return [newTree, newValue];
-        }
-        return [this, value!];
+        return super.computeIfAbsent(key, func) as [TreeMap<K, V>, V];
     }
 
     /**
@@ -736,13 +726,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
      */
 
     computeIfPresent(key: K, func: (key: K, value: V) => V): [TreeMap<K, V>, V] {
-        const value = this.get(key);
-        if (value !== undefined) {
-            const newValue = func(key, value);
-            const newTree = this.set(key, newValue);
-            return [newTree, newValue];
-        }
-        return [this, value!];
+        return super.computeIfPresent(key, func) as [TreeMap<K, V>, V];
     }
 
     /**
@@ -752,10 +736,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
      * @param func
      */
     compute(key: K, func: (key: K, value: (V | undefined)) => V): [TreeMap<K, V>, V] {
-        const value = this.get(key);
-        const newValue = func(key, value);
-        const newTree = this.set(key, newValue);
-        return [newTree, newValue];
+        return super.compute(key, func) as [TreeMap<K, V>, V];
     }
 
     static of<K, V>(comparer: Comparator<K>, ...entries: [K, V][]): TreeMap<K, V> {
@@ -767,11 +748,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
     }
 
     copyOf(map: Map<K, V>): TreeMap<K, V> {
-        let newTree = new TreeMap<K, V>(this.compare);
-        for (const [k, v] of map.entries()) {
-            newTree = newTree.set(k, v);
-        }
-        return newTree;
+        return TreeMap.of(this.compare, ...map.entries());
     }
 
     // Higher Order Functions
@@ -834,28 +811,17 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
       }
 
     forEach(callback: (value: V, key: K, map: this) => void, thisArg?: unknown) {
-        for (const [k, v] of this) {
-            callback.call(thisArg, v, k, this);
-        }
+        super.forEach(callback, thisArg);
     }
 
     find(predicate: (value: V, key: K, map: this) => boolean, thisArg?: unknown): V | undefined {
-        for (const [k, v] of this) {
-            if (predicate.call(thisArg, v, k, this)) {
-                return v;
-            }
-        }
-        return undefined;
+        return super.find(predicate, thisArg);
     }
 
     reduce(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
     reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
     reduce<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R {
-        let acc: R = initialValue as R;
-        for (const [k, v] of this) {
-            acc = callback(acc, v, k, this);
-        }
-        return acc;
+        return super.reduce(callback, initialValue);
     }
 
     /**
@@ -866,12 +832,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
     reduceRight(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;
     reduceRight<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R;
     reduceRight<R>(callback: (accumulator: R, value: V, key: K, map: this) => R, initialValue?: R): R {
-        let acc: R = initialValue as R;
-        const entries = [...this.entries()];
-        for (let i = entries.length - 1; i >= 0; i--) {
-            acc = callback(acc, entries[i][1], entries[i][0], this);
-        }
-        return acc;
+        return super.reduceRight(callback, initialValue);
     }
 
     updateOrAdd(key: K, callback: (value: V) => V): TreeMap<K, V>;
@@ -918,32 +879,6 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         callback: (oldVal: V, newVal: any, key: any) => any,
         ...collections: any[]
     ): TreeMap<any, any> {
-        /*
-        let newTree = this as TreeMap<any, any>;
-
-
-        for (const collection of collections) {
-            if (Array.isArray(collection)) {
-                for (const [key, value] of collection) {
-                    if (newTree.has(key)) {
-                        newTree = newTree.update(key, callback(newTree.get(key)!, value, key));
-                    } else {
-                        newTree = newTree.set(key, value);
-                    }
-                }
-            } else if (typeof collection === 'object' && collection !== null) {
-                for (const key in collection) {
-                    if (newTree.has(key)) {
-                        newTree = newTree.update(key, callback(newTree.get(key)!, collection[key], key));
-                    } else {
-                        newTree = newTree.set(key, collection[key]);
-                    }
-                }
-            }
-        }
-        return newTree;
-
-         */
         return super.mergeWith(callback, ...collections) as TreeMap<any, any>;
     }
 
@@ -1012,11 +947,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         callback: (value: V, key: K, map: this) => M,
         thisArg?: unknown
     ): TreeMap<K, M> {
-        let newTree = new TreeMap<K, M>(this.compare);
-        for (const [k, v] of this.entries()) {
-            newTree = newTree.set(k, callback.call(thisArg, v, k, this));
-        }
-        return newTree;
+        return super.map(callback, thisArg) as TreeMap<K, M>;
     }
 
     mapKeys<M>(

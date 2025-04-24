@@ -133,6 +133,17 @@ describe("TreeMap", () => {
         expect(hasKey).toBeTruthy();
     })
 
+    test('hasValue()', () => {
+        const check = "hasthisvalue";
+        const newTree = treeMap.set(treeMap.size(), check);
+        expect(newTree.hasValue(check)).toBeTruthy();
+    })
+
+    test('hasAll() check that it has all keys', () => {
+        expect(treeMap.hasAll(arr)).toBeTruthy();
+        expect(treeMap.hasAll(arrDistinct)).toBeTruthy();
+    })
+
     test('has() and get()', () => {
         for (const elem of arrDistinct) {
             expect(treeMap.has(elem)).toBeTruthy();
@@ -210,6 +221,7 @@ describe("TreeMap", () => {
 
         const newTreeMap = treeMap.deleteAll(elemsToDelete);
         expect(newTreeMap.size()).toBe(0)
+        expect(newTreeMap.has(50)).toBeFalsy();
     })
 
     test('clear()', () => {
