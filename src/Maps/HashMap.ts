@@ -588,6 +588,7 @@ class BitmapIndexedNode<K, V> implements INode<K, V> {
  *
  * @see Phil Bagwell, "Ideal Hash Trees", EPFL, 2000.
  * @see https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/PersistentHashMap.java
+ * @see https://blog.higher-order.net/2009/09/08/understanding-clojures-persistenthashmap-deftwice
  */
 export default class HashMap<K, V> extends AbstractMap<K, V>
                                     implements Map<K, V> {
