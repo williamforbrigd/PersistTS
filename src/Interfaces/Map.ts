@@ -41,11 +41,6 @@ export default interface Map<K, V> extends Iterable<[K, V]> {
     every(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): this is Map<K, V>;
     every(predicate: (value: V, key: K, map: this) => unknown, thisArg?: any): boolean;
     some(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): boolean;
-    sort(compare?: Comparator<K>): Map<K, V>;
-    sortBy<C>(
-        comparatorValueMapper: (value: V, key: K, map: this) => C,
-        compare?: Comparator<C>
-    ): Map<K | C, V>;
     forEach(callback: (value: V, key: K, map: this) => void, thisArg?: any): void;
     find(predicate: (value: V, key: K, map: this) => boolean, thisArg?: any): V | undefined;
     reduce(callback: (accumulator: V, value: V, key: K, map: this) => V, initialValue?: V): V;

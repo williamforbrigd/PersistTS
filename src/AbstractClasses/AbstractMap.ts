@@ -170,8 +170,6 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
         }
         return false;
     }
-    abstract sort(compare?: Comparator<K>): Map<K, V>;
-    abstract sortBy<C>(comparatorValueMapper: (value: V, key: K, map: this) => C, compare?: Comparator<C>): Map<K | C, V>;
 
     updateOrAdd(key: K, callback: (value: V) => V): Map<K, V>;
     updateOrAdd(key: K, callback: (value: V | undefined) => V | undefined): Map<K, V | undefined>;

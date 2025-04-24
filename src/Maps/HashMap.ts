@@ -966,52 +966,6 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
     }
 
     /**
-     * Sort using the default `Timsort` method.
-     * If a compare function is defined, use that one or use the default compare function.
-     * @param compare
-     */
-    sort(compare?: Comparator<K>): HashMap<K, V> {
-        const entries: [K, V][] = [...this.entries()];
-
-        if (compare) {
-            const tupleCompare: Comparator<[K, V]> = (a, b) => compare(a[0], b[0]);
-            Sorting.timSort(entries, tupleCompare);
-        } else {
-            const tupleCompare: Comparator<[K, V]> = (a, b) =>
-                a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
-            Sorting.timSort(entries, tupleCompare);
-        }
-        return HashMap.of(...entries);
-    }
-
-    /**
-     * Returns a new map whose entries are ordered by the *derived* key returned
-     * from `comparatorValueMapper`.  Sorting is stable and performed with
-     * `Sorting.timSort`.  Supply an optional `compare` to override the default
-     * ordering of the derived keys.
-     * @param comparatorValueMapper
-     * @param compare
-     */
-    sortBy<C>(
-        comparatorValueMapper: (value: V, key: K, map: this) => C,
-        compare?: Comparator<C>
-    ): HashMap<any, any> {
-        const entries: [K, V][] = [...this.entries()];
-        const entryCompare: Comparator<[K, V]> = compare
-            ? (a, b) => compare(
-                comparatorValueMapper(a[1], a[0], this),
-                comparatorValueMapper(b[1], b[0], this)
-            )
-            : (a, b) => {
-                const va = comparatorValueMapper(a[1], a[0], this);
-                const vb = comparatorValueMapper(b[1], b[0], this);
-                return va < vb ? -1 : va > vb ? 1 : 0;
-            };
-        Sorting.timSort(entries, entryCompare);
-        return HashMap.of(...entries);
-    }
-
-    /**
      * Iterate over the map and call the callback for each element.
      * @param callback
      * @param thisArg

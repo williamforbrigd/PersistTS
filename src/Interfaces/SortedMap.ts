@@ -6,6 +6,11 @@ import Map from "./Map";
 export default interface SortedMap<K, V> extends Map<K, V> {
     getComparator(): Comparator<K>;
     // keys(): K[];
+    sort(compare?: Comparator<K>): SortedMap<K, V>;
+    sortBy<C>(
+        comparatorValueMapper: (value: V, key: K, map: this) => C,
+        compare?: Comparator<C>
+    ): SortedMap<K | C, V>;
     findMin(key?: K): [K, V] | undefined;
     findMax(key?: K): [K, V] | undefined;
     deleteMin(): SortedMap<K, V>;

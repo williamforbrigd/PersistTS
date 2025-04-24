@@ -417,21 +417,6 @@ describe('HashMap every(), some()', () => {
     });
 });
 
-describe('HashMap sort() and sortBy()', () => {
-    const map = HashMap.of([3, "c"], [1, "a"], [2, "b"]);
-
-    test('sort returns map sorted by key', () => {
-        const sorted = map.sort();
-        expect(sorted.entries()).toEqual([[1, "a"], [2, "b"], [3, "c"]]);
-    });
-
-    // test('sortBy sort by values', () => {
-    //     const map = HashMap.of([1, "b"], [3, "a"], [2, "c"]);
-    //     const sorted = map.sortBy(v => v);
-    //     expect(sorted.entries()).toEqual([[3, "a"], [1, "b"], [2, "c"]]);
-    // });
-});
-
 describe('HashMap forEach()', () => {
     test('forEach iterates over all entries', () => {
         const map = HashMap.of([1, "one"], [2, "two"]);
