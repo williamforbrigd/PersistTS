@@ -28,8 +28,6 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     abstract set(key: K, value: V): Map<K, V>;
     abstract setAll(entries: Iterable<[K, V]>): Map<K, V>;
 
-    abstract update(key: K, newValue: V): Map<K, V>;
-
     has(key: K): boolean {
         return this.get(key) !== undefined;
     }
@@ -181,18 +179,10 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     updateOrAdd(key: K, callbackOrValue: ((value: any) => any) | V): Map<K, any> {
         if (typeof callbackOrValue === 'function') {
             const callback = callbackOrValue as (value: V) => V;
-            if (this.has(key)) {
-                return this.update(key, callback(this.get(key)!));
-            } else {
-                return this.set(key, callback(this.get(key) as any))
-            }
+            return this.set(key, callback(this.get(key) as any))
         } else {
             const newValue = callbackOrValue as V;
-            if (this.has(key)) {
-                return this.update(key, newValue);
-            } else {
-                return this.set(key, newValue);
-            }
+            return this.set(key, newValue);
         }
     }
 
@@ -257,9 +247,9 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
         });
 
         for (const [key, value] of objEntries) {
-            if (newMap.has(key as any)) {
-                const merged = callback(newMap.get(key as any)!, value, key);
-                newMap = newMap.update(key as any, merged);
+            if (newMap.has(key)) {
+                const merged = callback(newMap.get(key)!, value, key);
+                newMap = newMap.set(key, merged);
             } else {
                 newMap = newMap.set(key as any, value);
             }
@@ -284,18 +274,18 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
         for (const collection of collections) {
             if (this.isCustomMap(collection)) {
                 for (const [key, value] of collection.entries()) {
-                    if (newMap.has(key as any)) {
-                        const merged = callback(newMap.get(key as any)!, value, key);
-                        newMap = newMap.update(key as any, merged);
+                    if (newMap.has(key)) {
+                        const merged = callback(newMap.get(key)!, value, key);
+                        newMap = newMap.set(key, merged);
                     } else {
                         newMap = newMap.set(key as any, value);
                     }
                 }
             } else if (Array.isArray(collection)) {
                 for (const [key, value] of collection) {
-                    if (newMap.has(key as any)) {
-                        const merged = callback(newMap.get(key as any)!, value, key);
-                        newMap = newMap.update(key as any, merged);
+                    if (newMap.has(key)) {
+                        const merged = callback(newMap.get(key)!, value, key);
+                        newMap = newMap.set(key, merged);
                     } else {
                         newMap = newMap.set(key as any, value);
                     }
@@ -313,7 +303,7 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
     ): Map<K, M> {
         let newMap: Map<K, M> = this as unknown as Map<K, M>;
         for (const [k, v] of this) {
-            newMap = newMap.update(k, callback.call(thisArg, v, k, this));
+            newMap = newMap.set(k, callback.call(thisArg, v, k, this));
         }
         return newMap;
     }

@@ -210,7 +210,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         } else if (cmp > 0) {
             return this.bubble(c, this.left(), y, this.right().ins(x));
         } else {
-            return this;
+            return this.from(this.color, this.left(), x, this.right());
         }
     }
 
@@ -395,22 +395,6 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
     maxSubTreeKeyValue(): [K, V] {
         if (this.isEmpty()) throw new Error("cannot get max value from empty tree");
         return this.right().isEmpty() ? this.keyValue() : this.right().maxSubTreeKeyValue();
-    }
-
-    update(key: K, newValue: V): TreeMap<K, V> {
-        if (this.isEmpty()) return this;
-
-        const y = this.keyValue();
-        const cmp = this.compare(key, y[0]);
-
-        if (cmp < 0) {
-            return this.from(this.color, this.left().update(key, newValue), y, this.right())
-        } else if (cmp > 0) {
-            return this.from(this.color, this.left(), y, this.right().update(key, newValue));
-        } else {
-            // key found, update it
-            return this.from(this.color, this.left(), [key, newValue], this.right());
-        }
     }
     
     successorTree(): TreeMap<K, V> | null {

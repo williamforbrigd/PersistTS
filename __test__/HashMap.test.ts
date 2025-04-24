@@ -296,37 +296,6 @@ describe('HashMap delete()', () => {
 });
 
 
-// HashMap.update.test.ts
-describe("HashMap update()", () => {
-    let map: HashMap<string, number>;
-
-    beforeEach(() => {
-        // Start each test with a map containing { x→1, y→2 }
-        map = HashMap.of(["x", 1], ["y", 2]);
-    });
-
-    test("updating an existing key to a new value returns a new map with same size", () => {
-        const updated = (map as any).update("x", 42) as HashMap<string, number>;
-        expect(updated).not.toBe(map);
-        expect(updated.size()).toBe(map.size());
-        expect(updated.get("x")).toBe(42);
-        // Ensure other entries are unchanged
-        expect(updated.get("y")).toBe(2);
-    });
-
-    test("updating an existing key to the same value returns the same instance", () => {
-        const same = (map as any).update("y", 2) as HashMap<string, number>;
-        expect(same).toBe(map);
-    });
-
-    test("updating a non-existent key returns the same instance (no insertion)", () => {
-        const result = (map as any).update("z", 99) as HashMap<string, number>;
-        expect(result).toBe(map);
-        expect(result.has("z")).toBe(false);
-        expect(result.size()).toBe(2);
-    });
-});
-
 describe('HashMap size(), isEmpty()', () => {
     test('empty map has size 0 and isEmpty true', () => {
         const map = HashMap.empty<number, string>();

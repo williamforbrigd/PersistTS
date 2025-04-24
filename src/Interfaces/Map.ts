@@ -14,7 +14,6 @@ export default interface Map<K, V> extends Iterable<[K, V]> {
     // set method adds or updates an entry in this map
     set(key: K, value: V): Map<K, V>;
     setAll(entries: Iterable<[K, V]>): Map<K, V>;
-    update(key: K, newValue: V): Map<K, V>;
     has(key: K): boolean;
     hasValue(value: V): boolean;
     hasAll<H extends K>(keys: Iterable<H>): boolean;

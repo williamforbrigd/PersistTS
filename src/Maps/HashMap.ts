@@ -740,34 +740,6 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
     }
 
     /**
-     * Private helper method to update an already existing key in the hashmap.
-     *
-     * If the key does not exist, it is treated as a no-op for update.
-     * @param key
-     * @param newValue
-     * @private
-     */
-    update(key: K, newValue: V): HashMap<K, V> {
-        const addedLeaf: Box<LeafNode<K, V>> = {val: null};
-
-        const newRoot = this._root.assoc(this._shift, HashCode.hashCode(key), key, newValue, addedLeaf);
-
-        // no change, same map
-        if (newRoot === null || newRoot === this._root) {
-            return this;
-        }
-
-        // addedLeaf.val !== null means that the key did not exist in the map from before.
-        // In an update, we treat that as a no-op
-        if (addedLeaf.val !== null) {
-            return this;
-        }
-
-        return new HashMap<K, V>(this._size, this._shift, newRoot);
-
-    }
-
-    /**
      * Method to remove a key from the HashMap.
      * This calls the `without` method of the root node.
      *
