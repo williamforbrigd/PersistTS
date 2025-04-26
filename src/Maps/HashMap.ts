@@ -32,7 +32,7 @@ export function ctpop(map: number): number {
  * In a hash-array-mapped-trie (HAMT) each level consumes 5-bits of the hash, because 2**5 = 32.
  * This is the maximum branching factor of 32 children.
  * level 0 to 5 where the rightmost bits are used for the root.
- * [00][00000][00000][00000][00000]
+ * [00][00000][00000][00000][00000][00000][00000]
  *
  * When you want to obtain some bits corresponding to a level n. You obtain this number by first moving those bits
  * to the right until it is the right-most block (right shift). Then you null out the other bits (mask).
@@ -577,7 +577,6 @@ class BitmapIndexedNode<K, V> implements INode<K, V> {
 
 /**
  * **Persistent HashMap** - a fully immutable, Hash Array Mapped Trie (HAMT). adapted from Clojure's implementation.
- * Link to Clojure implementation:
  *
  * It is a persistent implementation of Phil Bagwell's Hash Array Mapped Trie (HAMT).
  * This preserves structural sharing where most of the data can be re-used between updates.
