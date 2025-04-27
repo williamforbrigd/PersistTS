@@ -1,3 +1,12 @@
+import AbstractList from "../AbstractClasses/AbstractList";
+import { Speed } from "../Enums/Speed";
+import HashCode from "../Hashing/HashCode";
+import Collection from "../Interfaces/Collection";
+import { Comparator } from "../Interfaces/Comparator";
+import List, {ListInput} from "../Interfaces/List";
+import SequencedCollection from "../Interfaces/SequencedCollection";
+import { Utils } from "../Utils/Utils";
+
 const MASK = 0x1f; // 011111 = 0b11111 = 32 - 1
 const SHIFT = 5; // log2(32) = 5
 const BRANCHING = 1 << SHIFT; // 32
@@ -51,6 +60,8 @@ function mask(i: number, shift: number): number {
     return (i >>> shift) & MASK;
 }
 
+
+
 /**
  * **Persistent Vector** - a fully immutable, bit-mapped vector trie (BVT) based on the vector implementation in Clojure.
  * 
@@ -63,13 +74,19 @@ function mask(i: number, shift: number): number {
  * @see https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/PersistentVector.java
  * @see https://blog.higher-order.net/2009/02/01/understanding-clojures-persistentvector-implementation
  */
-export default class Vector<T> {
-    private constructor(
-        private readonly _size: number,
-        private readonly _shift: number,
-        private readonly _root: Node<T>,
-        private readonly _tail: T[],
-    ) {}
+export default class Vector<T> extends AbstractList<T>
+    implements List<T> {
+
+    private _hashCode: number | null = null;
+
+    constructor(
+        readonly _size: number,
+        readonly _shift: number,
+        readonly _root: Node<T>,
+        readonly _tail: T[],
+    ) {
+        super();
+    }
 
     /**
      * Creates a new empty vector.
@@ -102,6 +119,14 @@ export default class Vector<T> {
 
     size(): number { return this._size;}
     isEmpty(): boolean { return this._size === 0; }
+
+    of(...values: T[]): Vector<T> {
+        return Vector.of(...values);
+    }
+
+    empty(): List<T> {
+        return Vector.empty<T>();
+    }
 
     /**
      * Locate leaf array for index i.
@@ -359,6 +384,635 @@ export default class Vector<T> {
         return new Branch((node as Branch<T>).array.slice(0, idx) as Node<T>[]);
     }
 
+    // Methods from the List interface
+
+    /**
+     * Adds an item to the end of the vector.
+     * Same as the `push` method.
+     */
+    add(item: T): Vector<T>;
+    add(index: number, item: T): Vector<T>;
+    add(arg1: T | number, arg2?: T): Vector<T> {
+        if (typeof arg1 === "number") {
+            return this.set(arg1, arg2 as T);
+        } else {
+            return this.push(arg1);
+        }
+    }
+
+    /**
+     * Add all the items to the Vector
+     * 
+     * Need to check if the calling instance is a VectorSlice or not.
+     * Then we slice all the items to the left and to the right of the index, excluding the index itself. 
+     * 
+     * @param items - to be added
+     * @param index - optional parameter which is where to add the items from.
+     * @returns - Vector with the items added. 
+     */
+    addAll(items: Iterable<T>, index?: number): Vector<T> {
+        const elems = Array.from(items);
+        if (elems.length === 0) return this;
+
+        const insertAt = index === undefined ? this._size : index;
+
+        const makeBase = (v: Vector<T>): Vector<T> =>
+            v instanceof (VectorView) ? Vector.of(...v) : v;
+
+        const left = this.slice(0, insertAt);
+        let res = makeBase(left);
+
+        for (const e of elems) res = res.push(e);
+
+        const right = this.slice(insertAt);
+        for (const e of right) res = res.push(e);
+
+        return res;
+    }
+
+
+    /**
+     * Removes the elemen at the given index.
+     * 
+     * First checks if the index is valid.
+     * 
+     * Then it calls the `slice` method to get the left view of the vector and the right view of the vector.
+     * This excludes the element at the index.
+     * 
+     * Then it calls the `addAll` method to create a new vector with the left and right views.
+     * 
+     * @param index - index of the element to be removed
+     * @returns A new vector with the element at index removed.
+     */
+    remove(index: number) {
+        if (index < 0 || index >= this._size) throw new RangeError(`Index ${index} is out of range`);
+
+        if (index === this._size - 1) return this.pop();
+
+        const left = this.slice(0, index);
+        const right = this.slice(index + 1);
+        return (left as Vector<T>).addAll(right);
+    }
+
+    /**
+     * Removes the item from the vector.
+     * 
+     * First gets the index of the item.
+     * If the index is -1, it means the item is not in the vector.
+     * If the item is in the vector, then it calls the `remove` method to remove the item.
+     * 
+     * @param item - item to be removed from the vector
+     * @returns a new vector with the item removed. 
+     */
+    removeItem(item: T): Vector<T> {
+        const i = this.indexOf(item);
+        return i === -1 ? this : this.remove(i);
+    }
+
+    /**
+     * Removes all the items from the vector.
+     * 
+     * If an item appears more times in the vector, all the instances will be removed.
+     * 
+     * @param c - collection of items to be removed from the vector
+     * @returns A new vector with the items removed.
+     */
+    removeAll(c: Iterable<T>): Vector<T> {
+        const toRemove = new Set(c);
+        if (toRemove.size === 0) return this;
+
+        let res = Vector.empty<T>();
+        let changed = false;
+        for (const value of this) {
+            if (toRemove.has(value)) {
+                changed = true;
+                continue;
+            }
+            res = res.push(value);
+        }
+        return changed ? res : this;
+    }
+
+    /**
+     * Empties the vector and adds all the items to it.
+     * @param items - items to be added to the vector
+     * @returns A new vector with the items added.
+     */
+    replaceAll(items: Iterable<T>): Vector<T> {
+        return Vector.empty<T>().addAll(items);
+    }
+
+    /**
+     * Copies the vector to the given array.
+     * @param array - array to copy the elements to
+     * @param arrayIndex 
+     */
+    copyTo(array: T[], arrayIndex: number): void {
+        if (arrayIndex < 0 || arrayIndex > array.length) {
+            throw new RangeError(`arrayIndex ${arrayIndex} out of bounds`);
+        }
+        if (arrayIndex + this._size > array.length) {
+            throw new RangeError("Destination array is not large enough to accommodate all elements");
+        }
+        for (let i = 0; i < this._size; i++) {
+            array[arrayIndex + i] = this.get(i);
+        }
+    }
+    /**
+     * Get the index of the item in the vector.
+     * @param item - item to be searched in the vector
+     * @returns the index of the item in the vector or -1 if not found.
+     */
+    indexOf(item: T): number {
+        for (let i = 0; i < this._size; i++) {
+            if (this.get(i) === item) return i;
+        }
+        return -1;
+    }
+    /**
+     * Get the last index of the item in the vector.
+     * @param item - item to be searched in the vector
+     * @returns the last index of the item in the vector or -1 if not found.
+     */
+    lastIndexOf(item: T): number {
+        for (let i = this._size - 1; i >= 0; i--) {
+            if (this.get(i) === item) return i;
+        }
+        return -1;
+    }
+
+    // methods from the SequencedCollection interface
+    /**
+     * Reverse the vector.
+     * @returns a new vector with the elements in reverse order.
+     */
+    reversed(): Vector<T> {
+        const items = this.toArray().reverse();
+        return Vector.of(...items);
+    }
+    /**
+     * Adds an element to the beginning of the vector.
+     * @param e - element to be added to the vector
+     * @returns a new vector with the element added to the beginning.
+     */
+    addFirst(e: T): Vector<T> {
+        return this.addAll([e], 0);
+    }
+    /**
+     * Adds element to the end of the vector.
+     * @param e - element to be added to the end of the vector
+     * @returns a new vector with the element added to the end.
+     */
+    addLast(e: T): Vector<T> {
+        return this.addAll([e], this._size);
+    }
+    /**
+     * Get the first element of the vector.
+     */
+    getFirst(): T | undefined {
+        if (this._size === 0) return undefined;
+        return this.get(0);
+    }
+    /**
+     * Get the last element of the vector.
+     */
+    getLast(): T | undefined {
+        if (this._size === 0) return undefined;
+        return this.get(this._size - 1);
+    }
+    /**
+     * Removes the first element of the vector.
+     */
+    removeFirst(): Vector<T> {
+        if (this._size === 0) throw new RangeError("Can't remove first element from empty vector");
+        return this.remove(0);
+    }
+    /**
+     * Removes the last element of the vector.
+     */
+    removeLast(): Vector<T> {
+        if (this._size === 0) throw new RangeError("Can't remove last element from empty vector");
+        return this.pop();
+    }
+
+    // Speed
+    indexingSpeed(): Speed {
+        return Speed.Log;
+    }
+    hasSpeed(): Speed {
+        return Speed.Log;
+    }
+    addSpeed(): Speed {
+        return Speed.Constant;
+    }
+    removeSpeed(): Speed {
+        return Speed.Log;
+    }
+
+    // Methods from Collection.ts
+    /**
+     * Checks if the vector has a given element
+     * @param o - element to be checked
+     * @returns true if the element is in the vector, false otherwise.
+     */
+    has(o: T): boolean {
+        for (const value of this) {
+            if (Utils.equals(value, o)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the vector has all the elemnts of the iterable.
+     * @param c - iterable to be checked
+     * @returns true if the vector has all the elements of the iterable, false otherwise.
+     */
+    hasAll(c: Iterable<T>): boolean {
+        for (const value of c) {
+            if (!this.has(value)) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Removes all the elements that pass the filter.
+     * @param filter - function to filter the elements of the vector
+     * @returns a new vector with the elements that pass the filter.
+     */
+    removeIf(filter: (item: T) => boolean): Vector<T> {
+        const items = this.toArray().filter((item) => !filter(item));
+        return Vector.of(...items);
+    }
+
+    /**
+     * 
+     * @param c - iterable to be retained
+     * @returns a new vector with the elements that are in the iterable.
+     */
+    retainAll(c: Iterable<T>): Vector<T> {
+        const retainSet = new Set(c);
+        const arr = this.toArray();
+        const kept = [];
+        for (let i = 0; i < arr.length; ++i) {
+            if (retainSet.has(arr[i])) {
+                kept.push(arr[i]);
+            }
+        }
+        return Vector.of(...kept);
+    }
+
+    /**
+     * Return an empty instance of the vector.
+     */
+    clear(): Vector<T> {
+        return Vector.empty<T>();
+    }
+
+    /**
+     * Checks if the vector is equal to another object.
+     * 
+     * First checks the references of the objects.
+     * Then checks if the object is an instance of the vector.
+     * Then checks if the size of the vector is equal to the size of the object.
+     * 
+     * Lastly, it checks if all the elements of the vector are equal to the elements of the object.
+     * 
+     * @param o - object to be compared
+     * @returns true if the object is equal to the vector, false otherwise.
+     */
+    equals(o: Object): boolean {
+        if (this === o) return true;
+        if (!(o instanceof Vector)) return false;
+
+        if (this._size !== o._size) return false;
+
+        const vec = o as Vector<T>;
+        for (let i = 0; i < this._size; i++) {
+            if (!Utils.equals(this.get(i), vec.get(i))) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Computes the hash code of the vector.
+     * 
+     * The hash code is lazily computer and cached. 
+     * 
+     * It is computed by summing the hash codes of all the elements in the vector.
+     * 
+     * @returns a hash code for the vector.
+     */
+    hashCode(): number {
+        if (this._hashCode === null) {
+            let hash = 0;
+            for (const value of this) {
+                hash += HashCode.hashCode(value);
+            }
+            this._hashCode = hash;
+        }
+        return this._hashCode;
+    }
+
+
+    // HOFs
+    /**
+     * Returns a new vector with the section removed and optional items inserted, without modifying the original vector.
+     * 
+     * @param start - index to start from. Negative index starts from the end.
+     * @param deleteCount - how many elements to delete from the given start index. Negative values are treated as 0. Values
+     * exceeding the size of the vector are clamped.
+     * @param items - optional items to be added to the vector
+     */
+    splice(start: number, deleteCount?: number): Vector<T>;
+    splice(start: number, deleteCount: number, ...items: T[]): Vector<T>;
+    splice(start: number, deleteCount?: number, ...items: T[]): Vector<T> {
+        const size = this._size;
+        let actualStart = start < 0 ? size + start : start;
+        if (actualStart < 0 || actualStart > size) {
+            throw new RangeError(`Index (${start}, ${deleteCount}) out of bounds`);
+        }
+        const dc = deleteCount === undefined
+            ? size - actualStart
+            : Math.min(Math.max(deleteCount, 0), size - actualStart);
+
+        const left = this.slice(0, actualStart);
+        let res = left;
+        if (items.length > 0) {
+            res = res.addAll(items);
+        }
+        const right = this.slice(actualStart + dc);
+        return res.addAll(right);
+    }
+
+    /**
+     * Returns a new vector containing the elements from the start index (inclusive) to the end index (exclusive).
+     * 
+     * Returns a new VectorView of the original vector that contains an offset from the start of the original vector.
+     * It also contains the length of the new vector.
+     * 
+     * @param start - start index (inclusive). Negative index starts from the end.
+     * @param end - end index (exclusive). Negative index starts from the end.
+     * @returns - A new vector with the selected items.
+     */
+    slice(start: number = 0, end: number = this._size): Vector<T> {
+        if (start < 0) start = this._size + start;
+        if (end < 0) end = this._size + end;
+
+        if (start < 0 || end > this._size || start > end) {
+            throw new RangeError(`slice(${start}, ${end}) out of bounds`);
+        }
+
+        const len = end - start;
+        if (len === 0) return Vector.empty<T>();
+        if (len === this._size) return this;
+
+        if (this instanceof VectorView) {
+            return new VectorView(
+                (this as any)._vector,
+                (this as any)._offset + start,
+                len
+            );
+        }
+        return new VectorView(this, start, len);
+    }
+
+    /**
+     * Removes the first element of the vector.
+     */
+    shift(): Vector<T> {
+        return this.removeFirst();
+    }
+    /**
+     * Prepend the given items to the vector.
+     * @param items
+     */
+    unshift(...items: T[]): Vector<T> {
+        return this.addAll(items, 0);
+    }
+
+    /**
+     * Concat the vector with the given values or collections.
+     * @param valuesOrCollections - values or collections to be concatenated
+     * @returns A new vector with the values or collections concatenated.
+     */
+    concat<C extends T>(...valuesOrCollections: Array<Iterable<C> | C>): Vector<T | C> {
+        let res = this as unknown as Vector<T | C>;
+
+        for (const elem of valuesOrCollections) {
+            if (elem !== null && (elem as any)[Symbol.iterator]) {
+                res = res.addAll(elem as Iterable<C>)
+            } else {
+                res = res.push(elem as C);
+            }
+        }
+        return res;
+    }
+
+    /**
+     * Merges the vector with the given collections.
+     * 
+     * @param collections - collections to be merged
+     * @returns A new vector with the collections merged.
+     */
+    merge<C extends T>(...collections: Array<Iterable<C>>): Vector<T | C> {
+        let res = this as Vector<T | C>;
+        for (const collection of collections) {
+            res = res.addAll(collection);
+        }
+        return res;
+    }
+
+    /**
+     * Traverses the vector and applies the given function to each element.
+     * @param mapper - function to map the elements of the vector
+     * @param thisArg - context for the mapper function
+     */
+    map<M>(
+        mapper: (value: T, key: number, collection: this) => M,
+        thisArg?: any
+    ): Vector<M> {
+        const newItems = this.toArray().map((value, index) => mapper.call(thisArg, value, index, this));
+        return Vector.of(...newItems);
+    }
+
+    /**
+     * Applies the mapper function to each element of the vector and flattens the result.
+     * @param mapper - function to map the elements of the vector
+     * @param thisArg - context for the mapper function
+     */
+    flatMap<M>(
+        mapper: (value: T, key: number, iter: this) => Iterable<M>,
+        thisArg?: any
+    ): Vector<M> {
+        let res = Vector.empty<M>();
+        let i=0;
+        for (const value of this) {
+            const iter = mapper.call(thisArg, value, i++, this);
+            res = res.addAll(iter);
+        }
+        return res;
+    }
+
+    /**
+     * Filters the vector and returns a new vector with the elements that pass the filter.
+     * @param predicate - function to filter the elements of the vector
+     * @param thisArg - context for the predicate function
+     */
+    filter<F extends T>(
+        predicate: (value: T, index: number, iter: this) => value is F,
+        thisArg?: any
+    ): Vector<F>;
+    filter(
+        predicate: (value: T, index: number, iter: this) => unknown,
+        thisArg?: any
+    ): this;
+    filter(predicate: any, thisArg?: any): any {
+        const filtered = this.toArray().filter((value, index) => predicate.call(thisArg, value, index, this));
+        return Vector.of(...filtered);
+    }
+
+    /**
+     * Partitions the vector into true vector if they satisfy the predicate.
+     * The rest of the elements will go into the false vector. 
+     * @param predicate - To apply to the vectors.
+     * @param thisArg - context for the predicate function.
+     */
+    partition<F extends T, C>(
+        predicate: (this: C, value: T, index: number, iter: this) => value is F,
+        thisArg?: C
+    ): [Vector<T>, Vector<F>];
+    partition<C>(
+        predicate: (this: C, value: T, index: number, iter: this) => unknown,
+        thisArg?: C
+    ): [this, this];
+    partition<C>(predicate: (this: C, value: T, index: number, iter: this) => unknown, thisArg?: any): any {
+        const trueItems: T[] = [];
+        const falseItems: T[] = [];
+        let i = 0;
+        for (const value of this) {
+            if (predicate.call(thisArg, value, i, this)) {
+                trueItems.push(value);
+            } else {
+                falseItems.push(value);
+            }
+            i++;
+        }
+        return [Vector.of(...trueItems), Vector.of(...falseItems)];
+    }
+
+    /**
+     * Combines elements of this collection with one or more iterables into tuples, 
+     * stopping when the shortest input is exhausted.
+     * @param other - other collections to combine with
+     */
+    zip<U>(other: ListInput<U>): Vector<[T, U]>;
+    zip<U, V>(
+        other: ListInput<U>,
+        other2: ListInput<V>
+    ): Vector<[T, U, V]>;
+    zip(...collections: Array<ListInput<unknown>>): Vector<unknown>;
+    zip<U, V>(...other: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]): Vector<unknown> {
+        // throw new Error("Vector.zip() not implemented");
+        return super.zip(...other) as Vector<unknown>;
+    }
+
+    /**
+     * Combines elements of this collection with one or more iterables into tuples, 
+     * continuing until the longest input is exhausted.
+     * @param other - other collections to combine with
+     */
+    zipAll<U>(other: ListInput<U>): Vector<[T, U]>;
+    zipAll<U, V>(
+        other: ListInput<U>,
+        other2: ListInput<V>
+    ): Vector<[T, U, V]>;
+    zipAll(...collections: Array<ListInput<unknown>>): Vector<unknown>;
+    zipAll<U, V>(...other: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]): Vector<unknown> {
+        return super.zipAll(...other) as Vector<unknown>;
+    }
+
+    /**
+     * Combines elements of this collection with one or more iterables by applying a zipper function
+     * to the elements.
+     * @param zipper - Function that takes one element from this collection and one from other collections
+     * to produce a result value.
+     * @param collections - Collections to zip with.
+     */
+    zipWith<U, Z>(
+        zipper: (value: T, otherValue: U) => Z,
+        otherCollection: ListInput<U>
+    ): Vector<Z>;
+    zipWith<U, V, Z>(
+        zipper: (value: T, otherValue: U, thirdValue: V) => Z,
+        otherCollection: ListInput<U>,
+        thirdCollection: ListInput<V>
+    ): Vector<Z>;
+    zipWith<Z>(
+        zipper: (...values: Array<unknown>) => Z,
+        ...collections: Array<ListInput<unknown>>
+    ): Vector<Z>;
+    zipWith<U, V, Z>(
+        zipper: any,
+        ...otherCollection: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]
+    ): Vector<Z> {
+        return super.zipWith(zipper, ...otherCollection) as Vector<Z>;
+    }
+
+    distinct(): Vector<T> {
+        throw new Error("Vector.distinct() not implemented");
+    }
+
+    join(separator?: string): string {
+        throw new Error("Vector.join() not implemented");
+    }
+
+    every<S extends T>(
+        callback: (value: T, index: number, collection: this) => value is S,
+        thisArg?: any
+    ): this is Vector<S>;
+    every(callback: (value: T, index: number, collection: this) => unknown, thisArg?: any): boolean;
+    every(predicate: any, thisArg?: any): any {
+        throw new Error("Vector.every() not implemented");
+    }
+
+    some(callback: (value: T, index: number, collection: this) => unknown, thisArg?: any): boolean {
+        throw new Error("Vector.some() not implemented");
+    }
+
+    sort(compareFn?: Comparator<T>): Vector<T> {
+        throw new Error("Vector.sort() not implemented");
+    }
+
+    sortedBy<U>(
+        keySelector: (value: T) => U,
+        compareFn?: (a: U, b: U) => number
+    ): Vector<T> {
+        throw new Error("Vector.sortedBy() not implemented");
+    }
+
+    forEach(callback: (value: T, index: number, collection: this) => void, thisArg?: any): void {
+        throw new Error("Vector.forEach() not implemented");
+    }
+
+    find(predicate: (value: T, index: number, collection: this) => boolean, thisArg?: any): T | undefined {
+        throw new Error("Vector.find() not implemented");
+    }
+
+    reduce(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
+    reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;
+    reduce(callback: any, initialValue?: any): any {
+        throw new Error("Vector.reduce() not implemented");
+    }
+
+    reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
+    reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T, initialValue: T): T;
+    reduceRight<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;
+    reduceRight(callback: any, initialValue?: any): any {
+        throw new Error("Vector.reduceRight() not implemented");
+    }
+
+
+
     /**
      * Converts the vector to an array using the iterator method.
      */
@@ -366,4 +1020,40 @@ export default class Vector<T> {
         return Array.from(this);
     }
 
+}
+
+
+/**
+ * Represents an immutable view of a contiguous slice of another Vector.
+ * Shares the underlying data structure and avoid copying data for efficient slicing.
+ * 
+ * Has an `_offset` to the original vector and a `_size` to represent the size of the slice.
+ */
+class VectorView<T> extends Vector<T> {
+    constructor(
+        private readonly _vector: Vector<T>,
+        private readonly _offset: number, 
+        readonly _size: number,
+    ) {
+        super(_size, _vector._shift, _vector._root, _vector._tail);
+    }
+
+    size(): number { return this._size; }
+    isEmpty(): boolean { return this.size() === 0; }
+
+    override get(i: number): T {
+        if (i < 0 || i >= this._size)
+            throw new RangeError(`Index ${i} out of bounds`);
+        return this._vector.get(this._offset + i);
+    }
+
+    override set(i: number, value: T): Vector<T> {
+        if (i < 0 || i >= this._size) throw new RangeError(`Index ${i} out of bounds`);
+        return this._vector.set(this._offset + i, value)
+                            .slice(this._offset, this._offset + this._size) as Vector<T>;
+    }
+
+    override slice(start: number = 0, end: number = this._size): Vector<T> {
+        return this._vector.slice(this._offset + start, this._offset + end);
+    }
 }

@@ -1,4 +1,6 @@
+import ArrayList from "../src/Arrays/ArrayList";
 import Vector from "../src/Arrays/Vector";
+import LinkedList from "../src/LinkedLists/LinkedList";
 import {createRandomIntArray, shuffleArray} from "../src/Utils/Utils";
 
 
@@ -211,3 +213,624 @@ describe("Vector pop()", () => {
     })
 
 })
+
+describe("Vector slice()", () => {
+  const vec = Vector.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+
+  test('slice() returns collection elements', () => {
+    const s = vec.slice(2, 7);
+    expect(s.size()).toBe(5);
+    expect(s.toArray()).toEqual([3, 4, 5, 6, 7]);
+  })
+
+  test('slice() without arguments returns the same instance', () => {
+    const s = vec.slice();
+    expect(s.size()).toBe(vec.size());
+    expect(s.toArray()).toEqual(vec.toArray());
+  })
+
+  test('slice() support negative indices', () => {
+    const s = vec.slice(-3);
+    expect(s.size()).toBe(3);
+    expect(s.toArray()).toEqual([8, 9, 10]);
+  })
+
+  test('slice() support negative indices with start and end', () => {
+    const s = vec.slice(-8, -3);
+    expect(s.size()).toBe(5);
+    expect(s.toArray()).toEqual([3, 4, 5, 6, 7]);
+  })
+
+  test("nested slice() works", () => {
+    const s1 = vec.slice(1, 9);
+    const s2 = s1.slice(2, 5);
+    expect(s2.size()).toBe(3);
+    expect(s2.toArray()).toEqual([4, 5, 6]);
+    expect(s1.toArray()).toEqual([2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(vec.toArray()).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  })
+
+  test('mutating the slice() does not affect the original vector', () => {
+    const s = vec.slice(0, vec.size() - 1);
+
+    const modified = s.set(0, 100);
+    expect(s.get(0)).toBe(1);
+    expect(modified.get(0)).toBe(100);
+    expect(vec.get(0)).toBe(1);
+  })
+
+  test('slice throws exception for out of bounds', () => {
+    expect(() => vec.slice(0, 11)).toThrow(RangeError);
+    expect(() => vec.slice(-11)).toThrow(RangeError);
+    expect(() => vec.slice(0, -11)).toThrow(RangeError);
+    expect(() => vec.slice(-11, -1)).toThrow(RangeError);
+  })
+
+})
+
+
+describe("Vector remove()", () => {
+  const base = Vector.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+
+  test("remove first element", () => {
+    const result = base.remove(0);
+    expect(result.toArray()).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(result.size()).toBe(9);
+    // original vector must stay unchanged
+    expect(base.get(0)).toBe(0);
+    expect(base.size()).toBe(10);
+  });
+
+  test("remove middle element", () => {
+    const result = base.remove(5);
+    expect(result.toArray()).toEqual([0, 1, 2, 3, 4, 6, 7, 8, 9]);
+    expect(result.size()).toBe(9);
+  });
+
+  test("remove last element (pop fast-path)", () => {
+    const result = base.remove(base.size() - 1) as Vector<number>;
+    expect(result.toArray()).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(result.size()).toBe(9);
+  });
+
+  test("remove on singleton vector returns empty", () => {
+    const single = Vector.of(42);
+    const result = single.remove(0) as Vector<number>;
+    expect(result.isEmpty()).toBe(true);
+    expect(result.size()).toBe(0);
+  });
+
+  test("remove throws on out-of-bounds indices", () => {
+    expect(() => base.remove(-1)).toThrow(RangeError);
+    expect(() => base.remove(base.size())).toThrow(RangeError);
+  });
+});
+
+
+
+describe("Vector removeItem(item) - value semantics", () => {
+  const base = Vector.of("a", "b", "c", "d", "e", "f", "g");
+
+  test("remove first item", () => {
+    const result = base.removeItem("a");
+    expect(result.toArray()).toEqual(["b", "c", "d", "e", "f", "g"]);
+    expect(base.toArray()).toEqual(["a", "b", "c", "d", "e", "f", "g"]); // original intact
+  });
+
+  test("remove middle item", () => {
+    const result = base.removeItem("d");
+    expect(result.toArray()).toEqual(["a", "b", "c", "e", "f", "g"]);
+  });
+
+  test("remove last item", () => {
+    const result = base.removeItem("g");
+    expect(result.toArray()).toEqual(["a", "b", "c", "d", "e", "f"]);
+  });
+
+  test("remove non‑existing item returns same instance", () => {
+    const result = base.removeItem("zzz");
+    expect(result).toBe(base); // should return identical vector when nothing removed
+  });
+
+  test("remove duplicates removes first occurrence only", () => {
+    const dup = Vector.of("x", "y", "x", "z");
+    const result = dup.removeItem("x");
+    expect(result.toArray()).toEqual(["y", "x", "z"]);
+  });
+
+  test("remove on singleton vector yields empty vector", () => {
+    const single = Vector.of("only");
+    const result = single.removeItem("only");
+    expect(result.isEmpty()).toBe(true);
+  });
+});
+
+
+
+
+describe("Vector removeAll(iterable)", () => {
+  const base = Vector.of(1, 2, 3, 4, 5, 2, 3); // duplicates included
+
+  test("removes every element that appears in the iterable", () => {
+    const toRemove = [2, 4];
+    const result = base.removeAll(toRemove);
+    expect(result.toArray()).toEqual([1, 3, 5, 3]); // both 2s and the 4 gone
+    expect(result.size()).toBe(4);
+    // original vector unchanged
+    expect(base.toArray()).toEqual([1, 2, 3, 4, 5, 2, 3]);
+  });
+
+  test("iterable with duplicates still removes only matching elements", () => {
+    const toRemove = [3, 3, 3]; // duplicates in the iterable
+    const result = base.removeAll(toRemove);
+    expect(result.toArray()).toEqual([1, 2, 4, 5, 2]); // both 3s removed once each
+  });
+
+  test("iterable with no common elements returns same instance", () => {
+    const result = base.removeAll([42, 99]);
+    expect(result).toBe(base);
+  });
+
+  test("removeAll where iterable equals the vector leaves it empty", () => {
+    const result = base.removeAll(base);
+    expect(result.isEmpty()).toBe(true);
+  });
+
+  test("removeAll on empty iterable returns same vector", () => {
+    const result = base.removeAll([]);
+    expect(result).toBe(base);
+  });
+
+  test("removeAll works with different generic type (string)", () => {
+    const fruits = Vector.of("apple", "banana", "cherry", "date", "apple");
+    const result = fruits.removeAll(["apple", "date"]);
+    expect(result.toArray()).toEqual(["banana", "cherry"]);
+  });
+});
+
+describe("Vector replaceAll()", () => {
+  test("replaceAll replaces content with new items and leaves original unchanged", () => {
+    const base = Vector.of(1, 2, 3);
+    const result = base.replaceAll([4, 5, 6]);
+    expect(result.toArray()).toEqual([4, 5, 6]);
+    expect(result.size()).toBe(3);
+    // original unchanged
+    expect(base.toArray()).toEqual([1, 2, 3]);
+  });
+
+  test("replaceAll on empty vector adds all items", () => {
+    const base = Vector.empty<number>();
+    const result = base.replaceAll([10, 20]);
+    expect(result.toArray()).toEqual([10, 20]);
+    expect(result.size()).toBe(2);
+  });
+
+  test("replaceAll with empty iterable yields empty vector and returns new instance", () => {
+    const base = Vector.of(1, 2, 3);
+    const result = base.replaceAll([]);
+    expect(result.isEmpty()).toBe(true);
+    expect(result).not.toBe(base);
+  });
+
+  test("replaceAll with same items yields a new vector instance with identical items", () => {
+    const base = Vector.of(1, 2, 3);
+    const result = base.replaceAll([1, 2, 3]);
+    expect(result.toArray()).toEqual([1, 2, 3]);
+    expect(result).not.toBe(base);
+  });
+
+  test("replaceAll works with different generic type (string)", () => {
+    const base = Vector.of("a", "b", "c");
+    const result = base.replaceAll(["x", "y"]);
+    expect(result.toArray()).toEqual(["x", "y"]);
+    expect(base.toArray()).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("Vector copyTo()", () => {
+  test("copyTo copies elements into target array at a non-zero index", () => {
+    const v = Vector.of(1, 2, 3);
+    const arr = [0, 0, 0, 0, 0];
+    v.copyTo(arr, 1);
+    expect(arr).toEqual([0, 1, 2, 3, 0]);
+  });
+
+  test("copyTo into exact-sized array at index 0", () => {
+    const v = Vector.of("a", "b", "c");
+    const arr = ["", "", ""];
+    v.copyTo(arr, 0);
+    expect(arr).toEqual(["a", "b", "c"]);
+  });
+
+  test("copyTo throws RangeError if arrayIndex is negative", () => {
+    const v = Vector.of(1);
+    expect(() => v.copyTo([], -1)).toThrow(RangeError);
+  });
+
+  test("copyTo throws RangeError if arrayIndex greater than array length", () => {
+    const v = Vector.of(1);
+    expect(() => v.copyTo([], 1)).toThrow(RangeError);
+  });
+
+  test("copyTo throws RangeError when destination array is too small", () => {
+    const v = Vector.of(1, 2, 3);
+    const arr = [0, 0];
+    expect(() => v.copyTo(arr, 0)).toThrow(RangeError);
+  });
+});
+
+describe("Vector lastIndexOf()", () => {
+  test("lastIndexOf() returns the last index of the item", () => {
+    const vec = Vector.of(1, 2, 3, 2, 1);
+    expect(vec.lastIndexOf(1)).toBe(4);
+    expect(vec.lastIndexOf(2)).toBe(3);
+    expect(vec.lastIndexOf(3)).toBe(2);
+    expect(vec.lastIndexOf(4)).toBe(-1); // not found
+  })
+  test('lastIndexOf() returns -1 for empty vector', () => {
+    const vec = Vector.empty<number>();
+    expect(vec.lastIndexOf(1)).toBe(-1);
+  })
+})
+
+
+
+describe("Vector from SequencedCollection interface", () => {
+  test("reversed() returns a new vector with elements in reverse order", () => {
+    const vec = Vector.of(1, 2, 3, 4, 5);
+    const reversed = vec.reversed();
+    expect(reversed.toArray()).toEqual([5, 4, 3, 2, 1]);
+    expect(vec.toArray()).toEqual([1, 2, 3, 4, 5]); // original unchanged
+  });
+
+  test("reversed() on empty vector returns empty vector", () => {
+    const vec = Vector.empty<number>();
+    const reversed = vec.reversed();
+    expect(reversed.isEmpty()).toBe(true);
+    expect(reversed.size()).toBe(0);
+  });
+  test("addFirst() adds an element to the front of the vector", () => {
+    const vec = Vector.of(2, 3, 4);
+    const newVec = vec.addFirst(1);
+    expect(newVec.toArray()).toEqual([1, 2, 3, 4]);
+    expect(vec.toArray()).toEqual([2, 3, 4]); // original unchanged
+  });
+  test('addLast() adds element to the end of the vector', () => {
+    const vec = Vector.of(1, 2, 3);
+    const newVec = vec.addLast(4);
+    expect(newVec.toArray()).toEqual([1, 2, 3, 4]);
+    expect(vec.toArray()).toEqual([1, 2, 3]); // original unchanged
+  })
+  test('getFirst() returns the first element of the vector', () => {
+    const vec = Vector.of("hello", "world", "!");
+    expect(vec.getFirst()).toBe("hello");
+  })
+  test('getLast() returns the last element of the vector', () => {
+    const vec = Vector.of("hello", "world", "!");
+    expect(vec.getLast()).toBe("!");
+  })
+  test('removeFirst() removes the first element and returns a new vector', () => {
+    const vec = Vector.of("hello", "world", "!");
+    const newVec = vec.removeFirst();
+    expect(newVec.toArray()).toEqual(["world", "!"]);
+    expect(vec.toArray()).toEqual(["hello", "world", "!"]); // original unchanged
+  })
+  test('removeLast() removes the last element and returns a new vector', () => {
+    const vec = Vector.of("hello", "world", "!");
+    const newVec = vec.removeLast();
+    expect(newVec.toArray()).toEqual(["hello", "world"]);
+    expect(vec.toArray()).toEqual(["hello", "world", "!"]); // original unchanged
+  })
+})
+
+
+describe("Vector has(), hasAll(), removeIf(), retainAll(), clear(), equals(), hashCode()", () => {
+  test("has() returns true for existing elements and false otherwise", () => {
+    const vec = Vector.of(1, 2, 3);
+    expect(vec.has(2)).toBe(true);
+    expect(vec.has(4)).toBe(false);
+  });
+
+  test("hasAll() returns true only if all elements are present", () => {
+    const vec = Vector.of("a", "b", "c");
+    expect(vec.hasAll(["a", "c"])).toBe(true);
+    expect(vec.hasAll(["a", "d"])).toBe(false);
+  });
+
+  test("removeIf() filters elements by predicate and does not mutate original", () => {
+    const vec = Vector.of(1, 2, 3, 4);
+    const result = vec.removeIf(x => x % 2 === 0);
+    expect(result.toArray()).toEqual([1, 3]);
+    expect(vec.toArray()).toEqual([1, 2, 3, 4]);
+  });
+
+  test("retainAll() keeps only specified elements and does not mutate original", () => {
+    const vec = Vector.of(1, 2, 3);
+    const result = vec.retainAll([2, 3]);
+    expect(result.toArray()).toEqual([2, 3]);
+    expect(vec.toArray()).toEqual([1, 2, 3]);
+  });
+
+  test("clear() returns an empty vector and leaves original unchanged", () => {
+    const vec = Vector.of("x", "y");
+    const cleared = vec.clear();
+    expect(cleared.isEmpty()).toBe(true);
+    expect(vec.isEmpty()).toBe(false);
+  });
+
+  test("equals() correctly compares vectors", () => {
+    const v1 = Vector.of(1, 2, 3);
+    const v2 = Vector.of(1, 2, 3);
+    const v3 = Vector.of(3, 2, 1);
+    expect(v1.equals(v1)).toBe(true);
+    expect(v1.equals(v2)).toBe(true);
+    expect(v1.equals(v3)).toBe(false);
+    expect(v1.equals({})).toBe(false);
+  });
+
+  test("hashCode() is consistent and immutable for original vector", () => {
+    const vec = Vector.of("a", "b");
+    const originalHash = vec.hashCode();
+    // Equal vectors have same hash
+    const same = Vector.of("a", "b");
+    expect(same.hashCode()).toBe(originalHash);
+    // Modifying vector yields new hash, but original remains unchanged
+    const modified = vec.push("c");
+    expect(vec.hashCode()).toBe(originalHash);
+    expect(modified.hashCode()).not.toBe(originalHash);
+  });
+});
+
+
+describe("Vector splice()", () => {
+  test("splice(start) removes from start to end when deleteCount is undefined", () => {
+    const vec = Vector.of(1, 2, 3, 4, 5);
+    const result = vec.splice(2);
+    expect(result.toArray()).toEqual([1, 2]);
+  });
+
+  test("splice(start, deleteCount) removes given number of elements", () => {
+    const vec = Vector.of(1, 2, 3, 4, 5);
+    const result = vec.splice(1, 2);
+    expect(result.toArray()).toEqual([1, 4, 5]);
+  });
+
+  test("splice(start, 0, ...items) inserts items without deletion", () => {
+    const vec = Vector.of(1, 2, 3);
+    const result = vec.splice(1, 0, 9, 8);
+    expect(result.toArray()).toEqual([1, 9, 8, 2, 3]);
+  });
+
+  test("splice supports negative start index", () => {
+    const vec = Vector.of("a", "b", "c", "d", "e");
+    const result = vec.splice(-2, 1);
+    expect(result.toArray()).toEqual(["a", "b", "c", "e"]);
+  });
+
+  test("splice clamps deleteCount greater than remaining length", () => {
+    const vec = Vector.of(1, 2, 3);
+    const result = vec.splice(1, 10);
+    expect(result.toArray()).toEqual([1]);
+  });
+
+  test("splice treats negative deleteCount as zero", () => {
+    const vec = Vector.of(1, 2, 3);
+    const result = vec.splice(1, -1, 9);
+    expect(result.toArray()).toEqual([1, 9, 2, 3]);
+  });
+
+  test("splice on empty vector returns empty when start=0", () => {
+    const vec = Vector.empty<number>();
+    const result = vec.splice(0);
+    expect(result.isEmpty()).toBe(true);
+  });
+
+  test("splice throws RangeError for start index out of bounds", () => {
+    const vec = Vector.of(1, 2, 3);
+    expect(() => vec.splice(4, 1)).toThrow(RangeError);
+    expect(() => vec.splice(-5, 1)).toThrow(RangeError);
+  });
+});
+
+
+describe("Vector shift() and unshift()", () => {
+  test("shift() removes the first element and leaves original unchanged", () => {
+    const vec = Vector.of(1, 2, 3);
+    const shifted = vec.shift();
+    expect(shifted.toArray()).toEqual([2, 3]);
+    expect(vec.toArray()).toEqual([1, 2, 3]);
+  });
+
+  test("shift() on empty vector throws RangeError", () => {
+    const vec = Vector.empty<number>();
+    expect(() => vec.shift()).toThrow(RangeError);
+  });
+
+  test("unshift() adds elements to the front and leaves original unchanged", () => {
+    const vec = Vector.of(3, 4);
+    const result = vec.unshift(1, 2);
+    expect(result.toArray()).toEqual([1, 2, 3, 4]);
+    expect(vec.toArray()).toEqual([3, 4]);
+  });
+
+  test("unshift() on empty vector adds items as new elements", () => {
+    const vec = Vector.empty<string>();
+    const result = vec.unshift("a", "b");
+    expect(result.toArray()).toEqual(["a", "b"]);
+    expect(vec.isEmpty()).toBe(true);
+  });
+});
+
+
+describe("Vector concat() and merge()", () => {
+  test("concat with single values appends correctly and leaves original unchanged", () => {
+    const vec = Vector.of(1, 2);
+    const result = vec.concat(3, 4);
+    expect(result.toArray()).toEqual([1, 2, 3, 4]);
+    expect(vec.toArray()).toEqual([1, 2]);
+  });
+
+  test("concat with iterable appends all elements and leaves original unchanged", () => {
+    const vec = Vector.of("a", "b");
+    const result = vec.concat(["c", "d"]);
+    expect(result.toArray()).toEqual(["a", "b", "c", "d"]);
+    expect(vec.toArray()).toEqual(["a", "b"]);
+  });
+
+  test('concat with iterables and another collection', () => {
+    const vec = Vector.of(1, 2);
+    const result = vec.concat([3, 4], Vector.of(5, 6));
+    expect(result.toArray()).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(vec.toArray()).toEqual([1, 2]);
+  })
+
+  test('concat with other vectors', () => {
+    const vec1 = Vector.of(1, 2);
+    const vec2 = Vector.of(44, 33, 77);
+    const vec3 = Vector.of(669, 88);
+
+    const res = vec1.concat(vec2, vec3);
+    expect(res.toArray()).toEqual([1, 2, 44, 33, 77, 669, 88]);
+  })
+
+  test("merge with multiple iterables combines them in sequence", () => {
+    const vec = Vector.of(1);
+    const result = vec.merge([2, 3], [4], []);
+    expect(result.toArray()).toEqual([1, 2, 3, 4]);
+    expect(vec.toArray()).toEqual([1]);
+  });
+
+  test("merge with no iterables returns the same instance", () => {
+    const vec = Vector.of("x", "y");
+    const result = vec.merge();
+    expect(result).toBe(vec);
+  });
+
+});
+
+describe("Vector zip()", () => {
+  test("zip with two vectors of equal length", () => {
+    const v1 = Vector.of(1, 2, 3);
+    const v2 = Vector.of("a", "b", "c");
+    const result = v1.zip(v2);
+    expect(result.toArray()).toEqual([[1, "a"], [2, "b"], [3, "c"]]);
+    // originals unchanged
+    expect(v1.toArray()).toEqual([1, 2, 3]);
+    expect(v2.toArray()).toEqual(["a", "b", "c"]);
+  });
+
+  test("zip stops at shortest iterable", () => {
+    const v1 = Vector.of(1, 2, 3, 4);
+    const arr = ["x", "y"];
+    const result = v1.zip(arr);
+    expect(result.toArray()).toEqual([[1, "x"], [2, "y"]]);
+  });
+
+  test("zip with array and vector mix", () => {
+    const v = Vector.of("p", "q");
+    const arr = [10, 20];
+    const result = v.zip(arr);
+    expect(result.toArray()).toEqual([["p", 10], ["q", 20]]);
+  });
+
+  test("zip on empty vector returns empty", () => {
+    const vEmpty = Vector.empty<number>();
+    const v2 = Vector.of(1, 2);
+    const result = vEmpty.zip(v2);
+    expect(result.isEmpty()).toBe(true);
+  });
+
+  test('zip with a LinkedList and an ArrayList', () => {
+     const res = Vector.of(1,2,3)
+                        .zip(LinkedList.of(4,5,6))
+                        .zip(ArrayList.of(7, 8, 9));
+    expect(res.toArray()).toEqual([[[1, 4], 7], [[2, 5], 8], [[3, 6], 9]]);
+  })
+
+  test('zip with LinkedList and ArrayList of different lengths. Stops at shortest collection', () => {
+    const res = Vector.of(1,2,3)
+                        .zip(LinkedList.of(4,5,6,7), ArrayList.of(8, 9));
+    expect(res.toArray()).toEqual([[1, 4, 8], [2, 5, 9]])
+  })
+});
+
+
+describe("Vector zipAll()", () => {
+  test("zipAll with two vectors of equal length", () => {
+    const v1 = Vector.of(1, 2, 3);
+    const v2 = Vector.of("a", "b", "c");
+    const result = v1.zipAll(v2);
+    expect(result.toArray()).toEqual([[1, "a"], [2, "b"], [3, "c"]]);
+  });
+
+  test("zipAll stops at longest iterable, filling missing with undefined", () => {
+    const v1 = Vector.of(1, 2);
+    const arr = ["x"];
+    const v3 = Vector.of("p", "q", "r");
+    const result = v1.zipAll(arr, v3);
+    expect(result.toArray()).toEqual([
+      [1, "x", "p"],
+      [2, undefined, "q"],
+      [undefined, undefined, "r"]
+    ]);
+  });
+
+  test("zipAll with empty vector returns tuples for other collections", () => {
+    const vEmpty = Vector.empty<number>();
+    const v2 = Vector.of("a", "b");
+    const arr = [true];
+    const result = vEmpty.zipAll(v2, arr);
+    expect(result.toArray()).toEqual([
+      [undefined, "a", true],
+      [undefined, "b", undefined]
+    ]);
+  });
+
+  test("zipAll on all empty returns empty vector", () => {
+    const empty = Vector.empty<number>();
+    const result = empty.zipAll([], []);
+    expect(result.isEmpty()).toBe(true);
+  });
+});
+
+describe("Vector zipWith()", () => {
+  test("zipWith two vectors of equal length using addition", () => {
+    const v1 = Vector.of(1, 2, 3);
+    const v2 = Vector.of(4, 5, 6);
+    const result = v1.zipWith((a, b) => a + b, v2);
+    expect(result.toArray()).toEqual([5, 7, 9]);
+    // originals unchanged
+    expect(v1.toArray()).toEqual([1, 2, 3]);
+    expect(v2.toArray()).toEqual([4, 5, 6]);
+  });
+
+  test("zipWith vector and array using multiplication", () => {
+    const v = Vector.of(2, 3, 4);
+    const arr = [5, 6, 7];
+    const result = v.zipWith((a, b) => a * b, arr);
+    expect(result.toArray()).toEqual([10, 18, 28]);
+  });
+
+  test("zipWith three collections combining into strings", () => {
+    const v = Vector.of("a", "b");
+    const v2 = Vector.of("x", "y");
+    const arr = ["1", "2"];
+    const result = v.zipWith((a, b, c) => `${a}${b}${c}`, v2, arr);
+    expect(result.toArray()).toEqual(["ax1", "by2"]);
+  });
+
+  test("zipWith stops at shortest collection", () => {
+    const v1 = Vector.of(1, 2, 3);
+    const arr = [10, 20];
+    const result = v1.zipWith((a, b) => a - b, arr);
+    expect(result.toArray()).toEqual([-9, -18]);
+  });
+
+  test("zipWith on empty vector returns empty", () => {
+    const empty = Vector.empty<number>();
+    const v2 = Vector.of(1, 2, 3);
+    const result = empty.zipWith((a, b) => a + b, v2);
+    expect(result.isEmpty()).toBe(true);
+  });
+});
+
