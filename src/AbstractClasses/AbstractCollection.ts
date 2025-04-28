@@ -1,5 +1,6 @@
 import Collection from '../Interfaces/Collection';
 import { Comparator } from '../Interfaces/Comparator';
+import Sorting from '../Sorting/Sorting';
 
 export default abstract class AbstractCollection<T> implements Collection<T> {
     abstract [Symbol.iterator](): Iterator<T>;
@@ -244,7 +245,7 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
     }
 
     /**
-     * Checks that
+     * Checks that some element in the collection passes the callback function.
      * @param callback - The function to apply to each element.
      * @param thisArg - The context to bind the function to.
      */
@@ -258,8 +259,35 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
         return false;
     }
 
-    abstract sort(compareFn?: Comparator<T>): Collection<T>;
-    abstract sortedBy<U>(keySelector: (value: T) => U, compareFn?: (a: U, b: U) => number): Collection<T>;
+    /**
+     * Sorts the collection using the provided comparator function.
+     * @param compare - The function to compare two elements.
+     * @returns A new collection with the elements sorted.
+     */
+    sort(compare: Comparator<T>): Collection<T> {
+        const mutableArray = this.toArray();
+        Sorting.timSort(mutableArray, compare);
+        return (this.empty() as unknown as Collection<T>).addAll(mutableArray);
+    }
+
+    /**
+     * Sorts the collection by the selected key using the provided key selector function.
+     * 
+     * Uses the Timsort algorithm for sorting.
+     * 
+     * @param keySelector - The function to select the key for sorting.
+     * @param compareFn - The function to compare two keys. If not provided, the default comparison will be used.
+     * @returns A new collection with the elements sorted by the selected key.
+     */
+    sortedBy<U>(keySelector: (value: T) => U, compareFn?: ((a: U, b: U) => number) | undefined): Collection<T> {
+        const mutableArray = this.toArray();
+        Sorting.timSort(mutableArray, (a, b) => {
+            const keyA = keySelector(a);
+            const keyB = keySelector(b);
+            return compareFn ? compareFn(keyA, keyB) : keyA < keyB ? -1 : keyA > keyB ? 1 : 0;
+        });
+        return (this.empty() as unknown as Collection<T>).addAll(mutableArray);
+    }
 
     forEach(callback: (value: T, index: number, collection: this) => void, thisArg?: any): void {
         let i=0;
@@ -279,11 +307,64 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
         return undefined;
     }
 
-    abstract reduce(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
-    abstract reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;
-    abstract reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;
-    abstract reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
-    abstract reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T, initialValue: T): T;
-    abstract reduceRight<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;
+    /**
+     * Accumulates the values in the collection using the provided callback function.
+     * 
+     * @param callback - The function to apply to each element.
+     */
+    reduce(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
+    reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;
+    reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, array: this) => U, initialValue?: U): U {
+        let accumulator: U;
+        let startIndex: number;
+
+        if (initialValue === undefined) {
+            if (this.size() === 0) {
+                throw new TypeError("Reduce of empty collection with no initial value");
+            }
+            // get the first element as the initial value
+            accumulator = this.get(0) as unknown as U;
+            startIndex = 1;
+        } else {
+            accumulator = initialValue;
+            startIndex = 0;
+        }
+
+        let i = startIndex;
+        for (const item of this) {
+            accumulator = callback(accumulator, item, i, this);
+            i++;
+        }
+        return accumulator;
+    }
+
+
+    /**
+     * Accumulates the values in the collection using the provided callback function, starting from the end.
+     * @param callback - The function to apply to each element.
+     */
+    reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, array: this) => T): T;
+    reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, array: this) => T, initialValue: T): T;
+    reduceRight<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, array: this) => U, initialValue: U): U;
+    reduceRight<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, array: this) => U, initialValue?: U): U {
+        let accumulator: U;
+        let startIndex: number;
+
+        if (initialValue === undefined) {
+            if (this.size() === 0) {
+                throw new TypeError("Reduce of empty array with no initial value");
+            }
+            accumulator = this.get(this.size() - 1) as unknown as U;
+            startIndex = this.size() - 2;
+        } else {
+            accumulator = initialValue;
+            startIndex = this.size() - 1;
+        }
+
+        for (let i = startIndex; i >= 0; i--) {
+            accumulator = callback(accumulator, this.get(i)!, i, this);
+        }
+        return accumulator;
+    }
 
 }
