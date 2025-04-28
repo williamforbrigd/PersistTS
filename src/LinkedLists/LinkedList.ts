@@ -1,14 +1,15 @@
-import AbstractSequentialList from '../AbstractClasses/AbstractSequentialList';
 import List, {ListInput} from '../Interfaces/List';
 import Queue from '../Interfaces/Queue';
 import HashCode from '../Hashing/HashCode';
 import { Comparator } from '../Interfaces/Comparator';
 import { Speed } from '../Enums/Speed';
 import Sorting from '../Sorting/Sorting';
+import AbstractList from '../AbstractClasses/AbstractList';
 
 // This class represents a singly linked list that is immutable.
 // This list is recursively defined.
-export default class LinkedList<T> extends AbstractSequentialList<T> implements List<T>, Queue<T> {
+export default class LinkedList<T> extends AbstractList<T> 
+                                    implements List<T>, Queue<T> {
     private _hashCode: number | null = null;
     
     constructor(

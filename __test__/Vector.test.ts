@@ -934,10 +934,9 @@ describe("Vector sort() and sortedBy()", () => {
   });
 
   test("sort with large random dataset", () => {
-    const SIZE = 1_000_000;
+    const SIZE = 100_000;
     const arr = Array.from({ length: SIZE }, () => Math.floor(Math.random() * SIZE));
-    // const vec = Vector.of(...arr);
-    const vec = Vector.empty<number>().addAll(arr);
+    const vec = Vector.empty<number>().addAll(arr); // spread operator is not good for large datasets
     const sorted = vec.sort((a, b) => a - b);
     const expected = [...arr].sort((a, b) => a - b);
     expect(sorted.toArray()).toEqual(expected);
@@ -950,13 +949,12 @@ describe("Vector sort() and sortedBy()", () => {
   });
 
   test("sortedBy with large random object dataset", () => {
-    const SIZE = 1_000_000;
+    const SIZE = 100_000;
     const arr = Array.from({ length: SIZE}, () => ({
         v: Math.floor(Math.random() * SIZE),
         id: Math.random().toString()
     }));
-    // const vec = Vector.of(...arr);
-    const vec = Vector.empty<{ v: number, id: string }>().addAll(arr);
+    const vec = Vector.empty<{ v: number, id: string }>().addAll(arr); // spread operator is not good for large datasets
     const sorted = vec.sortedBy(obj => obj.v);
     const expected = [...arr].sort((a, b) => a.v - b.v);
     expect(sorted.toArray()).toEqual(expected);

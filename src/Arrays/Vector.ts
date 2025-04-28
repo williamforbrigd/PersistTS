@@ -546,8 +546,8 @@ export default class Vector<T> extends AbstractList<T>
      * @returns a new vector with the elements in reverse order.
      */
     reversed(): Vector<T> {
-        const items = this.toArray().reverse();
-        return Vector.of(...items);
+        const arr = this.toArray().reverse();
+        return Vector.of(...arr);
     }
     /**
      * Adds an element to the beginning of the vector.

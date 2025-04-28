@@ -4,8 +4,9 @@ import SequencedCollection from "../Interfaces/SequencedCollection";
 import { Comparator } from "../Interfaces/Comparator";
 import Collection from "../Interfaces/Collection";
 import { Speed } from "../Enums/Speed";
+import AbstractSequencedCollection from "./AbstractSequentialCollection";
 
-export default abstract class AbstractList<T> extends AbstractCollection<T> implements List<T> {
+export default abstract class AbstractList<T> extends AbstractSequencedCollection<T> implements List<T> {
     [index: number]: T | undefined;
 
     FIFO(): boolean {
@@ -84,11 +85,6 @@ export default abstract class AbstractList<T> extends AbstractCollection<T> impl
         return index;
     }
 
-    abstract reversed(): SequencedCollection<T>;
-
-    abstract addFirst(e: T): SequencedCollection<T>;
-
-    abstract addLast(e: T): SequencedCollection<T>;
 
     getFirst(): T | undefined {
         return this.get(0);
@@ -97,10 +93,6 @@ export default abstract class AbstractList<T> extends AbstractCollection<T> impl
     getLast(): T | undefined {
         return this.get(this.size() - 1);
     }
-
-    abstract removeFirst(): SequencedCollection<T>;
-
-    abstract removeLast(): SequencedCollection<T>;
 
 
     // HOFs only relevant to List
