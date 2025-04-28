@@ -14,7 +14,7 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
 
     abstract clear(): Collection<T>;
 
-    contains(o: T): boolean {
+    has(o: T): boolean {
         for (const item of this) {
             if (item === o) {
                 return true;
@@ -23,9 +23,9 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
         return false;
     }
 
-    containsAll(c: Iterable<T>): boolean {
+    hasAll(c: Iterable<T>): boolean {
         for (const item of c) {
-            if (!this.contains(item)) {
+            if (!this.has(item)) {
                 return false;
             }
         }
@@ -43,7 +43,9 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
         return this.size() === 0;
     }
 
-    abstract remove(e: T): Collection<T>;
+    abstract empty(): Collection<T>;
+
+    abstract removeItem(e: T): Collection<T>;
 
     abstract removeAll(c: Iterable<T>): Collection<T>;
 
@@ -64,36 +66,117 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
         return result;
     }
 
-    abstract concat<C extends T>(...valuesOrCollections: Array<Iterable<C> | C>): Collection<T | C>;
-    abstract merge<C extends T>(...collections: Array<Iterable<C>>): Collection<T | C>;
+    /**
+     * Concat the collection with the given values or collections.
+     * @param valuesOrCollections - values or collections to be concatenated
+     * @returns A new collection with the values or collections concatenated.
+     */
+    concat<C extends T>(...valuesOrCollections: Array<Iterable<C> | C>): Collection<T | C> {
+        let res = this as unknown as Collection<T | C>;
 
-    abstract map<M>(
+        for (const elem of valuesOrCollections) {
+            if (elem !== null && (elem as any)[Symbol.iterator]) {
+                res = res.addAll(elem as Iterable<C>)
+            } else {
+                res = res.add(elem as C);
+            }
+        }
+        return res;
+    }
+
+    /**
+     * Merges with the given collections.
+     * 
+     * @param collections - collections to be merged
+     * @returns A new collection with the collections merged.
+     */
+    merge<C extends T>(...collections: Array<Iterable<C>>): Collection<T | C> {
+        let res = this as Collection<T | C>;
+        for (const collection of collections) {
+            res = res.addAll(collection);
+        }
+        return res;
+    }
+
+    /**
+     * Traverses and applies the given function to each element.
+     * @param mapper - function to map the elements of the collection
+     * @param thisArg - context for the mapper function
+     */
+    map<M>(
         mapper: (value: T, key: number, collection: this) => M,
         thisArg?: any
-    ): Collection<M>;
+    ): Collection<M> {
+        const newItems = this.toArray().map((value, index) => mapper.call(thisArg, value, index, this));
+        return (this.empty() as unknown as Collection<M>).addAll(newItems);
+    }
 
-    abstract flatMap<M>(
+    /**
+     * Applies the mapper function to each element and flattens the result.
+     * @param mapper - function to map the elements of the collection
+     * @param thisArg - context for the mapper function
+     */
+    flatMap<M>(
         mapper: (value: T, key: number, iter: this) => Iterable<M>,
         thisArg?: any
-    ): Collection<M>;
+    ): Collection<M> {
+        let res = this.empty() as unknown as Collection<M>;
+        let i=0;
+        for (const value of this) {
+            const iter = mapper.call(thisArg, value, i++, this);
+            res = res.addAll(iter);
+        }
+        return res;
+    }
 
-    abstract filter<F extends T>(
+    /**
+     * Filters and returns a new collection with the elements that pass the filter.
+     * @param predicate - function to filter the elements
+     * @param thisArg - context for the predicate function
+     */
+    filter<F extends T>(
         predicate: (value: T, index: number, iter: this) => value is F,
         thisArg?: any
     ): Collection<F>;
-    abstract filter(
+    filter(
         predicate: (value: T, index: number, iter: this) => unknown,
         thisArg?: any
     ): this;
+    filter(predicate: any, thisArg?: any): any {
+        const filtered = this.toArray().filter((value, index) => predicate.call(thisArg, value, index, this));
+        return (this.empty() as unknown as Collection<T>).addAll(filtered);
+    }
 
-    abstract partition<F extends T, C>(
+    /**
+     * Partitions into a true collection for the elements that pass the predicate function.
+     * The rest of the elements will go into the false collection. 
+     * @param predicate - To apply to the elements.
+     * @param thisArg - context for the predicate function.
+     */
+    partition<F extends T, C>(
         predicate: (this: C, value: T, index: number, iter: this) => value is F,
         thisArg?: C
     ): [Collection<T>, Collection<F>];
-    abstract partition<C>(
+    partition<C>(
         predicate: (this: C, value: T, index: number, iter: this) => unknown,
         thisArg?: C
     ): [this, this];
+    partition<C>(predicate: (this: C, value: T, index: number, iter: this) => unknown, thisArg?: any): any {
+        const trueItems: T[] = [];
+        const falseItems: T[] = [];
+        let i = 0;
+        for (const value of this) {
+            if (predicate.call(thisArg, value, i, this)) {
+                trueItems.push(value);
+            } else {
+                falseItems.push(value);
+            }
+            i++;
+        }
+        const trueCollection = (this.empty() as unknown as Collection<T>).addAll(trueItems);
+        const falseCollection = (this.empty() as unknown as Collection<T>).addAll(falseItems);
+        return [trueCollection, falseCollection];
+    }
 
     abstract zip<U>(other: Collection<U>): Collection<[T, U]>;
     abstract zip<U, V>(
@@ -124,11 +207,30 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
     ): Collection<Z>;
 
 
-    abstract distinct(): Collection<T>;
+    /**
+     * Returns a new collection with only unique elements.
+     */
+    distinct(): Collection<T> {
+        let res = this.empty() as unknown as Collection<T>;
+        const set = new Set<T>(this.toArray());
+        res = res.addAll(set as Iterable<T>);
+        return res;
+    }
+
+    /**
+     * Concatenates the collection into a string
+     * @param separator - The separator to use between elements. Defaults to "," if not provided.
+     * @returns A string representation of the collection.
+     */
     join(separator?: string): string {
-        return Array.from(this).join(separator ?? ",");
+        return this.toArray().join(separator);
     }
     
+    /**
+     * Checks that every element in the collection passes the callback function.
+     * @param callback - The function to apply to each element.
+     * @param thisArg - The context to bind the function to.
+     */
     every<S extends T>(callback: (value: T, index: number, collection: this) => value is S, thisArg?: any): this is Collection<S>;
     every(callback: (value: T, index: number, collection: this) => unknown, thisArg?: any): boolean;
     every(callback: (value: T, index: number, collection: this) => unknown, thisArg?: any): any {
@@ -141,6 +243,11 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
         return true;
     }
 
+    /**
+     * Checks that
+     * @param callback - The function to apply to each element.
+     * @param thisArg - The context to bind the function to.
+     */
     some(callback: (value: T, index: number, collection: this) => unknown, thisArg?: any): boolean {
         let i=0;
         for (const item of this) {
