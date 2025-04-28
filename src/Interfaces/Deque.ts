@@ -28,7 +28,7 @@ export default interface Deque<T> extends Queue<T>, SequencedCollection<T> {
     push(e: T): Deque<T>;
     pop(): {value: T | undefined, newDeque: Deque<T>};
     remove(item: T): Deque<T>;
-    contains(item: T): boolean;
+    has(item: T): boolean;
     size(): number;
     reversed(): Deque<T>;
 }

@@ -5,12 +5,13 @@ export default interface Collection<T> extends Iterable<T>  {
 
     size(): number;
     isEmpty(): boolean;
-    contains(o: T): boolean;
+    empty(): Collection<T>;
+    has(o: T): boolean;
     toArray(): T[];
     toArray(generator: (size: number) => T[]): T[];
     add(e: T): Collection<T>;
-    remove(e: T): Collection<T>;
-    containsAll(c: Iterable<T>): boolean;
+    removeItem(item: T): Collection<T>;
+    hasAll(c: Iterable<T>): boolean;
     addAll(c: Iterable<T>): Collection<T>;
     removeAll(c: Iterable<T>): Collection<T>;
     removeIf(filter: (item: T) => boolean): Collection<T>;
