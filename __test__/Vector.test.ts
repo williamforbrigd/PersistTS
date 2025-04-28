@@ -834,3 +834,44 @@ describe("Vector zipWith()", () => {
   });
 });
 
+
+describe('Vector.distinct()', () => {
+  it('returns an empty vector when called on an empty vector', () => {
+    const v = Vector.empty<number>();
+    const d = v.distinct();
+    expect(d.size()).toBe(0);
+    expect(d.toArray()).toEqual([]);
+  });
+
+  it('removes duplicate primitive values and preserves insertion order', () => {
+    const v = Vector.of(1, 2, 2, 3, 1, 4, 3);
+    const d = v.distinct();
+    expect(d.toArray()).toEqual([1, 2, 3, 4]);
+    // original is unchanged
+    expect(v.toArray()).toEqual([1, 2, 2, 3, 1, 4, 3]);
+  });
+
+  it('returns the same sequence if there are no duplicates', () => {
+    const arr = ['a', 'b', 'c'];
+    const v = Vector.of(...arr);
+    const d = v.distinct();
+    expect(d.toArray()).toEqual(arr);
+  });
+
+  it('uses reference equality for objects', () => {
+    const o1 = { x: 1 };
+    const o2 = { x: 1 };
+    const v = Vector.of(o1, o2, o1, o2);
+    const d = v.distinct();
+    // should keep the first occurrences of each reference
+    expect(d.toArray()).toEqual([o1, o2]);
+  });
+
+  it('works on a VectorView slice', () => {
+    const v = Vector.of(5, 5, 6, 7, 6, 8);
+    const slice = v.slice(1, 5); // [5,6,7,6]
+    const d = slice.distinct();
+    expect(d.toArray()).toEqual([5, 6, 7]);
+  });
+});
+

@@ -393,10 +393,10 @@ export default class Vector<T> extends AbstractList<T>
     add(item: T): Vector<T>;
     add(index: number, item: T): Vector<T>;
     add(arg1: T | number, arg2?: T): Vector<T> {
-        if (typeof arg1 === "number") {
+        if (typeof arg1 === "number" && arg2 !== undefined) {
             return this.set(arg1, arg2 as T);
         } else {
-            return this.push(arg1);
+            return this.push(arg1 as T);
         }
     }
 
@@ -796,16 +796,7 @@ export default class Vector<T> extends AbstractList<T>
      * @returns A new vector with the values or collections concatenated.
      */
     concat<C extends T>(...valuesOrCollections: Array<Iterable<C> | C>): Vector<T | C> {
-        let res = this as unknown as Vector<T | C>;
-
-        for (const elem of valuesOrCollections) {
-            if (elem !== null && (elem as any)[Symbol.iterator]) {
-                res = res.addAll(elem as Iterable<C>)
-            } else {
-                res = res.push(elem as C);
-            }
-        }
-        return res;
+        return super.concat(...valuesOrCollections) as Vector<T | C>;
     }
 
     /**
@@ -815,11 +806,7 @@ export default class Vector<T> extends AbstractList<T>
      * @returns A new vector with the collections merged.
      */
     merge<C extends T>(...collections: Array<Iterable<C>>): Vector<T | C> {
-        let res = this as Vector<T | C>;
-        for (const collection of collections) {
-            res = res.addAll(collection);
-        }
-        return res;
+        return super.merge(...collections) as Vector<T | C>;
     }
 
     /**
@@ -831,8 +818,7 @@ export default class Vector<T> extends AbstractList<T>
         mapper: (value: T, key: number, collection: this) => M,
         thisArg?: any
     ): Vector<M> {
-        const newItems = this.toArray().map((value, index) => mapper.call(thisArg, value, index, this));
-        return Vector.of(...newItems);
+        return super.map(mapper, thisArg) as Vector<M>;
     }
 
     /**
@@ -844,13 +830,7 @@ export default class Vector<T> extends AbstractList<T>
         mapper: (value: T, key: number, iter: this) => Iterable<M>,
         thisArg?: any
     ): Vector<M> {
-        let res = Vector.empty<M>();
-        let i=0;
-        for (const value of this) {
-            const iter = mapper.call(thisArg, value, i++, this);
-            res = res.addAll(iter);
-        }
-        return res;
+        return super.flatMap(mapper, thisArg) as Vector<M>;
     }
 
     /**
@@ -867,8 +847,7 @@ export default class Vector<T> extends AbstractList<T>
         thisArg?: any
     ): this;
     filter(predicate: any, thisArg?: any): any {
-        const filtered = this.toArray().filter((value, index) => predicate.call(thisArg, value, index, this));
-        return Vector.of(...filtered);
+        return super.filter(predicate, thisArg) as any;
     }
 
     /**
@@ -886,18 +865,7 @@ export default class Vector<T> extends AbstractList<T>
         thisArg?: C
     ): [this, this];
     partition<C>(predicate: (this: C, value: T, index: number, iter: this) => unknown, thisArg?: any): any {
-        const trueItems: T[] = [];
-        const falseItems: T[] = [];
-        let i = 0;
-        for (const value of this) {
-            if (predicate.call(thisArg, value, i, this)) {
-                trueItems.push(value);
-            } else {
-                falseItems.push(value);
-            }
-            i++;
-        }
-        return [Vector.of(...trueItems), Vector.of(...falseItems)];
+        return super.partition(predicate, thisArg) as any;
     }
 
     /**
@@ -912,7 +880,6 @@ export default class Vector<T> extends AbstractList<T>
     ): Vector<[T, U, V]>;
     zip(...collections: Array<ListInput<unknown>>): Vector<unknown>;
     zip<U, V>(...other: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]): Vector<unknown> {
-        // throw new Error("Vector.zip() not implemented");
         return super.zip(...other) as Vector<unknown>;
     }
 
@@ -958,25 +925,42 @@ export default class Vector<T> extends AbstractList<T>
         return super.zipWith(zipper, ...otherCollection) as Vector<Z>;
     }
 
+    /**
+     * Returns a new vector with only unique elements.
+     */
     distinct(): Vector<T> {
-        throw new Error("Vector.distinct() not implemented");
+        return super.distinct() as Vector<T>;
     }
 
+    /**
+     * Concatenates the collection into a string
+     * @param separator - separator to join the elements of the vector
+     */
     join(separator?: string): string {
-        throw new Error("Vector.join() not implemented");
+        return super.join(separator);
     }
 
+    /**
+     * Checks that every element in the vector passes the callback function.
+     * @param callback - function to test each element
+     * @param thisArg - context for the callback function
+     */
     every<S extends T>(
         callback: (value: T, index: number, collection: this) => value is S,
         thisArg?: any
     ): this is Vector<S>;
     every(callback: (value: T, index: number, collection: this) => unknown, thisArg?: any): boolean;
     every(predicate: any, thisArg?: any): any {
-        throw new Error("Vector.every() not implemented");
+        return super.every(predicate, thisArg) as any;
     }
 
+    /**
+     * Check that some element in the vector passes the callback function.
+     * @param callback - function to test each element
+     * @param thisArg - context for the callback function
+     */
     some(callback: (value: T, index: number, collection: this) => unknown, thisArg?: any): boolean {
-        throw new Error("Vector.some() not implemented");
+        return super.some(callback, thisArg) as boolean;
     }
 
     sort(compareFn?: Comparator<T>): Vector<T> {
