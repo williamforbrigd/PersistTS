@@ -33,8 +33,16 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         return new ArrayList(Array.from(items));
     }
 
-    static of<T>(items: Iterable<T>): ArrayList<T> {
+    static of<T>(...items: T[]): ArrayList<T> {
         return new ArrayList<T>(Array.from(items));
+    }
+
+    of(...items: T[]): ArrayList<T> {
+        return new ArrayList<T>(Array.from(items));
+    }
+
+    empty(): ArrayList<T> {
+        return new ArrayList<T>();
     }
 
     static isList = true;
@@ -95,11 +103,11 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
     }
 
     addFirst(item: T): ArrayList<T> {
-        return this.add(0, item);
+        return this.set(0, item);
     }
 
     addLast(item: T): ArrayList<T> {
-        return this.add(this.length-1, item)
+        return this.set(this.length-1, item)
     }
 
     clear(): ArrayList<T> {
@@ -118,12 +126,12 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         return new ArrayList(newItems);
     }
 
-    contains(item: T): boolean {
-        return super.contains(item);
+    has(item: T): boolean {
+        return super.has(item);
     }
 
-    containsAll(items: Iterable<T>): boolean {
-        return super.containsAll(items);
+    hasAll(items: Iterable<T>): boolean {
+        return super.hasAll(items);
     }
 
     toArray(): T[];
@@ -272,26 +280,26 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         return accumulator;
     }
 
-    remove(item: T): ArrayList<T>;
-    remove(): ArrayList<T>;
-    remove(item?: T): ArrayList<T> {
-        if (item === undefined) {
-            if (this.FIFO()) {
-                return this.removeFirst();
-            } else {
-                return this.removeLast();
-            }
-        } else {
-            const index = this.indexOf(item);
-            if (index === -1) {
-                return this;
-            } else {
-                const newItems = this.items.slice();
-                newItems.splice(index, 1);
-                return new ArrayList(newItems);
-            }
-        }
-    }
+    // remove(item: T): ArrayList<T>;
+    // remove(): ArrayList<T>;
+    // remove(item?: T): ArrayList<T> {
+    //     if (item === undefined) {
+    //         if (this.FIFO()) {
+    //             return this.removeFirst();
+    //         } else {
+    //             return this.removeLast();
+    //         }
+    //     } else {
+    //         const index = this.indexOf(item);
+    //         if (index === -1) {
+    //             return this;
+    //         } else {
+    //             const newItems = this.items.slice();
+    //             newItems.splice(index, 1);
+    //             return new ArrayList(newItems);
+    //         }
+    //     }
+    // }
 
     removeAll(items: Iterable<T>): ArrayList<T> {
         const itemsToRemove = new Set(items);
@@ -299,18 +307,27 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         return new ArrayList(newItems);
     }
 
-    removeAt(index: number): ArrayList<T> {
+    remove(index: number): ArrayList<T> {
         const newItems = this.items.slice();
         newItems.splice(index, 1);
         return new ArrayList(newItems);
     }
 
+    removeItem(item: T): ArrayList<T> {
+        const index = this.indexOf(item);
+        if (index === -1) {
+            return this;
+        } else {
+            return this.remove(index);
+        }
+    }
+
     removeFirst(): ArrayList<T> {
-        return this.removeAt(0);
+        return this.remove(0);
     }
 
     removeLast(): ArrayList<T> {
-        return this.removeAt(this.length - 1);
+        return this.remove(this.length - 1);
     }
 
     removeIf(filter: (item: T) => boolean): ArrayList<T> {
@@ -338,6 +355,13 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         const newItems = this.items.slice();
         newItems[index] = item;
         return new ArrayList(newItems);
+    }
+
+    pop(): ArrayList<T> {
+        if (this.isEmpty()) {
+            throw new RangeError("Cannot pop from an empty list");
+        }
+        return this.removeLast();
     }
 
     shift(): ArrayList<T> {
@@ -399,7 +423,11 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         return new ArrayList(newItems);
     }
 
-    // zip stops when the shorter collection runs out of elements
+    /**
+     * Combines elements of this collection with one or more iterables into tuples, 
+     * stopping when the shortest input is exhausted.
+     * @param other - other collections to combine with
+     */
     zip<U>(other: ListInput<T>): ArrayList<[T, U]>;
     zip<U, V>(
         other: ListInput<T>,
@@ -407,30 +435,28 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
     ): ArrayList<[T, U, V]>;
     zip(...collections: Array<ListInput<unknown>>): ArrayList<unknown>;
     zip<U, V>(...other: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]): ArrayList<unknown> {
-        const minLength = Math.min(this.size(), ...other.map(c => Array.isArray(c) ? c.length : c.size()));
-        const newItems: unknown[] = [];
-        for (let i = 0; i < minLength; i++) {
-            newItems.push([this.items[i], ...other.map(c => Array.isArray(c) ? c[i] : c.get(i))]);
-        }
-        return new ArrayList<unknown>(newItems);
+        return super.zip(...other) as ArrayList<unknown>;
     }
 
-    // zipAll continues until the longest collection runs out of elements
+    /**
+     * Combines elements of this collection with one or more iterables into tuples, 
+     * continuing until the longest input is exhausted.
+     * @param other - other collections to combine with
+     */
     zipAll<U>(other: ListInput<U>): ArrayList<[T, U]>;
     zipAll<U, V>(other: ListInput<U>, other2: ListInput<V>): ArrayList<[T, U, V]>;
     zipAll(...collections: Array<ListInput<unknown>>): ArrayList<unknown>;
     zipAll<U, V>(...other: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]): ArrayList<unknown> {
-        const maxLength = Math.max(this.size(), ...other.map(c => Array.isArray(c) ? c.length : c.size()));
-        const newItems = [];
-        for (let i = 0; i < maxLength; i++) {
-            const firstValue = i < this.size() ? this.get(i) : undefined;
-            const secondValue = other.map(c => Array.isArray(c) ? (i < c.length ? c[i] : undefined) : (i < c.size() ? c.get(i) : undefined));
-            const zipped = [firstValue, ...secondValue];
-            newItems.push(zipped);
-        }
-        return new ArrayList<unknown>(newItems);
+        return super.zipAll(...other) as ArrayList<unknown>;
     }
 
+    /**
+     * Combines elements of this collection with one or more iterables by applying a zipper function
+     * to the elements.
+     * @param zipper - Function that takes one element from this collection and one from other collections
+     * to produce a result value.
+     * @param collections - Collections to zip with.
+     */
     zipWith<U, Z>(
         zipper: (value: T, otherValue: U) => Z,
         otherCollection: ListInput<U>
@@ -448,13 +474,7 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         zipper: any,
         ...otherCollection: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]
     ): ArrayList<Z> {
-        const minLength = Math.min(this.size(), ...otherCollection.map(c => Array.isArray(c) ? c.length : c.size()));
-        const newItems: Z[] = [];
-        for (let i = 0; i < minLength; i++) {
-            const values = [this.items[i], ...otherCollection.map(c => Array.isArray(c) ? c[i] : c.get(i))];
-            newItems.push(zipper(...values));
-        }
-        return new ArrayList<Z>(newItems);
+        return super.zipWith(zipper, ...otherCollection) as ArrayList<Z>;
     }
 
     // Speed for different types of operations
