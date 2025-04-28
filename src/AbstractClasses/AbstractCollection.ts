@@ -268,6 +268,7 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
         const mutableArray = this.toArray();
         Sorting.timSort(mutableArray, compare);
         return (this.empty() as unknown as Collection<T>).addAll(mutableArray);
+        // return new (this.constructor as any)(mutableArray);
     }
 
     /**
@@ -330,10 +331,9 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
             startIndex = 0;
         }
 
-        let i = startIndex;
-        for (const item of this) {
+        for (let i = startIndex; i < this.size(); i++) {
+            const item = this.get(i)!;
             accumulator = callback(accumulator, item, i, this);
-            i++;
         }
         return accumulator;
     }

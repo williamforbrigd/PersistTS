@@ -387,6 +387,7 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         const mutableArray = this.toArray();
         Sorting.timSort(mutableArray, compare);
         return new ArrayList(mutableArray);
+        // return super.sort(compare) as ArrayList<T>;
     }
 
     sortedBy<U>(keySelector: (value: T) => U, compareFn?: ((a: U, b: U) => number) | undefined): ArrayList<T> {

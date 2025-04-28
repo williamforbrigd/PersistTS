@@ -1,10 +1,9 @@
 import AbstractList from "../AbstractClasses/AbstractList";
 import { Speed } from "../Enums/Speed";
 import HashCode from "../Hashing/HashCode";
-import Collection from "../Interfaces/Collection";
 import { Comparator } from "../Interfaces/Comparator";
 import List, {ListInput} from "../Interfaces/List";
-import SequencedCollection from "../Interfaces/SequencedCollection";
+import Sorting from "../Sorting/Sorting";
 import { Utils } from "../Utils/Utils";
 
 const MASK = 0x1f; // 011111 = 0b11111 = 32 - 1
@@ -969,7 +968,11 @@ export default class Vector<T> extends AbstractList<T>
      * @returns a new vector with the elements sorted.
      */
     sort(compare: Comparator<T>): Vector<T> {
-        return super.sort(compare) as Vector<T>;
+        const mutableArray = this.toArray();
+        Sorting.timSort(mutableArray, compare);
+        // return Vector.of(...mutableArray);
+        return Vector.empty<T>().addAll(mutableArray);
+        // return super.sort(compare) as Vector<T>;
     }
 
     /**

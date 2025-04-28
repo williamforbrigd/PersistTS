@@ -835,7 +835,7 @@ describe("Vector zipWith()", () => {
 });
 
 
-describe('Vector.distinct()', () => {
+describe('Vector distinct()', () => {
   it('returns an empty vector when called on an empty vector', () => {
     const v = Vector.empty<number>();
     const d = v.distinct();
@@ -874,4 +874,165 @@ describe('Vector.distinct()', () => {
     expect(d.toArray()).toEqual([5, 6, 7]);
   });
 });
+
+describe("Vector join()", () => {
+  test("join() with default separator", () => {
+    const vec = Vector.of(1, 2, 3);
+    const result = vec.join();
+    expect(result).toBe("1,2,3");
+  });
+
+  test("join() with custom separator", () => {
+    const vec = Vector.of("a", "b", "c");
+    const result = vec.join("-");
+    expect(result).toBe("a-b-c");
+  });
+
+  test("join() on empty vector returns empty string", () => {
+    const vec = Vector.empty<number>();
+    const result = vec.join(", ");
+    expect(result).toBe("");
+  });
+
+})
+
+
+describe("Vector every() and some()", () => {
+  test("every returns true when all elements satisfy predicate", () => {
+      const vec = Vector.of(2, 4, 6, 8);
+      expect(vec.every(x => x % 2 === 0)).toBe(true);
+  });
+
+  test("every returns false when at least one element does not satisfy predicate", () => {
+    const vec = Vector.of(1, 2, 3, 4);
+    expect(vec.every(x => x < 4)).toBe(false);
+  });
+  test("some returns true when at least one element satisfies predicate", () => {
+    const vec = Vector.of(1, 3, 5, 6);
+    expect(vec.some(x => x % 2 === 0)).toBe(true);
+  });
+
+  test("some returns false when no elements satisfy predicate", () => {
+    const vec = Vector.of(1, 3, 5);
+    expect(vec.some(x => x % 2 === 0)).toBe(false);
+  });
+
+  test("every returns true and some returns false on empty vector", () => {
+    const vec = Vector.empty<number>();
+    expect(vec.every(x => x > 0)).toBe(true);
+    expect(vec.some(x => x > 0)).toBe(false);
+  });
+});
+
+
+
+describe("Vector sort() and sortedBy()", () => {
+  test("sort sorts numbers using provided comparator", () => {
+      const vec = Vector.of(3, 1, 2);
+      const sorted = vec.sort((a, b) => a - b);
+      expect(sorted.toArray()).toEqual([1, 2, 3]);
+  });
+
+  test("sort with large random dataset", () => {
+    const SIZE = 1_000_000;
+    const arr = Array.from({ length: SIZE }, () => Math.floor(Math.random() * SIZE));
+    // const vec = Vector.of(...arr);
+    const vec = Vector.empty<number>().addAll(arr);
+    const sorted = vec.sort((a, b) => a - b);
+    const expected = [...arr].sort((a, b) => a - b);
+    expect(sorted.toArray()).toEqual(expected);
+  });
+
+  test("sortedBy sorts objects by key selector", () => {
+    const vec = Vector.of({ v: 3 }, { v: 1 }, { v: 2 });
+    const sorted = vec.sortedBy(obj => obj.v);
+    expect(sorted.toArray()).toEqual([{ v: 1 }, { v: 2 }, { v: 3 }]);
+  });
+
+  test("sortedBy with large random object dataset", () => {
+    const SIZE = 1_000_000;
+    const arr = Array.from({ length: SIZE}, () => ({
+        v: Math.floor(Math.random() * SIZE),
+        id: Math.random().toString()
+    }));
+    // const vec = Vector.of(...arr);
+    const vec = Vector.empty<{ v: number, id: string }>().addAll(arr);
+    const sorted = vec.sortedBy(obj => obj.v);
+    const expected = [...arr].sort((a, b) => a.v - b.v);
+    expect(sorted.toArray()).toEqual(expected);
+  });
+
+  test("sortedBy with custom comparator (descending order)", () => {
+    const vec = Vector.of(1, 3, 2);
+    const sortedDesc = vec.sortedBy(x => x, (a, b) => b - a);
+    expect(sortedDesc.toArray()).toEqual([3, 2, 1]);
+  });
+  });
+
+
+  describe("Vector forEach()", () => {
+    test("forEach iterates through all elements in order", () => {
+        const results: number[] = [];
+        const vec = Vector.of(1, 2, 3);
+        vec.forEach((value, index) => {
+            results.push(value + index);
+        });
+        expect(results).toEqual([1, 3, 5]);
+    });
+
+    test("forEach with empty vector does nothing", () => {
+      const results: number[] = [];
+      const vec = Vector.empty<number>();
+      vec.forEach(value => results.push(value));
+      expect(results).toEqual([]);
+  });
+});
+
+describe("Vector find()", () => {
+  test("find returns the first element matching predicate", () => {
+      const vec = Vector.of(1, 2, 3, 4);
+      const found = vec.find(x => x % 2 === 0);
+      expect(found).toBe(2);
+  });
+
+  test("find returns undefined when no element matches", () => {
+      const vec = Vector.of(1, 3, 5);
+      const found = vec.find(x => x > 10);
+      expect(found).toBeUndefined();
+  });
+});
+
+describe("Vector reduce() and reduceRight()", () => {
+  test("reduce sums elements without initial value", () => {
+      const vec = Vector.of(1, 2, 3, 4);
+      expect(vec.reduce((acc, x) => acc + x)).toBe(10);
+  });
+
+  test("reduce sums elements with initial value", () => {
+      const vec = Vector.of(1, 2, 3);
+      expect(vec.reduce((acc, x) => acc + x, 5)).toBe(11);
+  });
+
+  test("reduce throws TypeError on empty vector without initial value", () => {
+      const vec = Vector.empty<number>();
+      expect(() => vec.reduce((acc, x) => acc + x)).toThrow(TypeError);
+  });
+
+  test("reduceRight concatenates elements without initial value", () => {
+      const vec = Vector.of("a", "b", "c");
+      expect(vec.reduceRight((acc, x) => acc + x)).toBe("cba");
+  });
+
+  test("reduceRight concatenates elements with initial value", () => {
+      const vec = Vector.of("x", "y", "z");
+      expect(vec.reduceRight((acc, x) => acc + x, "!")).toBe("!zyx");
+  });
+
+  test("reduceRight throws TypeError on empty vector without initial value", () => {
+      const vec = Vector.empty<string>();
+      expect(() => vec.reduceRight((acc, x) => acc + x)).toThrow(TypeError);
+  });
+});
+
+
 
