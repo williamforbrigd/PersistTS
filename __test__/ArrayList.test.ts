@@ -179,7 +179,7 @@ describe("ArrayList", () => {
 
     test('reduce gives error', () => {
         const emptyArr = new ArrayList<number>();
-        expect(() => emptyArr.reduce((acc, x) => acc + x)).toThrow("Reduce of empty array with no initial value");
+        expect(() => emptyArr.reduce((acc, x) => acc + x)).toThrow("Reduce of empty collection with no initial value");
     });
 
     test('reduceRight', () => {

@@ -49,7 +49,13 @@ export default abstract class AbstractList<T> extends AbstractSequencedCollectio
 
     // abstract remove(item: T): List<T>;
     abstract remove(index: number): List<T>;
-    abstract removeItem(item: T): List<T>;
+    removeItem(item: T): List<T> {
+        const index = this.indexOf(item);
+        if (index === -1) {
+            return this;
+        }
+        return this.remove(index);
+    }
 
     abstract set(index: number, item: T): List<T>;
     abstract pop(): List<T>;

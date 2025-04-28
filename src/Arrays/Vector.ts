@@ -464,8 +464,7 @@ export default class Vector<T> extends AbstractList<T>
      * @returns a new vector with the item removed. 
      */
     removeItem(item: T): Vector<T> {
-        const i = this.indexOf(item);
-        return i === -1 ? this : this.remove(i);
+        return super.removeItem(item) as Vector<T>;
     }
 
     /**
@@ -569,15 +568,13 @@ export default class Vector<T> extends AbstractList<T>
      * Get the first element of the vector.
      */
     getFirst(): T | undefined {
-        if (this._size === 0) return undefined;
-        return this.get(0);
+        return super.getFirst();
     }
     /**
      * Get the last element of the vector.
      */
     getLast(): T | undefined {
-        if (this._size === 0) return undefined;
-        return this.get(this._size - 1);
+        return super.getLast();
     }
     /**
      * Removes the first element of the vector.

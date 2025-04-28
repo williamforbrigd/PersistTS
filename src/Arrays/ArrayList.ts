@@ -115,15 +115,7 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
     }
 
     concat<C extends T>(...valuesOrCollections: Array<Iterable<C> | C>): ArrayList<T | C> {
-        const newItems = this.items.slice();
-        for (const valueOrCollection of valuesOrCollections) {
-            if (typeof (valueOrCollection as Iterable<C>)[Symbol.iterator] === 'function') {
-                newItems.push(...Array.from(valueOrCollection as Iterable<C>));
-            } else {
-                newItems.push(valueOrCollection as C);
-            }
-        }
-        return new ArrayList(newItems);
+        return super.concat(...valuesOrCollections) as ArrayList<T | C>;
     }
 
     has(item: T): boolean {
@@ -153,8 +145,7 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
     filter<F extends T>(predicate: (value: T, index: number, iter: this) => value is F, context?: any): ArrayList<F>;
     filter(predicate: (value: T, index: number, iter: this) => unknown, context?: any): this;
     filter(predicate: (value: T, index: number, iter: this) => unknown, context?: any): any {
-        const newItems = this.items.filter((item, index) => predicate.call(context, item, index, this));
-        return new ArrayList(newItems);
+        return super.filter(predicate, context);
     }
 
     findAll(filter: (item: T) => boolean): ArrayList<T> {
@@ -163,12 +154,7 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
     }
 
     flatMap<M>(mapper: (value: T, key: number, iter: this) => Iterable<M>, context?: any): ArrayList<M> {
-        const newItems = [];
-        for (let i=0; i < this.size(); i++) {
-            const mapped = mapper.call(context, this.items[i], i, this);
-            newItems.push(...mapped);
-        }
-        return new ArrayList(newItems);
+        return super.flatMap(mapper, context) as ArrayList<M>;
     }
 
     forEach(callback: (value: T, index: number, array: this) => void, thisArg?: any): void {
@@ -204,80 +190,30 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
     }
 
     map<M>(mapper: (value: T, key: number, iter: this) => M, context?: any): ArrayList<M> {
-        const newItems = this.items.map((item, index) => mapper.call(context, item, index, this));
-        return new ArrayList(newItems);
+        return super.map(mapper, context) as ArrayList<M>;
     }
 
     merge<C extends T>(...collections: Array<Iterable<C>>): ArrayList<T | C> {
-        const newItems = this.items.slice();
-        for (const collection of collections) {
-            newItems.push(...Array.from(collection));
-        }
-        return new ArrayList(newItems);
+        return super.merge(...collections) as ArrayList<T | C>;
     }
 
     partition<F extends T, C>(predicate: (this: C, value: T, index: number, iter: this) => value is F, context?: C): [ArrayList<T>, ArrayList<F>];
     partition<C>(predicate: (this: C, value: T, index: number, iter: this) => unknown, context?: C): [this, this];
     partition<C>(predicate: (this: C, value: T, index: number, iter: this) => unknown, context?: any): any {
-        const trueItems: T[] = [];
-        const falseItems: T[] = [];
-        for (let i=0; i < this.size(); i++) {
-            if (predicate.call(context, this.items[i], i, this)) {
-                trueItems.push(this.items[i]);
-            } else {
-                falseItems.push(this.items[i]);
-            }
-        }
-        return [new ArrayList(trueItems), new ArrayList(falseItems)];
+        return super.partition(predicate, context) as [ArrayList<T>, ArrayList<T>];
     }
 
     reduce(callback: (previousValue: T, currentValue: T, currentIndex: number, array: this) => T): T;
     reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, array: this) => U, initialValue: U): U;
-    reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, array: this) => U, initialValue?: U): U {
-        let accumulator: U;
-        let startIndex: number;
-
-        if (initialValue === undefined) {
-            if (this.size() === 0) {
-                throw new TypeError("Reduce of empty array with no initial value");
-            }
-            accumulator = this.getFirst() as unknown as U;
-            startIndex = 1;
-        } else {
-            accumulator = initialValue;
-            startIndex = 0;
-        }
-
-        let i = startIndex;
-        for (const item of this) {
-            accumulator = callback(accumulator, item, i, this);
-            i++;
-        }
-        return accumulator;
+    reduce(callback: any, initialValue?: any): any {
+        return super.reduce(callback, initialValue) as any;
     }
 
     reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, array: this) => T): T;
     reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, array: this) => T, initialValue: T): T;
     reduceRight<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, array: this) => U, initialValue: U): U;
-    reduceRight<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, array: this) => U, initialValue?: U): U {
-        let accumulator: U;
-        let startIndex: number;
-
-        if (initialValue === undefined) {
-            if (this.items.length === 0) {
-                throw new TypeError("Reduce of empty array with no initial value");
-            }
-            accumulator = this.items[this.items.length - 1] as unknown as U;
-            startIndex = this.items.length - 2;
-        } else {
-            accumulator = initialValue;
-            startIndex = this.items.length - 1;
-        }
-
-        for (let i = startIndex; i >= 0; i--) {
-            accumulator = callback(accumulator, this.items[i], i, this);
-        }
-        return accumulator;
+    reduceRight(callback: any, initialValue?: any): any {
+        return super.reduceRight(callback, initialValue) as any;
     }
 
     // remove(item: T): ArrayList<T>;
@@ -314,12 +250,7 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
     }
 
     removeItem(item: T): ArrayList<T> {
-        const index = this.indexOf(item);
-        if (index === -1) {
-            return this;
-        } else {
-            return this.remove(index);
-        }
+        return super.removeItem(item) as ArrayList<T>;
     }
 
     removeFirst(): ArrayList<T> {
@@ -387,7 +318,6 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         const mutableArray = this.toArray();
         Sorting.timSort(mutableArray, compare);
         return new ArrayList(mutableArray);
-        // return super.sort(compare) as ArrayList<T>;
     }
 
     sortedBy<U>(keySelector: (value: T) => U, compareFn?: ((a: U, b: U) => number) | undefined): ArrayList<T> {
