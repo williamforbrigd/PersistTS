@@ -963,39 +963,69 @@ export default class Vector<T> extends AbstractList<T>
         return super.some(callback, thisArg) as boolean;
     }
 
-    sort(compareFn?: Comparator<T>): Vector<T> {
-        throw new Error("Vector.sort() not implemented");
+    /**
+     * Sorts the vector using the given comparator function.
+     * @param compareFn - function to compare the elements of the vector
+     * @returns a new vector with the elements sorted.
+     */
+    sort(compare: Comparator<T>): Vector<T> {
+        return super.sort(compare) as Vector<T>;
     }
 
+    /**
+     * Sorts the vector by the given key selector and comparator function.
+     * 
+     * Sorts using the Timsort algorithm.
+     * 
+     * @param keySelector - function to select the key to sort by
+     * @param compareFn - function to compare the keys
+     * @returns A new vector with the elements sorted by the key.
+     */
     sortedBy<U>(
         keySelector: (value: T) => U,
         compareFn?: (a: U, b: U) => number
     ): Vector<T> {
-        throw new Error("Vector.sortedBy() not implemented");
+        return super.sortedBy(keySelector, compareFn) as Vector<T>;
     }
 
+    /**
+     * Applies the given function to each element of the vector.
+     * @param callback - function to apply to each element
+     * @param thisArg - context for the callback function
+     */
     forEach(callback: (value: T, index: number, collection: this) => void, thisArg?: any): void {
-        throw new Error("Vector.forEach() not implemented");
+        super.forEach(callback, thisArg) as void;
     }
 
+    /**
+     * Finds the first element that satisfies the predicate function.
+     * @param predicate - function to test each element
+     * @param thisArg - context for the predicate function
+     */
     find(predicate: (value: T, index: number, collection: this) => boolean, thisArg?: any): T | undefined {
-        throw new Error("Vector.find() not implemented");
+        return super.find(predicate, thisArg) as T | undefined;
     }
 
+    /**
+     * Accumulates the values of the vector using the given callback function.
+     * @param callback - function to accumulate the values
+     */
     reduce(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
     reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;
     reduce(callback: any, initialValue?: any): any {
-        throw new Error("Vector.reduce() not implemented");
+        return super.reduce(callback, initialValue) as any;
     }
 
+    /**
+     * Accumulates the values in the collection using the provided callback function, starting from the end.
+     * @param callback - The function to apply to each element.
+     */
     reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
     reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T, initialValue: T): T;
     reduceRight<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;
     reduceRight(callback: any, initialValue?: any): any {
-        throw new Error("Vector.reduceRight() not implemented");
+        return super.reduceRight(callback, initialValue) as any;
     }
-
-
 
     /**
      * Converts the vector to an array using the iterator method.
