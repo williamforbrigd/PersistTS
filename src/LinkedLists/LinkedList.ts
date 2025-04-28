@@ -18,10 +18,18 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
         super();
     }
 
-    static of<T>(items: Iterable<T>): LinkedList<T> {
+    static of<T>(...items: T[]): LinkedList<T> {
         let list = new LinkedList<T>();
         for (const item of items) {
             list = list.addLast(item);
+        }
+        return list;
+    }
+
+    of(...values: T[]): LinkedList<T> {
+        let list = this.empty();
+        for (const value of values) {
+            list = list.addLast(value);
         }
         return list;
     }
@@ -38,6 +46,12 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
     isEmpty(): boolean {
         return this.head === null && this.tail === null;
     }
+
+    empty(): LinkedList<T> {
+        return new LinkedList<T>();
+    }
+
+    
 
     size(): number {
         let s=0;
@@ -59,7 +73,6 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
         }
     }
 
-    add(e: T): LinkedList<T>;
     add(item: T): LinkedList<T>;
     add(index: number, item: T): LinkedList<T>;
     add(e: T): LinkedList<T>;
@@ -95,14 +108,13 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
         }
     } 
 
-    addAll(c: Iterable<T>): LinkedList<T>;
     addAll(items: Iterable<T>): LinkedList<T>;
-    addAll(index: number, items: Iterable<T>): LinkedList<T>;
-    addAll(arg1: Iterable<T> | number, items?: Iterable<T>): LinkedList<T> {
-        if (typeof arg1 === 'number') {
-            return this.addAllAtIndex(arg1, items!);
+    addAll(items: Iterable<T>, index: number): LinkedList<T>;
+    addAll(items: Iterable<T>, index?: number): LinkedList<T> {
+        if (index !== undefined) {
+            return this.addAllAtIndex(index!, items);
         } else {
-            return this.addAllAtEnd(arg1);
+            return this.addAllAtEnd(items);
         }
     }
     private addAllAtEnd(items: Iterable<T>): LinkedList<T> {
@@ -257,19 +269,19 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
         return acc;
     }
 
-    remove(e: T): LinkedList<T>;
-    remove(item: T): LinkedList<T>;
-    remove(index: number): LinkedList<T>;
-    remove(): LinkedList<T>;
-    remove(arg1?: T | number): LinkedList<T> {
-        if (typeof arg1 === 'number') {
-            return this.removeAt(arg1);
-        } else {
-            return this.removeItem(arg1 as T);
-        }
-    }
+    // remove(e: T): LinkedList<T>;
+    // remove(item: T): LinkedList<T>;
+    // remove(index: number): LinkedList<T>;
+    // remove(): LinkedList<T>;
+    // remove(arg1?: T | number): LinkedList<T> {
+    //     if (typeof arg1 === 'number') {
+    //         return this.removeAt(arg1);
+    //     } else {
+    //         return this.removeItem(arg1 as T);
+    //     }
+    // }
 
-    private removeItem(item: T): LinkedList<T> {
+    removeItem(item: T): LinkedList<T> {
         if (this.isEmpty()) {
             return this;
         }
@@ -280,7 +292,16 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
         return new LinkedList(this.head, newTail);
     }
 
-    private removeAt(index: number): LinkedList<T> {
+    remove(): LinkedList<T>;
+    remove(index: number): LinkedList<T>;
+    remove(index?: number): LinkedList<T> {
+        if (index === undefined) {
+            return this.removeFirst();
+        }
+        return this.removeAt(index);
+    }
+
+    removeAt(index: number): LinkedList<T> {
         if (index < 0) {
             return this;
         }
@@ -385,6 +406,19 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
         return new LinkedList(this.head, newTail);
     }
 
+    pop(): LinkedList<T> {
+        if (this.isEmpty()) throw new RangeError("Cannot pop from an empty list");
+        const res = this.popHelper();
+        return res ?? new LinkedList<T>();
+    }
+
+    popHelper(): LinkedList<T> | null {
+        if (this.tail === null) return null;
+
+        const newTail = this.tail.popHelper();
+        return new LinkedList(this.head!, newTail);
+    }
+
     shift(): LinkedList<T> {
         return this.tail ?? new LinkedList<T>();
     }
@@ -468,13 +502,14 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
     zip<U, V>(other: ListInput<U>, other2: ListInput<V>): LinkedList<[T, U, V]>;
     zip(...collections: Array<ListInput<unknown>>): LinkedList<unknown>;
     zip<U, V>(...other: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]): LinkedList<unknown> {
-        const minLength = Math.min(this.size(), ...other.map(c => Array.isArray(c) ? c.length : c.size()));
-        let newList = new LinkedList<unknown>();
-        for (let i=0; i<minLength; i++) {
-            const zipped = [this.get(i), ...other.map(c => Array.isArray(c) ? c[i] : c.get(i))];
-            newList = newList.addLast(zipped as unknown as [T, U, V])
-        }
-        return newList;
+        // const minLength = Math.min(this.size(), ...other.map(c => Array.isArray(c) ? c.length : c.size()));
+        // let newList = new LinkedList<unknown>();
+        // for (let i=0; i<minLength; i++) {
+        //     const zipped = [this.get(i), ...other.map(c => Array.isArray(c) ? c[i] : c.get(i))];
+        //     newList = newList.addLast(zipped as unknown as [T, U, V])
+        // }
+        // return newList;
+        return super.zip(...other) as LinkedList<unknown>;
     }
 
     // zipAll: (<U>(other: Collection<U>) => Collection<[T, U]>) 
@@ -484,15 +519,16 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
     zipAll<U, V>(other: ListInput<U>, other2: ListInput<V>): LinkedList<[T, U, V]>;
     zipAll(...collections: Array<ListInput<unknown>>): LinkedList<unknown>;
     zipAll<U, V>(...other: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]): LinkedList<unknown> {
-        const maxLength = Math.max(this.size(), ...other.map(c => Array.isArray(c) ? c.length : c.size()));
-        let newList = new LinkedList<unknown>();
-        for (let i = 0; i < maxLength; i++) {
-            const firstValue = i < this.size() ? this.get(i) : undefined;
-            const secondValue = other.map(c => Array.isArray(c) ? (i < c.length ? c[i] : undefined) : (i < c.size() ? c.get(i) : undefined));
-            const zipped = [firstValue, ...secondValue];
-            newList = newList.addLast(zipped as unknown as [T, U, V]);
-        }
-        return newList;
+        // const maxLength = Math.max(this.size(), ...other.map(c => Array.isArray(c) ? c.length : c.size()));
+        // let newList = new LinkedList<unknown>();
+        // for (let i = 0; i < maxLength; i++) {
+        //     const firstValue = i < this.size() ? this.get(i) : undefined;
+        //     const secondValue = other.map(c => Array.isArray(c) ? (i < c.length ? c[i] : undefined) : (i < c.size() ? c.get(i) : undefined));
+        //     const zipped = [firstValue, ...secondValue];
+        //     newList = newList.addLast(zipped as unknown as [T, U, V]);
+        // }
+        // return newList;
+        return super.zipAll(...other) as LinkedList<unknown>;
     }
 
     zipWith<U, Z>(
@@ -512,13 +548,14 @@ export default class LinkedList<T> extends AbstractSequentialList<T> implements 
         zipper: any,
         ...otherCollection: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]
     ): LinkedList<Z> {
-        const minLength = Math.min(this.size(), ...otherCollection.map(c => Array.isArray(c) ? c.length : c.size()));
-        let newList = new LinkedList<Z>();
-        for (let i = 0; i < minLength; i++) {
-            const values = [this.get(i), ...otherCollection.map(c => Array.isArray(c) ? c[i] : c.get(i))];
-            newList = newList.addLast(zipper(...values));
-        }
-        return newList;
+        // const minLength = Math.min(this.size(), ...otherCollection.map(c => Array.isArray(c) ? c.length : c.size()));
+        // let newList = new LinkedList<Z>();
+        // for (let i = 0; i < minLength; i++) {
+        //     const values = [this.get(i), ...otherCollection.map(c => Array.isArray(c) ? c[i] : c.get(i))];
+        //     newList = newList.addLast(zipper(...values));
+        // }
+        // return newList;
+        return super.zipWith(zipper, ...otherCollection) as LinkedList<Z>;
     }
 
     element(): T {
