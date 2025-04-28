@@ -7,17 +7,20 @@ interface List<T> extends SequencedCollection<T>  {
     [index: number]: T | undefined; // this is the get method
     get(index: number): T | undefined;
     set(index: number, item: T): List<T>;
+    pop(): List<T>;
     isReadOnly(): boolean;
 
     // add
     add(item: T): List<T>;
     add(index: number, item: T): List<T>;
     addAll(items: Iterable<T>): List<T>;
-    addAll(index: number, items: Iterable<T>): List<T>;
+    addAll(items: Iterable<T>, index?: number): List<T>;
 
     // remove
-    remove(item: T): List<T>;
+    // remove(item: T): List<T>;
+    // remove(index: number): List<T>;
     remove(index: number): List<T>;
+    removeItem(item: T): List<T>;
 
     replaceAll(items: Iterable<T>): List<T>;
     copyTo(array: T[], arrayIndex: number): void;
@@ -65,7 +68,7 @@ interface List<T> extends SequencedCollection<T>  {
 
 // declare const List: ListConstructor;
 
-export type ListInput<T> = T[] | Array<T> | Collection<T>;
+export type ListInput<T> = T[] | Array<T> | Collection<T> | List<T>;
 
 //function List<T>(collection?: Iterable<T> | ArrayLike<T>): List<T>;
 
