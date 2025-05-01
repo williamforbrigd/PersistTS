@@ -3,7 +3,6 @@ import Queue from '../Interfaces/Queue';
 import HashCode from '../Hashing/HashCode';
 import { Comparator } from '../Interfaces/Comparator';
 import { Speed } from '../Enums/Speed';
-import Sorting from '../Sorting/Sorting';
 import AbstractList from '../AbstractClasses/AbstractList';
 
 // This class represents a singly linked list that is immutable.
