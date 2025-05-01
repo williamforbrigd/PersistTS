@@ -1,7 +1,5 @@
 import List, {ListInput} from "../Interfaces/List";
-import AbstractCollection from "./AbstractCollection";
 import SequencedCollection from "../Interfaces/SequencedCollection";
-import { Comparator } from "../Interfaces/Comparator";
 import Collection from "../Interfaces/Collection";
 import { Speed } from "../Enums/Speed";
 import AbstractSequencedCollection from "./AbstractSequentialCollection";

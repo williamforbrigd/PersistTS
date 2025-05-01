@@ -85,6 +85,17 @@ export default class Vector<T> extends AbstractList<T>
         readonly _tail: T[],
     ) {
         super();
+
+        // Proxy to allow for array-like access
+        return new Proxy(this, {
+            get(target, prop) {
+                if (typeof prop === "string") {
+                    const index = Number(prop);
+                    if (!isNaN(index)) return target.get(index); // calls the get() method
+                }
+                return (target as any)[prop]; // default property access
+            }
+        });
     }
 
     /**

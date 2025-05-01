@@ -418,4 +418,13 @@ describe('LinkedList', () => {
     });
 
 
+    test("array like access", () => {
+        const result = LinkedList.of(1,2,3,4,5);
+        expect(result[0]).toBe(1);
+        expect(result[1]).toBe(2);
+        expect(result[2]).toBe(3);
+        expect(result[3]).toBe(4);
+        expect(result[4]).toBe(5);
+        expect(result[5]).toBe(undefined);
+    })
 });

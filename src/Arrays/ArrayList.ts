@@ -6,6 +6,12 @@ import Collection from "../Interfaces/Collection";
 import { Speed } from "../Enums/Speed";
 import Sorting from "../Sorting/Sorting";
 
+/**
+ * A persistent ArrayList implementation.
+ * It contains a list of items
+ * On modifications, it creates a new instance of the list without altering the original list.
+ * This way, you can keep the original list intact and create new versions of it. 
+ */
 class ArrayList<T> extends AbstractList<T> implements List<T> {
     private _hashCode: number | null = null;
     readonly items: T[];
@@ -29,10 +35,11 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         });
     }
 
-    static from<T>(items: Iterable<T> | T[]): ArrayList<T> {
-        return new ArrayList(Array.from(items));
-    }
-
+    /**
+     * Creates a new ArrayList from the provided items.
+     * @param items - The items to create the ArrayList from.
+     * @returns A new ArrayList instance containing the items.
+     */
     static of<T>(...items: T[]): ArrayList<T> {
         return new ArrayList<T>(Array.from(items));
     }

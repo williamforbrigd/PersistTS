@@ -5,8 +5,6 @@ import { Comparator } from '../Interfaces/Comparator';
 import { Speed } from '../Enums/Speed';
 import AbstractList from '../AbstractClasses/AbstractList';
 
-// This class represents a singly linked list that is immutable.
-// This list is recursively defined.
 /**
  * This class represents a singly linked list that is persistent and immutable.
  * This list is recursively defined.
@@ -25,6 +23,17 @@ export default class LinkedList<T> extends AbstractList<T>
         private readonly tail: LinkedList<T> | null = null
     ) {
         super();
+
+        // Proxy to allow for array-like access
+        return new Proxy(this, {
+            get(target, prop) {
+                if (typeof prop === "string") {
+                    const index = Number(prop);
+                    if (!isNaN(index)) return target.get(index); // calls the get() method
+                }
+                return (target as any)[prop]; // default property access
+            }
+        });
     }
 
     /**

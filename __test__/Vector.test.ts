@@ -1033,4 +1033,15 @@ describe("Vector reduce() and reduceRight()", () => {
 });
 
 
+describe("Vector array like access", () => {
+  test("array-like access works as expected", () => {
+    const vec = Vector.of(1, 2, 3, 4, 5);
+    expect(vec[0]).toBe(1);
+    expect(vec[2]).toBe(3);
+    expect(vec[4]).toBe(5);
+    expect(() => vec[5]).toThrow(RangeError); // out of bounds
+  });
+})
+
+
 
