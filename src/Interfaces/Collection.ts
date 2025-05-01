@@ -1,5 +1,19 @@
 import { Comparator } from "./Comparator";
 
+/**
+ * The Collection interface represents a generic, immutable container of elements.
+ * 
+ * All mutating methods return a new instance of the collection, without altering the original.
+ * 
+ * It extends the Iterable interface, allowing you to define a specific iteration order of the elements.
+ * Many of the definitions of the higher-order functions (HOFs) are inspired by the immutable.js library.
+ * 
+ * The Collection interface is also inpired by the Java Collections Framework and C5 collection library.
+ * 
+ * @see https://immutable-js.com/
+ * @see https://vipwww.itu.dk/research/c5/
+ * @see https://docs.oracle.com/javase/8/docs/api/?java/util/Collections.html
+ */
 export default interface Collection<T> extends Iterable<T>  {
     [Symbol.iterator](): Iterator<T>;
 
