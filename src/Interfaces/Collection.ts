@@ -1,4 +1,5 @@
 import { Comparator } from "./Comparator";
+import EqualityComparer from "./EqualityComparer";
 
 /**
  * The Collection interface represents a generic, immutable container of elements.
@@ -14,7 +15,7 @@ import { Comparator } from "./Comparator";
  * @see https://vipwww.itu.dk/research/c5/
  * @see https://docs.oracle.com/javase/8/docs/api/?java/util/Collections.html
  */
-export default interface Collection<T> extends Iterable<T>  {
+export default interface Collection<T> extends Iterable<T>, EqualityComparer<T> {
     [Symbol.iterator](): Iterator<T>;
 
     size(): number;
@@ -31,9 +32,6 @@ export default interface Collection<T> extends Iterable<T>  {
     removeIf(filter: (item: T) => boolean): Collection<T>;
     retainAll(c: Iterable<T>): Collection<T>;
     clear(): Collection<T>;
-
-    equals(o: Object): boolean;
-    hashCode(): number;
 
 
     // this is some java.util.Collection methods
