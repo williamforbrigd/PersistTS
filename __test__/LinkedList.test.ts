@@ -104,7 +104,7 @@ describe('LinkedList', () => {
 
     test('sort() method that uses the timSort method to sort large array in ascending and descending order', () => {
         const rndShuffled = shuffleArray(createRandomIntArray(1_000, 1, 10000));
-        const result = LinkedList.of(...rndShuffled);
+        const result = LinkedList.empty<number>().addAll(rndShuffled);
 
         const compareAscending = (a: number, b: number) => a - b;
         const compareDescending = (a: number, b: number) => b - a;
@@ -119,7 +119,7 @@ describe('LinkedList', () => {
 
     test('sortBy() on large array', () => {
         const rndShuffled = shuffleArray(createRandomIntArray(1_000, 1, 10000));
-        const result = LinkedList.of(...rndShuffled);
+        const result = LinkedList.empty<number>().addAll(rndShuffled);
 
         const sorted = result.sortBy(x => x*x);
         expect(Sorting.isSorted(sorted.toArray(), (a: number, b: number) => a - b)).toBe(true);

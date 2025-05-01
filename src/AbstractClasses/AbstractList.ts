@@ -11,10 +11,6 @@ export default abstract class AbstractList<T> extends AbstractSequencedCollectio
         return true;
     }
 
-    isReadOnly(): boolean {
-        return false;
-    }
-
     abstract empty(): List<T>;
 
     of(...values: T[]): List<T> {

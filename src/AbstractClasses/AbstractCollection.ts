@@ -50,7 +50,10 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
 
     abstract removeAll(c: Iterable<T>): Collection<T>;
 
-    abstract removeIf(filter: (item: T) => boolean): Collection<T>;
+    removeIf(filter: (item: T) => boolean): Collection<T> {
+        const filtered = this.toArray().filter((value) => !filter(value));
+        return (this.empty() as unknown as Collection<T>).addAll(filtered);
+    }
 
     abstract retainAll(c: Iterable<T>): Collection<T>;
 

@@ -4,6 +4,7 @@ import HashCode from '../Hashing/HashCode';
 import { Comparator } from '../Interfaces/Comparator';
 import { Speed } from '../Enums/Speed';
 import AbstractList from '../AbstractClasses/AbstractList';
+import Sorting from '../Sorting/Sorting';
 
 /**
  * This class represents a singly linked list that is persistent and immutable.
@@ -91,7 +92,13 @@ export default class LinkedList<T> extends AbstractList<T>
         return new LinkedList<T>();
     }
 
-    
+    /**
+     * Static method to create a new empty linked list.
+     * @returns A new empty linked list.
+     */
+    static empty<T>(): LinkedList<T> {
+        return new LinkedList<T>();
+    }
 
     /**
      * Returns the size of the linked list.
@@ -399,13 +406,8 @@ export default class LinkedList<T> extends AbstractList<T>
      * @returns A new linked list with the items that do not pass the filter.
      */
     removeIf(filter: (item: T) => boolean): LinkedList<T> {
-        let newList: LinkedList<T> = new LinkedList();
-        for (const item of this) {
-            if (!filter(item)) {
-                newList = newList.addLast(item);
-            }
-        }
-        return newList;
+        return super.removeIf(filter) as LinkedList<T>;
+       
         /*
         if (this.isEmpty()) return this;
 

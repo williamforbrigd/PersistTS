@@ -8,7 +8,6 @@ interface List<T> extends SequencedCollection<T>  {
     get(index: number): T | undefined;
     set(index: number, item: T): List<T>;
     pop(): List<T>;
-    isReadOnly(): boolean;
 
     // add
     add(item: T): List<T>;

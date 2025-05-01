@@ -647,8 +647,7 @@ export default class Vector<T> extends AbstractList<T>
      * @returns a new vector with the elements that pass the filter.
      */
     removeIf(filter: (item: T) => boolean): Vector<T> {
-        const items = this.toArray().filter((item) => !filter(item));
-        return Vector.of(...items);
+        return super.removeIf(filter) as Vector<T>; 
     }
 
     /**
