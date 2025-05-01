@@ -54,7 +54,11 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
 
     abstract retainAll(c: Iterable<T>): Collection<T>;
 
-    abstract size(): number;
+    size(): number {
+        let s = 0;
+        for (const _ of this) s++;
+        return s;
+    }
 
     toArray(): T[];
     toArray(generator: (size: number) => T[]): T[];
@@ -284,7 +288,7 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
      * @param compareFn - The function to compare two keys. If not provided, the default comparison will be used.
      * @returns A new collection with the elements sorted by the selected key.
      */
-    sortedBy<U>(keySelector: (value: T) => U, compareFn?: ((a: U, b: U) => number) | undefined): Collection<T> {
+    sortBy<U>(keySelector: (value: T) => U, compareFn?: ((a: U, b: U) => number) | undefined): Collection<T> {
         const mutableArray = this.toArray();
         Sorting.timSort(mutableArray, (a, b) => {
             const keyA = keySelector(a);

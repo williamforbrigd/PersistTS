@@ -320,7 +320,7 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         return new ArrayList(mutableArray);
     }
 
-    sortedBy<U>(keySelector: (value: T) => U, compareFn?: ((a: U, b: U) => number) | undefined): ArrayList<T> {
+    sortBy<U>(keySelector: (value: T) => U, compareFn?: ((a: U, b: U) => number) | undefined): ArrayList<T> {
         const newItems = this.items.slice();
         Sorting.timSort(newItems, (a, b) => {
             const keyA = keySelector(a);

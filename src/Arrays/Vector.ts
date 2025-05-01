@@ -981,11 +981,11 @@ export default class Vector<T> extends AbstractList<T>
      * @param compareFn - function to compare the keys
      * @returns A new vector with the elements sorted by the key.
      */
-    sortedBy<U>(
+    sortBy<U>(
         keySelector: (value: T) => U,
         compareFn?: (a: U, b: U) => number
     ): Vector<T> {
-        return super.sortedBy(keySelector, compareFn) as Vector<T>;
+        return super.sortBy(keySelector, compareFn) as Vector<T>;
     }
 
     /**

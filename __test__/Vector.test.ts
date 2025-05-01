@@ -942,27 +942,27 @@ describe("Vector sort() and sortedBy()", () => {
     expect(sorted.toArray()).toEqual(expected);
   });
 
-  test("sortedBy sorts objects by key selector", () => {
+  test("sortBy sorts objects by key selector", () => {
     const vec = Vector.of({ v: 3 }, { v: 1 }, { v: 2 });
-    const sorted = vec.sortedBy(obj => obj.v);
+    const sorted = vec.sortBy(obj => obj.v);
     expect(sorted.toArray()).toEqual([{ v: 1 }, { v: 2 }, { v: 3 }]);
   });
 
-  test("sortedBy with large random object dataset", () => {
+  test("sortBy with large random object dataset", () => {
     const SIZE = 100_000;
     const arr = Array.from({ length: SIZE}, () => ({
         v: Math.floor(Math.random() * SIZE),
         id: Math.random().toString()
     }));
     const vec = Vector.empty<{ v: number, id: string }>().addAll(arr); // spread operator is not good for large datasets
-    const sorted = vec.sortedBy(obj => obj.v);
+    const sorted = vec.sortBy(obj => obj.v);
     const expected = [...arr].sort((a, b) => a.v - b.v);
     expect(sorted.toArray()).toEqual(expected);
   });
 
-  test("sortedBy with custom comparator (descending order)", () => {
+  test("sortBy with custom comparator (descending order)", () => {
     const vec = Vector.of(1, 3, 2);
-    const sortedDesc = vec.sortedBy(x => x, (a, b) => b - a);
+    const sortedDesc = vec.sortBy(x => x, (a, b) => b - a);
     expect(sortedDesc.toArray()).toEqual([3, 2, 1]);
   });
   });

@@ -301,17 +301,17 @@ describe("ArrayList", () => {
         expect(Sorting.isSorted(sortedDescending.toArray(), compareDescending)).toBeTruthy();
     })
 
-    test('sortedBy', () => {
+    test('sortBy', () => {
         const arr = new ArrayList<number>([3, 1, 2]);
-        const result = arr.sortedBy(x => x);
+        const result = arr.sortBy(x => x);
         expect(result).toStrictEqual(new ArrayList([1, 2, 3]));
     });
 
-    test('sortedBy() on large array', () => {
+    test('sortBy() on large array', () => {
         const rndShuffled = shuffleArray(createRandomIntArray(1_000_000, 1, 10000));
         const arr = new ArrayList(rndShuffled);
 
-        const sorted = arr.sortedBy(x => x*x);
+        const sorted = arr.sortBy(x => x*x);
         expect(Sorting.isSorted(sorted.toArray(), (a: number, b: number) => a - b)).toBeTruthy();
     })
 

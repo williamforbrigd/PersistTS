@@ -117,11 +117,11 @@ describe('LinkedList', () => {
 
     });
 
-    test('sortedBy() on large array', () => {
+    test('sortBy() on large array', () => {
         const rndShuffled = shuffleArray(createRandomIntArray(1_000, 1, 10000));
         const result = LinkedList.of(...rndShuffled);
 
-        const sorted = result.sortedBy(x => x*x);
+        const sorted = result.sortBy(x => x*x);
         expect(Sorting.isSorted(sorted.toArray(), (a: number, b: number) => a - b)).toBe(true);
     })
 

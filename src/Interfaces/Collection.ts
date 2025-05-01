@@ -100,7 +100,7 @@ export default interface Collection<T> extends Iterable<T>  {
     every(callback: (value: T, index: number, collection: this) => unknown, thisArg?: any): boolean;
     some(callback: (value: T, index: number, collection: this) => unknown, thisArg?: any): boolean;
     sort(compareFn?: Comparator<T>): Collection<T>;
-    sortedBy<U>(keySelector: (value: T) => U, compareFn?: (a: U, b: U) => number): Collection<T>;
+    sortBy<U>(keySelector: (value: T) => U, compareFn?: (a: U, b: U) => number): Collection<T>;
     forEach(callback: (value: T, index: number, collection: this) => void, thisArg?: any): void;
     find(predicate: (value: T, index: number, collection: this) => boolean, thisArg?: any): T | undefined;
     reduce(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
