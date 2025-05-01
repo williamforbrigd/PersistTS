@@ -108,8 +108,7 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
         mapper: (value: T, key: number, collection: this) => M,
         thisArg?: any
     ): Collection<M> {
-        const newItems = this.toArray().map((value, index) => mapper.call(thisArg, value, index, this));
-        return (this.empty() as unknown as Collection<M>).addAll(newItems);
+        return this.flatMap((value, key, collection) => [mapper.call(thisArg, value, key, collection)]);
     }
 
     /**
@@ -264,9 +263,14 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
      * @param compare - The function to compare two elements.
      * @returns A new collection with the elements sorted.
      */
-    sort(compare: Comparator<T>): Collection<T> {
+    sort(compare?: Comparator<T>): Collection<T> {
         const mutableArray = this.toArray();
-        Sorting.timSort(mutableArray, compare);
+        const defaultComparator = (a: T, b: T) => {
+            if (a < b) return -1;
+            if (a > b) return 1;
+            return 0;
+        }
+        Sorting.timSort(mutableArray, compare ?? defaultComparator);
         return (this.empty() as unknown as Collection<T>).addAll(mutableArray);
         // return new (this.constructor as any)(mutableArray);
     }

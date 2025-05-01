@@ -140,53 +140,21 @@ export default class LinkedList<T> extends AbstractList<T>
     }
 
     concat<C extends T>(...valuesOrCollections: Array<Iterable<C> | C>): LinkedList<T | C> {
-        let newList = this as LinkedList<T | C>;
-        for (const valueOrCollection of valuesOrCollections) {
-            if (valueOrCollection && typeof (valueOrCollection as Iterable<C>)[Symbol.iterator] === 'function') {
-                // if it is a collection
-                newList = newList.addAll(valueOrCollection as Iterable<C>);
-            } else {
-                // if it is a single value
-                newList = newList.addLast(valueOrCollection as C);
-            }
-        }
-        return newList;
+        return super.concat(...valuesOrCollections) as LinkedList<T | C>;
     }
 
     distinct(): LinkedList<T> {
-        const set = new Set<T>();
-        let newList = new LinkedList<T>();
-        for (const item of this) {
-            if (!set.has(item)) {
-                set.add(item);
-                newList = newList.addLast(item);
-            }
-        }
-        return newList;
+        return super.distinct() as LinkedList<T>;
     }
 
     filter<F extends T>(predicate: (value: T, index: number, iter: this) => value is F, thisArg?: any): LinkedList<F>;
     filter(predicate: (value: T, index: number, iter: this) => unknown, thisArg?: any): this;
     filter(predicate: (value: T, index: number, iter: this) => unknown, thisArg?: any): any {
-        let newList = new LinkedList<T>();
-        let i=0;
-        for (const item of this) {
-            if (predicate.call(thisArg, item, i, this)) {
-                newList = newList.addLast(item);
-            }
-        }
-        return newList;
+        return super.filter(predicate, thisArg) as LinkedList<T>;
     }
 
     flatMap<M>(mapper: (value: T, key: number, iter: this) => Iterable<M>, thisArg?: any): LinkedList<M> {
-        let newList = new LinkedList<M>();
-        let i=0;
-        for (const item of this) {
-            for (const mappedItem of mapper.call(thisArg, item, i++, this)) {
-                newList = newList.addLast(mappedItem);
-            }
-        }
-        return newList;
+        return super.flatMap(mapper, thisArg) as LinkedList<M>;
     }
 
     listIterator(index: number): Iterator<T> {
@@ -194,81 +162,33 @@ export default class LinkedList<T> extends AbstractList<T>
     }
 
     map<M>(mapper: (value: T, key: number, collection: this) => M, thisArg?: any): LinkedList<M> {
-        return this.flatMap((value, key, collection) => [mapper.call(thisArg, value, key, collection)]);
+        return super.map(mapper, thisArg) as LinkedList<M>;
     }
 
     merge<C extends T>(...collections: Array<Iterable<C>>): LinkedList<T | C> {
-        let newList = this as LinkedList<T | C>;
-        for (const collection of collections) {
-            newList = newList.addAll(collection);
-        }
-        return newList;
+        return super.merge(...collections) as LinkedList<T | C>;
     }
 
     partition<F extends T, C>(predicate: (this: C, value: T, index: number, iter: this) => value is F, thisArg?: C): [LinkedList<T>, LinkedList<F>];
     partition<C>(predicate: (this: C, value: T, index: number, iter: this) => unknown, thisArg?: C): [this, this];
     partition<C>(predicate: (this: C, value: T, index: number, iter: this) => unknown, thisArg?: any): any {
-        let trueList = new LinkedList<T>();
-        let falseList = new LinkedList<T>();
-        let index = 0;
-        for (const value of this) {
-            if (predicate.call(thisArg, value, index++, this)) {
-                trueList = trueList.addLast(value);
-            } else {
-                falseList = falseList.addLast(value);
-            }
-        }
-        return [trueList, falseList];
+        return super.partition(predicate, thisArg) as [LinkedList<T>, LinkedList<T>];
     }
 
     reduce(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
     reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;
-    reduce<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue?: U): U {
-        let acc: U | T;
-        let i: number;
-
-        if (initialValue !== undefined) {
-            acc = initialValue;
-            i = 0;
-        } else {
-            if (this.isEmpty()) {
-                throw new Error("Reduce of empty collection with no initial value");
-            }
-            acc = this.head!
-            i = 1;
-        }
-
-        for (const item of this) {
-            acc = callback(acc as unknown as U, item, i++, this);
-        }
-        return acc as U;
+    reduce(callback: any, initialValue?: any): any {
+        return super.reduce(callback, initialValue) as any;
     }
+    
 
     reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
     reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T, initialValue: T): T;
     reduceRight<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue: U): U;
-    reduceRight<U>(callback: (previousValue: U, currentValue: T, currentIndex: number, collection: this) => U, initialValue?: U): U {
-        const array = this.toArray().reverse();
-
-        let acc: U | T;
-        let startIndex: number;
-
-        if (initialValue !== undefined) {
-            acc = initialValue;
-            startIndex = 0;
-        } else {
-            if (this.isEmpty()) {
-                throw new Error("ReduceRight of empty collection with no initial value");
-            }
-            acc = array[0] as unknown as U;
-            startIndex = 1;
-        }
-
-        for (let i = startIndex; i < array.length; i++) {
-            acc = callback(acc, array[i], i, this);
-        }
-        return acc;
+    reduceRight(callback: any, initialValue?: any): any {
+        return super.reduceRight(callback, initialValue) as any;
     }
+    
 
     // remove(e: T): LinkedList<T>;
     // remove(item: T): LinkedList<T>;
@@ -425,11 +345,7 @@ export default class LinkedList<T> extends AbstractList<T>
     }
 
     unshift(...items: T[]): LinkedList<T> {
-        let newList: LinkedList<T> = this;
-        for (let i=items.length-1; i>=0; i--) {
-            newList = newList.addFirst(items[i]);
-        }
-        return newList;
+        return super.unshift(...items) as LinkedList<T>;
     }
 
     slice(start?: number, end?: number): LinkedList<T> {
@@ -457,27 +373,11 @@ export default class LinkedList<T> extends AbstractList<T>
     }
 
     sort(compare?: Comparator<T>): LinkedList<T> {
-        const array = this.toArray();
-        // array.sort(compare);
-        const defaultComparator = (a: T, b: T) => {
-            if (a < b) return -1;
-            if (a > b) return 1;
-            return 0;
-        }
-        Sorting.timSort(array, compare ?? defaultComparator);
-
-        return new LinkedList<T>().addAll(array);
+        return super.sort(compare) as LinkedList<T>;
     }
 
     sortedBy<U>(keySelector: (value: T) => U, compareFn?: ((a: U, b: U) => number)): LinkedList<T> {
-        const mutableArray = this.toArray();
-        Sorting.timSort(mutableArray, (a,b) => {
-            const keyA = keySelector(a);
-            const keyB = keySelector(b);
-            return compareFn ? compareFn(keyA, keyB) : (keyA < keyB ? -1 : keyA > keyB ? 1 : 0);
-        })
-
-        return new LinkedList<T>().addAll(mutableArray);
+        return super.sortedBy(keySelector, compareFn) as LinkedList<T>;
     }
 
     splice(start: number, deleteCount?: number): LinkedList<T>;
@@ -503,13 +403,6 @@ export default class LinkedList<T> extends AbstractList<T>
     zip<U, V>(other: ListInput<U>, other2: ListInput<V>): LinkedList<[T, U, V]>;
     zip(...collections: Array<ListInput<unknown>>): LinkedList<unknown>;
     zip<U, V>(...other: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]): LinkedList<unknown> {
-        // const minLength = Math.min(this.size(), ...other.map(c => Array.isArray(c) ? c.length : c.size()));
-        // let newList = new LinkedList<unknown>();
-        // for (let i=0; i<minLength; i++) {
-        //     const zipped = [this.get(i), ...other.map(c => Array.isArray(c) ? c[i] : c.get(i))];
-        //     newList = newList.addLast(zipped as unknown as [T, U, V])
-        // }
-        // return newList;
         return super.zip(...other) as LinkedList<unknown>;
     }
 
@@ -520,15 +413,6 @@ export default class LinkedList<T> extends AbstractList<T>
     zipAll<U, V>(other: ListInput<U>, other2: ListInput<V>): LinkedList<[T, U, V]>;
     zipAll(...collections: Array<ListInput<unknown>>): LinkedList<unknown>;
     zipAll<U, V>(...other: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]): LinkedList<unknown> {
-        // const maxLength = Math.max(this.size(), ...other.map(c => Array.isArray(c) ? c.length : c.size()));
-        // let newList = new LinkedList<unknown>();
-        // for (let i = 0; i < maxLength; i++) {
-        //     const firstValue = i < this.size() ? this.get(i) : undefined;
-        //     const secondValue = other.map(c => Array.isArray(c) ? (i < c.length ? c[i] : undefined) : (i < c.size() ? c.get(i) : undefined));
-        //     const zipped = [firstValue, ...secondValue];
-        //     newList = newList.addLast(zipped as unknown as [T, U, V]);
-        // }
-        // return newList;
         return super.zipAll(...other) as LinkedList<unknown>;
     }
 
@@ -549,13 +433,6 @@ export default class LinkedList<T> extends AbstractList<T>
         zipper: any,
         ...otherCollection: (ListInput<U> | ListInput<unknown> | ListInput<V>)[]
     ): LinkedList<Z> {
-        // const minLength = Math.min(this.size(), ...otherCollection.map(c => Array.isArray(c) ? c.length : c.size()));
-        // let newList = new LinkedList<Z>();
-        // for (let i = 0; i < minLength; i++) {
-        //     const values = [this.get(i), ...otherCollection.map(c => Array.isArray(c) ? c[i] : c.get(i))];
-        //     newList = newList.addLast(zipper(...values));
-        // }
-        // return newList;
         return super.zipWith(zipper, ...otherCollection) as LinkedList<Z>;
     }
 
@@ -586,11 +463,7 @@ export default class LinkedList<T> extends AbstractList<T>
     
 
     toArray(): T[] {
-        const result: T[] = [];
-        for (const item of this) {
-            result.push(item);
-        }
-        return result;
+        return Array.from(this);
     }
 
 
