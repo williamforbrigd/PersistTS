@@ -60,7 +60,6 @@ function mask(i: number, shift: number): number {
 }
 
 
-
 /**
  * **Persistent Vector** - a fully immutable, bit-mapped vector trie (BVT) based on the vector implementation in Clojure.
  * 
@@ -741,7 +740,7 @@ export default class Vector<T> extends AbstractList<T>
             ? size - actualStart
             : Math.min(Math.max(deleteCount, 0), size - actualStart);
 
-        const left = this.slice(0, actualStart);
+        let left = this.slice(0, actualStart);
         let res = left;
         if (items.length > 0) {
             res = res.addAll(items);
@@ -971,7 +970,7 @@ export default class Vector<T> extends AbstractList<T>
 
     /**
      * Sorts the vector using the given comparator function.
-     * @param compareFn - function to compare the elements of the vector
+     * @param compare - function to compare the elements of the vector
      * @returns a new vector with the elements sorted.
      */
     sort(compare: Comparator<T>): Vector<T> {
@@ -1004,7 +1003,7 @@ export default class Vector<T> extends AbstractList<T>
      * @param thisArg - context for the callback function
      */
     forEach(callback: (value: T, index: number, collection: this) => void, thisArg?: any): void {
-        super.forEach(callback, thisArg) as void;
+        super.forEach(callback, thisArg);
     }
 
     /**

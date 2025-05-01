@@ -2,6 +2,12 @@ import { Speed } from "../Enums/Speed";
 import Collection from "./Collection";
 import SequencedCollection from "./SequencedCollection";
 
+/**
+ * This represents an indexed collection of elements, supporting ordered access and modification.
+ * Any modification will return a new instance of the list.
+ * 
+ * Elements can be accessed, inserted, and removed by index. 
+ */
 interface List<T> extends SequencedCollection<T>  {
     FIFO(): boolean;
     [index: number]: T | undefined; // this is the get method
@@ -67,6 +73,10 @@ interface List<T> extends SequencedCollection<T>  {
 
 // declare const List: ListConstructor;
 
+/**
+ * General input type used for many of the higher-order functions.
+ * This was we can for instance `merge` and ArrayList with a LinkedList.
+ */
 export type ListInput<T> = T[] | Array<T> | Collection<T> | List<T>;
 
 //function List<T>(collection?: Iterable<T> | ArrayLike<T>): List<T>;
