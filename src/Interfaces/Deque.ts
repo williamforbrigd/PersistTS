@@ -2,7 +2,11 @@ import SequencedCollection from "./SequencedCollection";
 import Queue from "./Queue";
 import Collection from "./Collection";
 
-// Double ended queue interface that should be immutable
+/**
+ * A double-ended queue (deque) is a linear collection that supports insertion and removal of elements from both ends.
+ * Extends the Queue interface (which supports FIFO operations) and SequencedCollection interface (which supports efficient head/tail operations).
+ * 
+ */
 export default interface Deque<T> extends Queue<T>, SequencedCollection<T> {
     addFirst(e: T): Deque<T>;
     addLast(e: T): Deque<T>;
@@ -28,7 +32,7 @@ export default interface Deque<T> extends Queue<T>, SequencedCollection<T> {
     push(e: T): Deque<T>;
     pop(): {value: T | undefined, newDeque: Deque<T>};
     remove(item: T): Deque<T>;
-    contains(item: T): boolean;
+    has(item: T): boolean;
     size(): number;
     reversed(): Deque<T>;
 }

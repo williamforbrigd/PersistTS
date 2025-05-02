@@ -11,12 +11,12 @@ describe("ArrayList", () => {
     });
 
     test('contains', () => {
-        const result = arr.contains(2);
+        const result = arr.has(2);
         expect(result).toBe(true);
     });
 
     test('containsAll', () => {
-        const result = arr.containsAll([1, 2]);
+        const result = arr.hasAll([1, 2]);
         expect(result).toBe(true);
     });
 
@@ -179,7 +179,7 @@ describe("ArrayList", () => {
 
     test('reduce gives error', () => {
         const emptyArr = new ArrayList<number>();
-        expect(() => emptyArr.reduce((acc, x) => acc + x)).toThrow("Reduce of empty array with no initial value");
+        expect(() => emptyArr.reduce((acc, x) => acc + x)).toThrow("Reduce of empty collection with no initial value");
     });
 
     test('reduceRight', () => {
@@ -187,8 +187,8 @@ describe("ArrayList", () => {
         expect(result).toBe(6);
     });
 
-    test('remove', () => {
-        const result = arr.remove(2);
+    test('removeItem', () => {
+        const result = arr.removeItem(2);
         expect(result).toStrictEqual(new ArrayList([1, 3]));
     });
 
@@ -202,8 +202,8 @@ describe("ArrayList", () => {
         expect(result).toStrictEqual(new ArrayList([2]));
     });
 
-    test('removeAt', () => {
-        const result = arr.removeAt(1);
+    test('remove() at index', () => {
+        const result = arr.remove(1);
         expect(result).toStrictEqual(new ArrayList([1, 3]));
     });
 
@@ -231,6 +231,30 @@ describe("ArrayList", () => {
         const result = arr.set(1, 4);
         expect(result).toStrictEqual(new ArrayList([1, 4, 3]));
     });
+
+    test('pop() on empty list', () => {
+        let arr = new ArrayList<number>();
+        expect(() => {
+            arr = arr.pop();
+        }).toThrow("Cannot pop from an empty list");
+    })
+
+    test('pop() one element is size - 1', () => {
+        const arr = new ArrayList<number>([1, 2, 3]);
+        const result = arr.pop();
+        expect(result).toStrictEqual(new ArrayList([1, 2]));
+    })
+
+    test('pop() all the elements from the list', () => {
+        const array = createRandomIntArray(10000);
+        let arr = new ArrayList(array);
+        expect(arr.length).toBe(10000);
+
+        for (const _ of array) {
+            arr = arr.pop();    
+        }
+        expect(arr.length).toBe(0);
+    })
 
     test('shift', () => {
         const result = arr.shift();
@@ -277,17 +301,17 @@ describe("ArrayList", () => {
         expect(Sorting.isSorted(sortedDescending.toArray(), compareDescending)).toBeTruthy();
     })
 
-    test('sortedBy', () => {
+    test('sortBy', () => {
         const arr = new ArrayList<number>([3, 1, 2]);
-        const result = arr.sortedBy(x => x);
+        const result = arr.sortBy(x => x);
         expect(result).toStrictEqual(new ArrayList([1, 2, 3]));
     });
 
-    test('sortedBy() on large array', () => {
+    test('sortBy() on large array', () => {
         const rndShuffled = shuffleArray(createRandomIntArray(1_000_000, 1, 10000));
         const arr = new ArrayList(rndShuffled);
 
-        const sorted = arr.sortedBy(x => x*x);
+        const sorted = arr.sortBy(x => x*x);
         expect(Sorting.isSorted(sorted.toArray(), (a: number, b: number) => a - b)).toBeTruthy();
     })
 
@@ -321,7 +345,7 @@ describe("ArrayList", () => {
     });
 
     test('zip() with ArrayList and LinkedList', () => {
-        const result = ArrayList.of([1,2,3]).zip(LinkedList.of([4,5,6]));
+        const result = ArrayList.of(1,2,3).zip(LinkedList.of(4,5,6));
         expect(result).toStrictEqual(new ArrayList([[1, 4], [2, 5], [3, 6]]));
     });
 
@@ -332,7 +356,7 @@ describe("ArrayList", () => {
 
     test('zipAll() with LinkedList that has a different size', () => {
         const arrayList = new ArrayList([21, 213, 213, 22, 6,7,8,9,10]);
-        const linkedList = LinkedList.of([4, 5, 6]);
+        const linkedList = LinkedList.of(4, 5, 6);
         const zipped = arrayList.zipAll(linkedList);
         expect(zipped).toStrictEqual(new ArrayList([[21, 4], [213, 5], [213, 6], [22, undefined], [6, undefined], [7, undefined], [8, undefined], [9, undefined], [10, undefined]]));
     });

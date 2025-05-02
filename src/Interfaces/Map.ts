@@ -2,6 +2,19 @@ import { Speed } from "../Enums/Speed";
 import {Comparator} from "./Comparator";
 
 // this is a dictionary (map) interface
+/**
+ * A Map (dictionary) is a collection of key-value pairs, where each key is unique and maps to a single value.
+ * Every key is associated with a value, and you can retrieve the value using the key.
+ * Contains only distinct keys, but can have duplicate values.
+ * 
+ * Extends the Iterable interface, and this allows you to define an iteration order of the key-value pairs.
+ *
+ * Many of the higher-order functions (HOFs) are inspired by the Immutable.js library.
+ * 
+ * Methods such as `computeIfAbsent`, `compute` etc are inspired by the Java Collections Framework.
+ * 
+ * @see https://immutable-js.com/
+ */
 export default interface Map<K, V> extends Iterable<[K, V]> {
     // Iterable<T>
     [Symbol.iterator](): MapIterator<[K, V]>;

@@ -2,6 +2,9 @@ import Collection from "./Collection";
 import {Comparator} from "./Comparator";
 import {Speed} from "../Enums/Speed";
 
+/**
+ * Represents an unordered collection of unique elements.
+ */
 export default interface Set<T> extends Iterable<T>  {
     [Symbol.iterator](): IterableIterator<T>;
     

@@ -1,24 +1,37 @@
 import { Comparator } from "./Comparator";
+import EqualityComparer from "./EqualityComparer";
 
-export default interface Collection<T> extends Iterable<T>  {
+/**
+ * The Collection interface represents a generic, immutable container of elements.
+ * 
+ * All mutating methods return a new instance of the collection, without altering the original.
+ * 
+ * It extends the Iterable interface, allowing you to define a specific iteration order of the elements.
+ * Many of the definitions of the higher-order functions (HOFs) are inspired by the immutable.js library.
+ * 
+ * The Collection interface is also inpired by the Java Collections Framework and C5 collection library.
+ * 
+ * @see https://immutable-js.com/
+ * @see https://vipwww.itu.dk/research/c5/
+ * @see https://docs.oracle.com/javase/8/docs/api/?java/util/Collections.html
+ */
+export default interface Collection<T> extends Iterable<T>, EqualityComparer<T> {
     [Symbol.iterator](): Iterator<T>;
 
     size(): number;
     isEmpty(): boolean;
-    contains(o: T): boolean;
+    empty(): Collection<T>;
+    has(o: T): boolean;
     toArray(): T[];
     toArray(generator: (size: number) => T[]): T[];
     add(e: T): Collection<T>;
-    remove(e: T): Collection<T>;
-    containsAll(c: Iterable<T>): boolean;
+    removeItem(item: T): Collection<T>;
+    hasAll(c: Iterable<T>): boolean;
     addAll(c: Iterable<T>): Collection<T>;
     removeAll(c: Iterable<T>): Collection<T>;
     removeIf(filter: (item: T) => boolean): Collection<T>;
     retainAll(c: Iterable<T>): Collection<T>;
     clear(): Collection<T>;
-
-    equals(o: Object): boolean;
-    hashCode(): number;
 
 
     // this is some java.util.Collection methods
@@ -99,7 +112,7 @@ export default interface Collection<T> extends Iterable<T>  {
     every(callback: (value: T, index: number, collection: this) => unknown, thisArg?: any): boolean;
     some(callback: (value: T, index: number, collection: this) => unknown, thisArg?: any): boolean;
     sort(compareFn?: Comparator<T>): Collection<T>;
-    sortedBy<U>(keySelector: (value: T) => U, compareFn?: (a: U, b: U) => number): Collection<T>;
+    sortBy<U>(keySelector: (value: T) => U, compareFn?: (a: U, b: U) => number): Collection<T>;
     forEach(callback: (value: T, index: number, collection: this) => void, thisArg?: any): void;
     find(predicate: (value: T, index: number, collection: this) => boolean, thisArg?: any): T | undefined;
     reduce(callback: (previousValue: T, currentValue: T, currentIndex: number, collection: this) => T): T;
