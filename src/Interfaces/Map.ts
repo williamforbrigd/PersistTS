@@ -1,5 +1,6 @@
 import { Speed } from "../Enums/Speed";
 import {Comparator} from "./Comparator";
+import EqualityComparer from "./EqualityComparer";
 
 // this is a dictionary (map) interface
 /**
@@ -15,7 +16,7 @@ import {Comparator} from "./Comparator";
  * 
  * @see https://immutable-js.com/
  */
-export default interface Map<K, V> extends Iterable<[K, V]> {
+export default interface Map<K, V> extends Iterable<[K, V]>, EqualityComparer<[K, V]> {
     // Iterable<T>
     [Symbol.iterator](): MapIterator<[K, V]>;
 
@@ -41,9 +42,7 @@ export default interface Map<K, V> extends Iterable<[K, V]> {
     removeSpeed(): Speed;
 
     size(): number;
-    equals(o: Object): boolean;
     compareTo(o: Object): number;
-    hashCode(): number;
     getOrDefault(key: K, defaultValue: V): V;
     computeIfAbsent(key: K, func: (key: K) => V): [Map<K, V>, V];
     computeIfPresent(key: K, func: (key: K, value: V) => V): [Map<K, V>, V];
