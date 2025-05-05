@@ -650,7 +650,7 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
 
     // Speed for different types of operations
     indexingSpeed(): Speed {
-        return Speed.Linear;
+        return Speed.Constant;
     }
 
     hasSpeed(): Speed {
