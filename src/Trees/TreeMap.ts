@@ -344,11 +344,11 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         else if (this.isB() && this.left().isEmpty() && this.right().isR()) return this.right().paint(Color.B);
         else if (this.isB() && this.left().isR() && this.right().isEmpty()) return this.left().paint(Color.B);
         else {
-            // find max in the left subtree and move it to the root
-            const maxTreeValue = this.left().maxSubTreeKeyValue();
-            // remove max in the left subtree from the left subtree
-            const rmMax = this.left().removeMax();
-            return this.bubble(this.color, rmMax, maxTreeValue, this.right());
+            // find minimum value in the right subtree, which is the inorder successor
+            const minTreeValue = this.right().minSubTreeKeyValue();
+            // remove the minimum value from the right subtree
+            const rmMin = this.right().removeMin();
+            return this.bubble(this.color, this.left(), minTreeValue, rmMin);
         }
     }
 
@@ -357,7 +357,18 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         else if (this.right().isEmpty()) {
             return this.remove();
         } else {
+            // recurse to the right subtree, then bubble back up
             return this.bubble(this.color, this.left(), this.keyValue(), this.right().removeMax())
+        }
+    }
+
+    private removeMin(): TreeMap<K, V> {
+        if (this.isEmpty()) throw new Error("cannot remove min from empty tree");
+        else if (this.left().isEmpty()) {
+            return this.remove();
+        } else {
+            // recurse to the left subtree, then bubble back up
+            return this.bubble(this.color, this.left().removeMin(), this.keyValue(), this.right());
         }
     }
 
