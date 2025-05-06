@@ -25,6 +25,9 @@ enum Color {
  * 
  * It is using balancing techniques to make sure that these invariants are always met. 
  * 
+ * This class is inspired by the article "The missing method": Deleting from Okasaki's red-black trees". 
+ * 
+ * @see https://matt.might.net/articles/red-black-delete/
  */
 export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> {
     // private static readonly EMPTY = new TreeMap<any, any>(TreeMap.defaultComparator, Color.B, null, null, null);

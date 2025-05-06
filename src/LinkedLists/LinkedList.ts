@@ -4,7 +4,6 @@ import HashCode from '../Hashing/HashCode';
 import { Comparator } from '../Interfaces/Comparator';
 import { Speed } from '../Enums/Speed';
 import AbstractList from '../AbstractClasses/AbstractList';
-import Sorting from '../Sorting/Sorting';
 
 /**
  * This class represents a singly linked list that is persistent and immutable.
