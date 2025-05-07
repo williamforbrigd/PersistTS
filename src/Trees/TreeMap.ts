@@ -100,6 +100,10 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         return new TreeMap<K, V>(this.compare);
     }
 
+    protected createEmpty<KM, VM>(compare?: Comparator<KM>): TreeMap<KM, VM> {
+        return new TreeMap<KM, VM>(compare ?? (this.compare as unknown as Comparator<KM>));
+    }
+
     doubleBlackLeaf(): TreeMap<K, V> {
         return new TreeMap<K, V>(this.compare, Color.BB, null, null, null);
     }
@@ -969,12 +973,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         thisArg?: unknown,
         compare?: Comparator<M>
     ): TreeMap<M, V> {
-        const keyComparator = compare ?? TreeMap.defaultComparator<M>;
-        let newTree = new TreeMap<M, V>(keyComparator);
-        for (const [key, value] of this.entries()) {
-            newTree = newTree.set(callback.call(thisArg, key, value, this), value);
-        }
-        return newTree;
+        return super.mapKeys(callback, thisArg, compare) as TreeMap<M, V>;
     }
 
     mapEntries<KM, VM>(
@@ -986,16 +985,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         thisArg?: unknown,
         compare?: Comparator<KM>
       ): TreeMap<KM, VM> {
-        const newCompare = compare ?? TreeMap.defaultComparator<KM>;
-        let newTree = new TreeMap<KM, VM>(newCompare);
-        let index = 0;
-        for (const entry of this.entries()) {
-          const newEntry = mapper.call(thisArg, entry, index++, this);
-          if (newEntry) {
-            newTree = newTree.set(newEntry[0], newEntry[1]);
-          }
-        }
-        return newTree;
+        return super.mapEntries(mapper, thisArg, compare) as TreeMap<KM, VM>;
       }
 
     flatMap<KM, VM>(
@@ -1003,15 +993,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         thisArg?: unknown,
         compare?: Comparator<KM>
     ): TreeMap<KM, VM> {
-        const newCompare = compare ?? TreeMap.defaultComparator<KM>;
-        let newTree = new TreeMap<KM, VM>(newCompare);
-
-        for (const [key, value] of this.entries()) {
-            for (const [newKey, newValue] of callback.call(thisArg, value, key, this)) {
-                newTree = newTree.set(newKey, newValue);
-            }
-        }
-        return newTree;
+        return super.flatMap(callback, thisArg, compare) as TreeMap<KM, VM>;
     }
 
     filter<F extends V>(
@@ -1025,14 +1007,8 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
     filter(
         predicate: (value: V, key: K, map: this) => unknown,
         thisArg?: unknown
-    ): TreeMap<any, any> {
-        let newTree = new TreeMap<any, any>(this.compare);
-        for (const [k, v] of this.entries()) {
-            if (predicate.call(thisArg, v, k, this)) {
-                newTree = newTree.set(k, v);
-            }
-        }
-        return newTree;
+    ): TreeMap<K, any> {
+        return super.filter(predicate, thisArg) as TreeMap<K, any>;
     }
 
     partition<F extends V, C>(
@@ -1047,24 +1023,11 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
         predicate: (value: V, key: K, map: this) => unknown,
         thisArg?: unknown
     ): [TreeMap<K, V>, TreeMap<K, V>] {
-        let trueTree = new TreeMap<K, V>(this.compare);
-        let falseTree = new TreeMap<K, V>(this.compare);
-        for (const [k, v] of this.entries()) {
-            if (predicate.call(thisArg, v, k, this)) {
-                trueTree = trueTree.set(k, v);
-            } else {
-                falseTree = falseTree.set(k, v);
-            }
-        }
-        return [trueTree, falseTree];
+        return super.partition(predicate, thisArg) as [TreeMap<K, V>, TreeMap<K, V>];
     }
 
     flip(): TreeMap<V, K> {
-        let newTree = new TreeMap<V, K>(TreeMap.defaultComparator);
-        for (const [k, v] of this.entries()) {
-            newTree = newTree.set(v, k);
-        }
-        return newTree;
+        return super.flip() as TreeMap<V, K>;
     }
 
 

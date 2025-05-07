@@ -612,6 +612,14 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         return new HashMap<K, V>(0, 0, EmptyNode.empty<K, V>());
     }
 
+    empty(): HashMap<K, V> {
+        return HashMap.empty<K, V>();
+    }
+
+    protected createEmpty<KM, VM>(): HashMap<KM, VM> {
+        return HashMap.empty<KM, VM>();
+    }
+
     static of<K, V>(...entries: [K, V][]): HashMap<K, V> {
         let map: HashMap<K, V> = HashMap.empty<K, V>();
         for (const [key, value] of entries) {
@@ -1158,11 +1166,7 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         thisArg?: unknown,
         compare?: Comparator<M>
     ): HashMap<M, V> {
-        let newMap = HashMap.empty<M, V>();
-        for (const [k, v] of this) {
-            newMap = newMap.set(callback.call(thisArg, k, v, this), v);
-        }
-        return newMap;
+        return super.mapKeys(callback, thisArg, compare) as HashMap<M, V>;
     }
 
     /**
@@ -1180,17 +1184,7 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         thisArg?: unknown,
         compare?: Comparator<KM>
     ): HashMap<KM, VM> {
-        let newMap = HashMap.empty<KM, VM>();
-        let idx = 0;
-        for (const entry of this) {
-            const result = mapper.call(thisArg, entry, idx, this);
-            if (result !== undefined) {
-                const [newKey, newValue] = result;
-                newMap = newMap.set(newKey, newValue);
-            }
-            idx++;
-        }
-        return newMap;
+        return super.mapEntries(mapper, thisArg, compare) as HashMap<KM, VM>;
     }
 
     /**
@@ -1209,13 +1203,7 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         thisArg?: unknown,
         compare?: Comparator<KM>
     ): HashMap<KM, VM> {
-        let newMap = HashMap.empty<KM, VM>();
-        for (const [key, value] of this) {
-            for (const [newKey, newValue] of callback.call(thisArg, value, key, this)) {
-                newMap = newMap.set(newKey, newValue);
-            }
-        }
-        return newMap;
+        return super.flatMap(callback, thisArg, compare) as HashMap<KM, VM>;
     }
 
     /**
@@ -1235,14 +1223,8 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
     filter(
         predicate: (value: V, key: K, map: this) => unknown,
         thisArg?: unknown
-    ): HashMap<any, any> {
-        let newMap = HashMap.empty<K, V>();
-        for (const [k, v] of this) {
-            if (predicate.call(thisArg, v, k, this)) {
-                newMap = newMap.set(k, v);
-            }
-        }
-        return newMap;
+    ): HashMap<K, any> {
+        return super.filter(predicate, thisArg) as HashMap<K, any>;
     }
 
     /**
@@ -1266,28 +1248,14 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         predicate: (value: V, key: K, map: this) => unknown,
         thisArg?: unknown
     ): [HashMap<K, V>, HashMap<K, V>] {
-        let trueMap = HashMap.empty<K, V>();
-        let falseMap = HashMap.empty<K, V>();
-
-        for (const [k, v] of this) {
-            if (predicate.call(thisArg, v, k, this)) {
-                trueMap = trueMap.set(k, v);
-            } else {
-                falseMap = falseMap.set(k, v);
-            }
-        }
-        return [trueMap, falseMap];
+        return super.partition(predicate, thisArg) as [HashMap<K, V>, HashMap<K, V>];
     }
 
     /**
      * Flips the keys and values of the HashMap.
      */
     flip(): HashMap<V, K> {
-        let map = HashMap.empty<V, K>();
-        for (const [k, v] of this) {
-            map = map.set(v, k);
-        }
-        return map;
+        return super.flip() as HashMap<V, K>;
     }
 
 
