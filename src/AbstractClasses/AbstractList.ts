@@ -23,6 +23,11 @@ export default abstract class AbstractList<T> extends AbstractSequencedCollectio
 
     abstract empty(): List<T>;
 
+    /**
+     * Method to create an empty instance of the collection, based on the generic parameter.
+     */
+    protected abstract createEmpty<E>(): List<E>;
+
     of(...values: T[]): List<T> {
         return this.empty().addAll(values);
     }
@@ -192,7 +197,7 @@ export default abstract class AbstractList<T> extends AbstractSequencedCollectio
         for (let i = 0; i < minLength; i++) {
             newItems.push([this.get(i), ...other.map(c => Array.isArray(c) ? c[i] : c.get(i))]);
         }
-        return (this.empty() as unknown as List<unknown>).addAll(newItems);
+        return this.createEmpty<unknown>().addAll(newItems);
     }
 
     /**
@@ -212,7 +217,7 @@ export default abstract class AbstractList<T> extends AbstractSequencedCollectio
             const zipped = [firstValue, ...secondValue];
             newItems.push(zipped);
         }
-        return (this.empty() as unknown as List<unknown>).addAll(newItems);
+        return this.createEmpty<unknown>().addAll(newItems);
     }
 
     /**
@@ -245,6 +250,6 @@ export default abstract class AbstractList<T> extends AbstractSequencedCollectio
             const values = [this.get(i), ...otherCollection.map(c => Array.isArray(c) ? c[i] : c.get(i))];
             newItems.push(zipper(...values));
         }
-        return (this.empty() as unknown as List<Z>).addAll(newItems);
+        return this.createEmpty<Z>().addAll(newItems);
     }
 }

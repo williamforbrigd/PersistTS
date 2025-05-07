@@ -67,6 +67,15 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
         return this.size() === 0;
     }
 
+    /**
+     * The type of key-value pairs passed to the function needs to be flexible.
+     * Therefore we have the <KM, VM> generic types.
+     * It can be whatever you are for instance mapping right now. 
+     * 
+     * @param compare - The comparator function
+     */
+    protected abstract createEmpty<KM, VM>(compare?: Comparator<KM>): Map<KM, VM>;
+
     abstract clear(): Map<K, V>;
 
     /**
@@ -312,20 +321,26 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
         callback: (value: V, key: K, map: this) => M,
         thisArg?: unknown
     ): Map<K, M> {
-        let newMap: Map<K, M> = this as unknown as Map<K, M>;
+        let newMap = this.createEmpty<K, M>();
         for (const [k, v] of this) {
             newMap = newMap.set(k, callback.call(thisArg, v, k, this));
         }
         return newMap;
     }
 
-    abstract mapKeys<M>(
+    mapKeys<M>(
         callback: (key: K, value: V, map: this) => M,
         thisArg?: unknown,
         compare?: Comparator<M>
-    ): Map<M, V>;
+    ): Map<M, V> {
+        let newMap = this.createEmpty<M, V>(compare);
+        for (const [key, value] of this.entries()) {
+            newMap = newMap.set(callback.call(thisArg, key, value, this), value);
+        }
+        return newMap;
+    }
 
-    abstract mapEntries<KM, VM>(
+    mapEntries<KM, VM>(
         mapper: (
             entry: [K, V],
             index: number,
@@ -333,31 +348,87 @@ export default abstract class AbstractMap<K, V> implements Map<K, V> {
         ) => [KM, VM] | undefined,
         thisArg?: unknown,
         compare?: Comparator<KM>
-    ): Map<KM, VM>;
+    ): Map<KM, VM> {
+        let newMap = this.createEmpty<KM, VM>(compare);
+        let idx = 0;
+        for (const entry of this) {
+            const newEntry = mapper.call(thisArg, entry, idx++, this);
+            if (newEntry) {
+                const [k, v] = newEntry;
+                newMap = newMap.set(k, v);
+            }
+        }
+        return newMap;
+    }
 
-    abstract flatMap<KM, VM>(
+    
+
+    flatMap<KM, VM>(
         callback: (value: V, key: K, map: this) => Iterable<[KM, VM]>,
         thisArg?: unknown,
         compare?: Comparator<KM>
-    ): Map<KM, VM>;
+    ): Map<KM, VM> {
+        let newMap = this.createEmpty<KM, VM>(compare);
+        for (const [k, v] of this) {
+            const entries = callback.call(thisArg, v, k, this);
+            for (const [newKey, newValue] of entries) {
+                newMap = newMap.set(newKey, newValue);
+            }
+        }
+        return newMap;
+    }
 
-    abstract filter<F extends V>(
+    filter<F extends V>(
         predicate: (value: V, key: K, map: this) => value is F,
         thisArg?: unknown,
       ): Map<K, F>;
-    abstract filter(
+    filter(
         predicate: (value: V, key: K, map: this) => unknown,
         thisArg?: unknown
     ): Map<K, V>;
+    filter(
+        predicate: (value: V, key: K, map: this) => unknown,
+        thisArg?: unknown
+    ): Map<K, any> {
+        let newMap = this.createEmpty<K, any>();
+        for (const [k, v] of this.entries()) {
+            if (predicate.call(thisArg, v, k, this)) {
+                newMap = newMap.set(k, v);
+            }
+        }
+        return newMap;
+    }
 
-    abstract partition<F extends V, C>(
+    partition<F extends V, C>(
         predicate: (this: C, value: V, key: K, map: this) => value is F,
         thisArg?: C
       ): [Map<K, V>, Map<K, F>];
-    abstract partition<C>(
+    partition<C>(
         predicate: (this: C, value: V, key: K, map: this) => unknown,
         thisArg?: C
     ): [Map<K, V>, Map<K, V>];
+    partition(
+        predicate: (value: V, key: K, map: this) => unknown,
+        thisArg?: unknown
+    ): [Map<K, V>, Map<K, V>] {
+        let trueMap = this.createEmpty<K, V>();
+        let falseMap = this.createEmpty<K, V>();
 
-    abstract flip(): Map<V, K>;
+        for (const [k, v] of this) {
+            if (predicate.call(thisArg, v, k, this)) {
+                trueMap = trueMap.set(k, v);
+            } else {
+                falseMap = falseMap.set(k, v);
+            }
+        }
+        return [trueMap, falseMap];
+    }
+
+    flip(): Map<V, K> {
+        let map = this.createEmpty<V, K>();
+        for (const [k, v] of this) {
+            map = map.set(v, k);
+        }
+        return map;
+    }
 }

@@ -92,6 +92,13 @@ export default class LinkedList<T> extends AbstractList<T>
     }
 
     /**
+     * Create an empty linked list of the generic type.
+     */
+    protected createEmpty<E>(): List<E> {
+        return new LinkedList<E>();
+    }
+
+    /**
      * Static method to create a new empty linked list.
      * @returns A new empty linked list.
      */

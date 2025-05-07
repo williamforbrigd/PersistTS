@@ -46,6 +46,11 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
 
     abstract empty(): Collection<T>;
 
+    /**
+     * Method to create an empty instance of the collection, based on the generic parameter.
+     */
+    protected abstract createEmpty<E>(): Collection<E>;
+
     abstract removeItem(e: T): Collection<T>;
 
     abstract removeAll(c: Iterable<T>): Collection<T>;
@@ -80,7 +85,7 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
      * @returns A new collection with the values or collections concatenated.
      */
     concat<C extends T>(...valuesOrCollections: Array<Iterable<C> | C>): Collection<T | C> {
-        let res = this as unknown as Collection<T | C>;
+        let res = this as Collection<T | C>;
 
         for (const elem of valuesOrCollections) {
             if (elem !== null && (elem as any)[Symbol.iterator]) {
@@ -127,7 +132,7 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
         mapper: (value: T, key: number, iter: this) => Iterable<M>,
         thisArg?: any
     ): Collection<M> {
-        let res = this.empty() as unknown as Collection<M>;
+        let res = this.createEmpty<M>();
         let i=0;
         for (const value of this) {
             const iter = mapper.call(thisArg, value, i++, this);
@@ -218,7 +223,7 @@ export default abstract class AbstractCollection<T> implements Collection<T> {
      * Returns a new collection with only unique elements.
      */
     distinct(): Collection<T> {
-        let res = this.empty() as unknown as Collection<T>;
+        let res = this.createEmpty<T>();
         const set = new Set<T>(this.toArray());
         res = res.addAll(set as Iterable<T>);
         return res;
