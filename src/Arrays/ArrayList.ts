@@ -62,6 +62,13 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
     }
 
     /**
+     * Create an empty array list of the generic type.
+     */
+    protected createEmpty<E>(): List<E> {
+        return new ArrayList<E>();
+    }
+
+    /**
      * Get the item at the specified index.
      */
     [index: number]: T | undefined;

@@ -106,6 +106,13 @@ export default class Vector<T> extends AbstractList<T>
     }
 
     /**
+     * Create an empty vector of the generic type.
+     */
+    protected createEmpty<E>(): List<E> {
+        return Vector.empty<E>();
+    }
+
+    /**
      * Creates a new vector with the given values.
      * @param values - values to be added to the vector
      * @returns a new vector with the values added.
