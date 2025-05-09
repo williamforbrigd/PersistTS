@@ -76,7 +76,7 @@ class NFA {
             // this.transitions = this.transitions.set(s1, s1Tr);
         }
         s1Tr = s1Tr.add(new Transition(label, s2));
-        this.transitions = this.transitions.updateOrAdd(s1, s1Tr);
+        this.transitions = this.transitions.set(s1, s1Tr);
     }
 
     public addTransitionKeyValue(tr: [number, ArrayList<Transition>]): void {
@@ -128,7 +128,7 @@ class NFA {
                             if (stateTr.has(label)) { // there is already a transition for this label
                                 let toState = stateTr.get(label)!;
                                 toState = toState.add(tr.getTarget());
-                                stateTr = stateTr.updateOrAdd(label, toState);
+                                stateTr = stateTr.set(label, toState);
                             } else { // No transitions on this label yet
                                 const toState = TreeSet.of(tr.getTarget());
                                 stateTr = stateTr.set(label, toState);
@@ -166,13 +166,9 @@ class NFA {
      */
     private epsilonClose(states: TreeSet<number>, transitions: TreeMap<number, ArrayList<Transition>>): TreeSet<number> {
         // the worklist initially contains all states in the set
-        // S.apply(worklist.Enqueue)
         const worklist = states.toArray();  
 
-        let res = new TreeSet<number>();
-        for (const value of states) {
-            res = res.add(value);
-        }
+        let res = states;
 
         while (worklist.length > 0) {
             const s = worklist.shift();
@@ -205,7 +201,7 @@ class NFA {
         });
         let count = 0;
         for (const state of states) {
-            renamer = renamer.updateOrAdd(state, count++);
+            renamer = renamer.set(state, count++);
         }
         return renamer;
     }
@@ -227,11 +223,11 @@ class NFA {
             for (const [trKey, value] of entries) {
                 const renamed = renamer.get(value);
                 if (renamed === undefined) throw new Error("renamed is undefined");
-                newktr = newktr.updateOrAdd(trKey, renamed);
+                newktr = newktr.set(trKey, renamed);
             }
             const newk = renamer.get(k);
             if (newk === undefined) throw new Error("newk is undefined");
-            newTr = newTr.updateOrAdd(newk, newktr);
+            newTr = newTr.set(newk, newktr);
         }
         return newTr;
     }
