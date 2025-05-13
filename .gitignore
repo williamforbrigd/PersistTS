@@ -45,4 +45,4 @@ Diagrams/
 src/Testing
 
 # Out folder
-out/
+out/coverage/
