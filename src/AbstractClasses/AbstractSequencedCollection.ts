@@ -1,7 +1,7 @@
 import SequencedCollection from "../Interfaces/SequencedCollection";
 import AbstractCollection from "./AbstractCollection";
 
-export default abstract class AbstractSequentialCollection<T> 
+export default abstract class AbstractSequencedCollection<T> 
                         extends AbstractCollection<T>
                         implements SequencedCollection<T> {
 

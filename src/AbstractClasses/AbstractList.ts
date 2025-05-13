@@ -2,7 +2,7 @@ import List, {ListInput} from "../Interfaces/List";
 import SequencedCollection from "../Interfaces/SequencedCollection";
 import Collection from "../Interfaces/Collection";
 import { Speed } from "../Enums/Speed";
-import AbstractSequencedCollection from "./AbstractSequentialCollection";
+import AbstractSequencedCollection from "./AbstractSequencedCollection";
 
 /**
  * Abstract class representation for the List interface.

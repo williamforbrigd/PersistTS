@@ -44,5 +44,6 @@ Diagrams/
 # Testing folder
 src/Testing
 
-# Out folder
-out/coverage/
+
+# Coverage folder
+coverage/
