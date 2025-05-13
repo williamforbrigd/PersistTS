@@ -69,6 +69,25 @@ describe('HashMap persistencen and structural sharing', () => {
     })
 })
 
+describe("HAMT invariants", () => {
+    test("random maps validate", () => {
+      let map = HashMap.empty<number, number>();
+      const N = 2_000;
+
+      // validate the map after insertion
+      for (let i = 0; i < N; i++) {
+        map = map.set(i, i);
+        expect(map.validateHamt()).toBe(true);
+      }
+
+      // validate the map after deletion
+      for (let i = 0; i < N; i += 3) {
+        map = map.delete(i);
+        expect(map.validateHamt()).toBe(true);
+      }
+    });
+  });
+
 describe('HashMap general tests', () => {
 
     test("size equals number of distinct keys and all values are retrievable", () => {

@@ -25,6 +25,7 @@ describe("TreeMap", () => {
         let elements = createRandomIntArray(1_000, 1, 1000);
         elements = shuffleArray(elements);
 
+        // inserting many elements and validating the tree
         let newTree = tree;
         for (const elem of elements) {
             newTree = newTree.set(elem, elem.toString());
@@ -40,6 +41,7 @@ describe("TreeMap", () => {
             expect(newTree.get(elem)).not.toBe(undefined);
         }
 
+        // Check that the red-black tree properties are still valid after deletion
         const elementsToDelete = shuffleArray(elements);
         for (const elem of elementsToDelete) {
             newTree = newTree.delete(elem);
