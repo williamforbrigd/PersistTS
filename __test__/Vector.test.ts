@@ -102,6 +102,14 @@ describe("Vector general tests", () => {
   });
 
 
+
+test("Vector invariants hold after random updates", () => {
+  let v = Vector.empty<number>();
+  for (let i = 0; i < 10_000; i++) v = v.push(i);
+  expect(v.validateVector()).toBe(true);
+});
+
+
 describe("Vector get()", () => {
     const vec = Vector.of(1, 2, 3, 4, 5);
     test('get() should return the correct element at index 0', () => {
