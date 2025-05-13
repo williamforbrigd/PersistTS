@@ -1267,4 +1267,120 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
             console.log(`${key}: ${value}`);
         }
     }
+
+    /**
+     * Recursively validates ** all structural invariants ** of the hash array mapped trie (HAMT)
+     * that backs the `HashMap`.
+     * 
+     * It does checks on all of the different node types:
+     * 
+     * <p>The walk performs the following checks:</p>
+     * <ul>
+     *   <li><b>EmptyNode</b> – always valid.</li>
+     *   <li><b>LeafNode</b> – the stored hash equals <code>HashCode.hashCode(key)</code>
+     *       and the key has not appeared elsewhere in the current traversal.</li>
+     *   <li><b>HashCollisionNode</b> – every leaf shares the same hash and all the keys are distinct.</li>
+     *   <li><b>FullNode</b> – contains exactly 32 children and validates every subtree.</li>
+     *   <li><b>BitmapIndexedNode</b> – <code>ctpop(bitmap) === children.length</code> and each
+     *       child's bit‑position maps back to its array index.</li>
+     * </ul>
+     * 
+     * While descending the trie, the method counts the number of distinct keys seen so far. 
+     * A subtree that violates any rule returns <code>[false, size]</code>; otherwise it returns
+     * <code>[true, size]</code>.
+     * 
+     * @param node - the node to validate
+     * @param shift - the current 5-bit shift that identifies the slice of the hash consumed
+     *   at this level (0 for the root, +5 per descent).
+     * @param seenKeys - a set of keys that have been seen so far
+     * @returns A tuple <code>[isValid, leafCount]</code> where <code>isValid</code> is
+     *  <code>true</code> if the subtree is valid, and
+     *  <code>leafCount</code> is the number of leaves in the subtree.
+     */
+    validateNode(node: Node<K, V>, shift: number, seenKeys: Set<K> = new Set()): [boolean, number] {
+        // empty node is always valid
+        if (node instanceof EmptyNode) {
+            return [true, 0];
+        }
+
+        // leaf node
+        if (node instanceof LeafNode) {
+            const ok =
+            node._hash === HashCode.hashCode(node._key) && !seenKeys.has(node._key);
+            seenKeys.add(node._key);
+            return [ok, 1];
+        }
+
+        // hash collision node
+        if (node instanceof HashCollisionNode) {
+            const allSameHash = node._leaves.every(l => l._hash === node._hash);
+            const distinctKeys =
+                new Set(node._leaves.map(l => l._key)).size === node._leaves.length;
+
+            let size = 0;
+            let okLeaves = true;
+            for (const leaf of node._leaves) {
+                const [ok, n] = this.validateNode(leaf, shift + 5, seenKeys);
+                okLeaves &&= ok;
+                size += n;
+            }
+            return [allSameHash && distinctKeys && okLeaves, size];
+        }
+
+        // full node
+        if (node instanceof FullNode) {
+            const children = (node as any)._nodes as Node<K, V>[];
+            const bitmapOk = children.length === 32;
+
+            let size = 0;
+            let okChildren = true;
+            for (const child of children) {
+                const [ok, n] = this.validateNode(child, shift + 5, seenKeys);
+                okChildren &&= ok;
+                size += n;
+            }
+            return [bitmapOk && okChildren, size];
+        }
+
+        // bitmap indexed node
+        if (node instanceof BitmapIndexedNode) {
+            const bitmap = (node as any)._bitmap as number;
+            const children = (node as any)._nodes as Node<K, V>[];
+
+            const bitmapOk = ctpop(bitmap) === children.length;
+
+            let size = 0;
+            let okChildren = true;
+            for (const child of children) {
+                const bit = bitpos(child.getHash(), shift);
+                const idx = index(bitmap, bit);
+                okChildren &&= children[idx] === child;
+                const [ok, n] = this.validateNode(child, shift + 5, seenKeys);
+                okChildren &&= ok;
+                size += n;
+            }
+            return [bitmapOk && okChildren, size];
+        }
+
+
+        return [false, 0];
+    }
+
+    /**
+     * Method to validate the HAMT.
+     * Calls the helper method <code>validateNode</code> to validate the root node
+     * and all the subtrees in the HAMT.
+     * 
+     * Checks that the size of all the distinct keys found in the validation is equal to the size
+     * of the `HashMap`.
+     * 
+     * @returns <code>true</code> if the HAMT is valid, <code>false</code> otherwise.
+     */
+    validateHamt(): boolean {
+        const [ok, size] = this.validateNode(this._root, this._shift);
+        return ok && size === this.size();
+    }
 }
+
+
+
