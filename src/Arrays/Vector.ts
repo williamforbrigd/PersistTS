@@ -1050,6 +1050,58 @@ export default class Vector<T> extends AbstractList<T>
         return Array.from(this);
     }
 
+    /**
+     * Verifies that the {@link Vector} instance obeys all the structural invariants of the 
+     * array mapped trie (AMT).
+     * 
+     * Checks performed:
+     * 1. Tail buffer length is between 1 and 32 (or 0 for an empty vector) and is consistent
+     *    with the total size.
+     * 2. The shift is a multiple of 5, i.e. each trie level consumes exactly 
+     *    one 5-bit slice.
+     * 4. Every internal {@link Branch} node has between 1 and 32 children.
+     * 5. Every {@link Leaf} node has between 1 and 32 elements.
+     *
+     * @returns true if all the properties of the vector are valid, false otherwise.
+     */
+    validateVector(): boolean {
+        const BRANCHING = 1 << 5;               // 32
+        const SHIFT     = 5;
+        
+        if (this._size !== this.toArray().length) return false;
+    
+        // check the tail length
+        const tailLen = this._tail.length;
+        if (this._size === 0) {
+            if (tailLen !== 0) return false;
+        } else {
+            if (tailLen === 0 || tailLen > BRANCHING) return false;
+            if (this._size < BRANCHING && tailLen !== this._size) return false;
+        }
+    
+        // trie depth
+        if (this._shift % SHIFT !== 0) return false;
+    
+        // check for branch and leaf nodess
+        function checkNode(node: Node<T>, level: number): boolean {
+        if (level === 0) {
+            return (
+            node instanceof Leaf &&
+            node.array.length > 0 &&
+            node.array.length <= BRANCHING
+            );
+        }
+    
+        if (!(node instanceof Branch)) return false;
+        const children = node.array as Node<T>[];
+        if (children.length === 0 || children.length > BRANCHING) return false;
+    
+            return children.every(child => checkNode(child, level - SHIFT));
+        }
+    
+        return checkNode(this._root, this._shift);
+    }
+
 }
 
 

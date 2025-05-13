@@ -1381,6 +1381,3 @@ export default class HashMap<K, V> extends AbstractMap<K, V>
         return ok && size === this.size();
     }
 }
-
-
-
