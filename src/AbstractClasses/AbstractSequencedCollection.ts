@@ -8,8 +8,20 @@ export default abstract class AbstractSequencedCollection<T>
     abstract reversed(): SequencedCollection<T>;
     abstract addFirst(e: T): SequencedCollection<T>;
     abstract addLast(e: T): SequencedCollection<T>;
-    abstract getFirst(): T | undefined;
-    abstract getLast(): T | undefined;
+    /**
+     * Get the item at the given index.
+     * @returns - the first item in the list, or undefined if the list is empty
+     */
+    getFirst(): T | undefined {
+        return this.get(0);
+    }
+    /**
+     * Get the last item in the list.
+     * @returns - the last item in the list, or undefined if the list is empty
+     */
+    getLast(): T | undefined {
+        return this.get(this.size() - 1);
+    }
     abstract removeFirst(): SequencedCollection<T>;
     abstract removeLast(): SequencedCollection<T>;
 

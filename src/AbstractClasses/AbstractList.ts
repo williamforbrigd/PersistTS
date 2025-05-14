@@ -133,23 +133,6 @@ export default abstract class AbstractList<T> extends AbstractSequencedCollectio
     }
 
 
-    /**
-     * Get the item at the given index.
-     * @returns - the first item in the list, or undefined if the list is empty
-     */
-    getFirst(): T | undefined {
-        return this.get(0);
-    }
-
-    /**
-     * Get the last item in the list.
-     * @returns - the last item in the list, or undefined if the list is empty
-     */
-    getLast(): T | undefined {
-        return this.get(this.size() - 1);
-    }
-
-
     // HOFs only relevant to List
     abstract splice(start: number, deleteCount?: number): Collection<T>;
     abstract splice(start: number, deleteCount: number, ...items: T[]): Collection<T>;
