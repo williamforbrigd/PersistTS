@@ -1,5 +1,6 @@
-import HashMap, {ctpop} from "../src/Maps/HashMap";
-import {createRandomIntArray, shuffleArray} from "../src/Utils/Utils";
+import HashCode from "../src/Hashing/HashCode";
+import HashMap, { ctpop } from "../src/Maps/HashMap";
+import { createRandomIntArray, shuffleArray } from "../src/Utils/Utils";
 
 /**
  * Utility: build a map with `size` distinct integer keys
@@ -26,7 +27,7 @@ describe('HashMap persistencen and structural sharing', () => {
         const SIZE = 1024;
 
         let m0 = HashMap.empty<number, number>();
-        for (let i=0; i < SIZE; i++) {
+        for (let i = 0; i < SIZE; i++) {
             m0 = m0.set(i, i);
         }
         const n0 = m0.entriesNode();
@@ -34,7 +35,7 @@ describe('HashMap persistencen and structural sharing', () => {
         const m1 = m0.set(0, 999);
         const n1 = m1.entriesNode();
 
-        const m2 = m1.set(SIZE-1, 123);
+        const m2 = m1.set(SIZE - 1, 123);
         const n2 = m2.entriesNode();
 
         const m3 = m2.delete(1);
@@ -61,32 +62,32 @@ describe('HashMap persistencen and structural sharing', () => {
         expect(m1.get(0)).toBe(999);
         expect(m1.size()).toBe(SIZE);
 
-        expect(m2.get(SIZE-1)).toBe(123);
+        expect(m2.get(SIZE - 1)).toBe(123);
         expect(m2.size()).toBe(SIZE);
 
         expect(m3.has(1)).toBe(false);
-        expect(m3.size()).toBe(SIZE-1);
+        expect(m3.size()).toBe(SIZE - 1);
     })
 })
 
 describe("HAMT invariants", () => {
     test("random maps validate", () => {
-      let map = HashMap.empty<number, number>();
-      const N = 2_000;
+        let map = HashMap.empty<number, number>();
+        const N = 2_000;
 
-      // validate the map after insertion
-      for (let i = 0; i < N; i++) {
-        map = map.set(i, i);
-        expect(map.validateHamt()).toBe(true);
-      }
+        // validate the map after insertion
+        for (let i = 0; i < N; i++) {
+            map = map.set(i, i);
+            expect(map.validateHamt()).toBe(true);
+        }
 
-      // validate the map after deletion
-      for (let i = 0; i < N; i += 3) {
-        map = map.delete(i);
-        expect(map.validateHamt()).toBe(true);
-      }
+        // validate the map after deletion
+        for (let i = 0; i < N; i += 3) {
+            map = map.delete(i);
+            expect(map.validateHamt()).toBe(true);
+        }
     });
-  });
+});
 
 describe('HashMap general tests', () => {
 
@@ -204,7 +205,7 @@ describe('HashMap general tests', () => {
     })
 })
 
-describe("HashMap set()",() => {
+describe("HashMap set()", () => {
     let map: HashMap<number, string>;
 
     beforeEach(() => {
@@ -597,32 +598,65 @@ describe('HashMap flip()', () => {
 
 describe("HashMap compareTo()", () => {
     const mapA = HashMap.of([10, "ten"], [20, "twenty"], [30, "thirty"]);
-  
+
     test("identical maps → 0", () => {
         const mapB = HashMap.of([10, "ten"], [20, "twenty"], [30, "thirty"]);
         expect(mapA.compareTo(mapB)).toBe(0);
         expect(mapB.compareTo(mapA)).toBe(0);
     });
-  
+
     test("different sizes", () => {
         const mapSmaller = HashMap.of([10, "ten"], [20, "twenty"]);
         expect(mapA.compareTo(mapSmaller)).toBeGreaterThan(0);
         expect(mapSmaller.compareTo(mapA)).toBeLessThan(0);
     });
-  
+
     test("same size, first key differs", () => {
         const mapC = HashMap.of([10, "ten"], [40, "forty"], [50, "fifty"]);
-      // 30 vs 40 => mapA “smaller”
+        // 30 vs 40 => mapA “smaller”
         expect(mapA.compareTo(mapC)).toBeLessThan(0);
         expect(mapC.compareTo(mapA)).toBeGreaterThan(0);
     });
-  
+
     test("same key, values differ", () => {
         const mapE = HashMap.empty<number, string>().set(1, "abc");
         const mapF = HashMap.empty<number, string>().set(1, "xyz");
         expect(mapE.compareTo(mapF)).toBeLessThan(0);
         expect(mapF.compareTo(mapE)).toBeGreaterThan(0);
     });
-  });
+});
+
+describe('Hash collision handling in HashMap (HashCollisionNode)', () => {
+    // two keys that collide but are not equal
+    const KEY_A = 'aa';
+    const KEY_B = 'bA';
+
+    test('test that the keys collide but are not equal', () => {
+        expect(KEY_A).not.toBe(KEY_B);
+
+        const hA = HashCode.hashCode(KEY_A);
+        const hB = HashCode.hashCode(KEY_B);
+        expect(hA).toBe(hB);   
+    });
+
+    test('inserting both keys creates a HashCollisionNode', () => {
+        let map = HashMap.empty<string, number>();
+        map = map.set(KEY_A, 1);
+        map = map.set(KEY_B, 2);
+
+        // external behaviour
+        expect(map.size()).toBe(2);
+        expect(map.get(KEY_A)).toBe(1);
+        expect(map.get(KEY_B)).toBe(2);
+
+        // root should be a HashCollisionNode
+        const root: any = (map as any)._root;
+        expect(root.constructor.name).toBe('HashCollisionNode');
+        expect(root._leaves.length).toBe(2);
+
+        // check that the map is a valid HAMT even with a HashCollisionNode
+        expect(map.validateHamt()).toBe(true);
+    });
+});
 
 
