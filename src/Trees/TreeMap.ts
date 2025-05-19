@@ -453,7 +453,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
 
         if (!this.left().isEmpty() && this.compare(this.left().key(), this.key()) >= 0) return false;
 
-        if (!this.right().isEmpty() && this.compare(this.right().key(), this.key()) >= 0) return false;
+        if (!this.right().isEmpty() && this.compare(this.right().key(), this.key()) <= 0) return false;
 
         return this.left().isBSTHelper() && this.right().isBSTHelper();
     }
