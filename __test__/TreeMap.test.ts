@@ -1057,7 +1057,7 @@ describe('TreeMap isBST()', () => {
     test('fails when the left child key is GREATER than the parent key', () => {
         //   10
         //  /
-        // 15     ← bad: 15 ≥ 10 on left
+        // 15
         const badTree = node(10, node(15), empty);
         expect(badTree.isBST()).toBe(false);
     });
@@ -1065,7 +1065,7 @@ describe('TreeMap isBST()', () => {
     test('fails when the right child key is SMALLER than the parent key', () => {
         // 10
         //   \
-        //    5   ← bad: 5 ≤ 10 on right
+        //    5
         const badTree = node(10, empty, node(5));
         expect(badTree.isBST()).toBe(false);
     });
@@ -1073,7 +1073,7 @@ describe('TreeMap isBST()', () => {
     test('fails when the left child key is EQUAL to the parent key', () => {
         // 10
         // /
-        // 10  ← bad: duplicate on left
+        // 10 
         const badTree = node(10, node(10), empty);
         expect(badTree.isBST()).toBe(false);
     });
@@ -1081,7 +1081,7 @@ describe('TreeMap isBST()', () => {
     test('fails when the right child key is EQUAL to the parent key', () => {
         // 10
         //   \
-        //    10 ← bad: duplicate on right
+        //    10
         const badTree = node(10, empty, node(10));
         expect(badTree.isBST()).toBe(false);
     });
