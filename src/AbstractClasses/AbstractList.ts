@@ -3,6 +3,7 @@ import SequencedCollection from "../Interfaces/SequencedCollection";
 import Collection from "../Interfaces/Collection";
 import { Speed } from "../Enums/Speed";
 import AbstractSequencedCollection from "./AbstractSequencedCollection";
+import { Utils } from "../Utils/Utils";
 
 /**
  * Abstract class representation for the List interface.
@@ -102,7 +103,7 @@ export default abstract class AbstractList<T> extends AbstractSequencedCollectio
     indexOf(item: T): number {
         let i=0;
         for (const value of this) {
-            if (value === item) {
+            if (Utils.equals(value, item)) {
                 return i;
             }
             i++;
