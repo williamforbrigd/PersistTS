@@ -31,7 +31,7 @@ export default interface Set<T> extends Iterable<T>, EqualityComparer<T>  {
     every(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): this is Set<T>;
     every(predicate: (value: T, key: T, set: this) => unknown, thisArg?: unknown): boolean;
 
-    some(predicate: (value: T, key: T, map: this) => boolean, thisArg?: unknown): boolean;
+    some(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): boolean;
 
     forEach(callback: (value: T, key: T, set: this) => void, thisArg?: unknown): void;
     find(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): T | undefined;
