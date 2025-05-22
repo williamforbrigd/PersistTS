@@ -147,8 +147,8 @@ export default abstract class AbstractList<T> extends AbstractSequencedCollectio
     /**
      * Removes the first element of the collection.
      */
-    shift(): SequencedCollection<T> {
-        return this.removeFirst();
+    shift(): List<T> {
+        return this.removeFirst() as List<T>;
     }
 
     /**
