@@ -6,7 +6,7 @@ import {Speed} from "../Enums/Speed";
  * Represents an unordered collection of unique elements.
  */
 export default interface Set<T> extends Iterable<T>  {
-    [Symbol.iterator](): IterableIterator<T>;
+    [Symbol.iterator](): Iterator<T>;
     
     size(): number;
     isEmpty(): boolean;
@@ -33,12 +33,6 @@ export default interface Set<T> extends Iterable<T>  {
     every(predicate: (value: T, key: T, set: this) => unknown, thisArg?: unknown): boolean;
 
     some(predicate: (value: T, key: T, map: this) => boolean, thisArg?: unknown): boolean;
-
-    sort(comparator?: Comparator<T>): Set<T>;
-    sortBy<C>(
-        comparatorValueMapper: (value: T, key: T, set: this) => C,
-        comparator?: (valueA: C, valueB: C) => number
-    ): Set<T | C>;
 
     forEach(callback: (value: T, key: T, set: this) => void, thisArg?: unknown): void;
     find(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): T | undefined;
