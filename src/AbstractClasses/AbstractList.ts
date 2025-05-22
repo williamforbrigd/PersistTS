@@ -17,10 +17,6 @@ import AbstractSequencedCollection from "./AbstractSequencedCollection";
 export default abstract class AbstractList<T> extends AbstractSequencedCollection<T> implements List<T> {
     [index: number]: T | undefined;
 
-    FIFO(): boolean {
-        return true;
-    }
-
     abstract empty(): List<T>;
 
     /**
