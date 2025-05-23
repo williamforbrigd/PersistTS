@@ -3,8 +3,9 @@ import HashCode from "../Hashing/HashCode";
 import HashMap from "../Maps/HashMap";
 import { Utils } from "../Utils/Utils";
 import Set from "../Interfaces/Set";
+import AbstractSet from "../AbstractClasses/AbstractSet";
 
-export default class HashSet<T> implements Set<T> {
+export default class HashSet<T> extends AbstractSet<T> implements Set<T> {
     private _hashCode: number|null = null;
 
     private readonly _map: HashMap<T, undefined>;
@@ -12,6 +13,7 @@ export default class HashSet<T> implements Set<T> {
     constructor(
         _map?: HashMap<T, undefined>,
     ) {
+        super();
         this._map = _map ?? HashMap.empty<T, undefined>();
     }
 
@@ -46,11 +48,7 @@ export default class HashSet<T> implements Set<T> {
     }
 
     addAll(values: Iterable<T>): HashSet<T> {
-        let hashSet: HashSet<T> = this;
-        for (const value of values) {
-            hashSet = hashSet.add(value);
-        }
-        return hashSet;
+        return super.addAll(values) as HashSet<T>;
     }
 
     has(value: T): boolean {
@@ -185,7 +183,7 @@ export default class HashSet<T> implements Set<T> {
     }
 
     find(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): T | undefined {
-        // return this.tree.find((_, key) => predicate.call(thisArg, key, key, this));
+        // return this._map.find((_, key) => predicate.call(thisArg, key, key, this));
         for (const value of this) {
             if (predicate.call(thisArg, value, value, this)) {
                 return value;
@@ -207,17 +205,7 @@ export default class HashSet<T> implements Set<T> {
     }
 
     union<C>(...collections: Array<Iterable<C>>): HashSet<T | C> {
-        // let treeSet = new TreeSet<T | C>(this.compare as unknown as (a: T | C, b: T | C) => number);
-        let hashSet: HashSet<T | C> = this;
-        for (const value of this) {
-            hashSet = hashSet.add(value);
-        }
-        for (const collection of collections) {
-            for (const value of collection) {
-                hashSet = hashSet.add(value);
-            }
-        }
-        return hashSet;
+        return super.union(...collections) as HashSet<T | C>;
     }
 
     merge<C>(...collections: Array<Iterable<C>>): HashSet<T | C> {
@@ -252,15 +240,7 @@ export default class HashSet<T> implements Set<T> {
     }
 
     subtract(...collections: Array<Iterable<T>>): HashSet<T> {
-        // let result = new TreeSet<T>(this.compare, this.tree);
-        let result: HashSet<T> = this;
-
-        for (const collection of collections) {
-            for (const value of collection) {
-                result = result.delete(value);
-            }
-        }
-        return result;
+        return super.subtract(...collections) as HashSet<T>;
     }
 
     map<M>(
