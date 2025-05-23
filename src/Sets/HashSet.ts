@@ -147,9 +147,9 @@ export default class HashSet<T> implements Set<T> {
 
     hashCode(): number {
         if (this._hashCode === null) {
-            let hash = 1;
+            let hash = 0;
             for (const value of this) {
-                hash = 31 * hash + HashCode.hashCode(value);
+                hash += HashCode.hashCode(value);
             }
             this._hashCode = hash;
         }
@@ -253,7 +253,7 @@ export default class HashSet<T> implements Set<T> {
 
     subtract(...collections: Array<Iterable<T>>): HashSet<T> {
         // let result = new TreeSet<T>(this.compare, this.tree);
-        let result: HashSet<T> = this.empty();
+        let result: HashSet<T> = this;
 
         for (const collection of collections) {
             for (const value of collection) {
@@ -317,7 +317,7 @@ export default class HashSet<T> implements Set<T> {
     partition<F extends T, C>(
         predicate: (this: C, value: T, key: T, set: this) => value is F,
         thisArg?: C
-      ): [HashSet<T>, HashSet<F>];
+      ): [HashSet<F>, HashSet<Exclude<T, F>>];
     partition<C>(
         predicate: (this: C, value: T, key: T, set: this) => unknown,
         thisArg?: C
