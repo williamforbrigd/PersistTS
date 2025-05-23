@@ -445,17 +445,16 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
 
     // Methods to check invariants
     isBST(): boolean {
-        return this.isBSTHelper();
+        return this.isBSTHelper(undefined, undefined);
     }
 
-    private isBSTHelper(): boolean {
+    private isBSTHelper(min: K | undefined, max: K | undefined): boolean {
         if (this.isEmpty()) return true;
 
-        if (!this.left().isEmpty() && this.compare(this.left().key(), this.key()) >= 0) return false;
+        if (min !== undefined && this.compare(this.key(), min) <= 0) return false;
+        if (max !== undefined && this.compare(this.key(), max) >= 0) return false;
 
-        if (!this.right().isEmpty() && this.compare(this.right().key(), this.key()) >= 0) return false;
-
-        return this.left().isBSTHelper() && this.right().isBSTHelper();
+        return this.left().isBSTHelper(min, this.key()) && this.right().isBSTHelper(this.key(), max);
     }
 
     redInvariant(): boolean {

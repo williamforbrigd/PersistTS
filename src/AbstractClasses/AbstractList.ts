@@ -3,6 +3,7 @@ import SequencedCollection from "../Interfaces/SequencedCollection";
 import Collection from "../Interfaces/Collection";
 import { Speed } from "../Enums/Speed";
 import AbstractSequencedCollection from "./AbstractSequencedCollection";
+import { Utils } from "../Utils/Utils";
 
 /**
  * Abstract class representation for the List interface.
@@ -16,10 +17,6 @@ import AbstractSequencedCollection from "./AbstractSequencedCollection";
  */
 export default abstract class AbstractList<T> extends AbstractSequencedCollection<T> implements List<T> {
     [index: number]: T | undefined;
-
-    FIFO(): boolean {
-        return true;
-    }
 
     abstract empty(): List<T>;
 
@@ -106,7 +103,7 @@ export default abstract class AbstractList<T> extends AbstractSequencedCollectio
     indexOf(item: T): number {
         let i=0;
         for (const value of this) {
-            if (value === item) {
+            if (Utils.equals(value, item)) {
                 return i;
             }
             i++;
@@ -150,8 +147,8 @@ export default abstract class AbstractList<T> extends AbstractSequencedCollectio
     /**
      * Removes the first element of the collection.
      */
-    shift(): SequencedCollection<T> {
-        return this.removeFirst();
+    shift(): List<T> {
+        return this.removeFirst() as List<T>;
     }
 
     /**

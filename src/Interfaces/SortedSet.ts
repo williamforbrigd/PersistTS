@@ -17,6 +17,26 @@ export default interface SortedSet<T> extends Set<T> {
     getComparator(): Comparator<T>;
 
     /**
+     * Sorts the elements of the set using the provided comparator.
+     * 
+     * @param comparator - The comparator used to order the set's elements.
+     * @returns A new SortedSet with the order defined by the comparator.
+     */
+    sort(comparator?: Comparator<T>): Set<T>;
+
+    /**
+     * Sorts the elements of the set using a custom comparator value mapper.
+     * 
+     * @param comparatorValueMapper - Function to map the value to a comparable value.
+     * @param comparator - Optional comparator for the mapped values.
+     * @returns A new SortedSet with the order defined by the comparator.
+     */
+    sortBy<C>(
+        comparatorValueMapper: (value: T, key: T, set: this) => C,
+        comparator?: (valueA: C, valueB: C) => number
+    ): Set<T | C>;
+
+    /**
      * Retrieves the smallest element in the set.
      *
      * @returns The minimum element, or undefined if the set is empty.

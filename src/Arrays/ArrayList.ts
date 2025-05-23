@@ -76,10 +76,6 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
         return this.items[index];
     }
 
-    FIFO(): boolean {
-        return false;
-    }
-
     /**
      * Returns an iterator for the items in the list.
      */
@@ -360,27 +356,6 @@ class ArrayList<T> extends AbstractList<T> implements List<T> {
     reduceRight(callback: any, initialValue?: any): any {
         return super.reduceRight(callback, initialValue) as any;
     }
-
-    // remove(item: T): ArrayList<T>;
-    // remove(): ArrayList<T>;
-    // remove(item?: T): ArrayList<T> {
-    //     if (item === undefined) {
-    //         if (this.FIFO()) {
-    //             return this.removeFirst();
-    //         } else {
-    //             return this.removeLast();
-    //         }
-    //     } else {
-    //         const index = this.indexOf(item);
-    //         if (index === -1) {
-    //             return this;
-    //         } else {
-    //             const newItems = this.items.slice();
-    //             newItems.splice(index, 1);
-    //             return new ArrayList(newItems);
-    //         }
-    //     }
-    // }
 
     /**
      * Remove all the items from the collection.

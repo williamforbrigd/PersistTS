@@ -1060,7 +1060,6 @@ export default class Vector<T> extends AbstractList<T>
      * 2. The shift is a multiple of 5, i.e. each trie level consumes exactly 
      *    one 5-bit slice.
      * 4. Every internal {@link Branch} node has between 1 and 32 children.
-     * 5. Every {@link Leaf} node has between 1 and 32 elements.
      *
      * @returns true if all the properties of the vector are valid, false otherwise.
      */

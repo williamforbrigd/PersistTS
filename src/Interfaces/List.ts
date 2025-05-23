@@ -9,7 +9,6 @@ import SequencedCollection from "./SequencedCollection";
  * Elements can be accessed, inserted, and removed by index. 
  */
 interface List<T> extends SequencedCollection<T>  {
-    FIFO(): boolean;
     [index: number]: T | undefined; // this is the get method
     get(index: number): T | undefined;
     set(index: number, item: T): List<T>;
@@ -37,8 +36,8 @@ interface List<T> extends SequencedCollection<T>  {
     splice(start: number, deleteCount: number, ...items: T[]): Collection<T>;
     slice(start?: number, end?: number): Collection<T>;
 
-    shift(): Collection<T>;
-    unshift(...items: T[]): Collection<T>;
+    shift(): List<T>;
+    unshift(...items: T[]): List<T>;
 
     // Speed
     indexingSpeed(): Speed;
