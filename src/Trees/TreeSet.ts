@@ -134,14 +134,6 @@ export default class TreeSet<T> implements SortedSet<T> {
 
 
     /**
-     * Since the TreeSet is implemented using a persistent red-black tree, the speed of the operations such as add, delete, and has is Logarithmi O(log n).
-     * @returns the speed of the TreeSet, which is Logarithmic.
-     */
-    containsSpeed(): Speed {
-        return Speed.Log;
-    }
-
-    /**
      * Returns a new TreeSet with the value deleted from the set if the set has it.
      * Uses the delete method defined in the persistent red-black tree.
      * @param value to be deleted from the set.
