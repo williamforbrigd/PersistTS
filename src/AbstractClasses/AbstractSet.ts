@@ -1,6 +1,7 @@
 import { Comparator } from '../Interfaces/Comparator';
 import { Speed } from '../Enums/Speed';
 import Set from '../Interfaces/Set';
+import { Utils } from '../Utils/Utils';
 
 export default abstract class AbstractSet<T> implements Set<T> {
     abstract [Symbol.iterator](): Iterator<T>;
@@ -11,6 +12,9 @@ export default abstract class AbstractSet<T> implements Set<T> {
     }
 
     protected abstract createEmpty<TT>(compare?: Comparator<TT>): Set<TT>;
+    protected equalsElement(a: T, b: T): boolean {
+        return Utils.equals(a,b);
+    } 
 
     abstract add(value: T): Set<T>;
     addAll(values: Iterable<T>): Set<T> {
@@ -156,7 +160,26 @@ export default abstract class AbstractSet<T> implements Set<T> {
         return this.union(...collections);
     }
 
-    abstract intersect(...collections: Array<Iterable<T>>): Set<T>;
+    intersect(...collections: Array<Iterable<T>>): Set<T> {
+        let result: Set<T> = this.createEmpty();
+
+        outer: for (const v1 of this) {
+            for (const collection of collections) {
+                let found = false;
+                for (const v2 of collection) {
+                    if (this.equalsElement(v1,v2)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    continue outer;
+                }
+            }
+            result = result.add(v1);
+        }
+        return result;
+    }
 
     subtract(...collections: Array<Iterable<T>>): Set<T> {
         let result: Set<T> = this;

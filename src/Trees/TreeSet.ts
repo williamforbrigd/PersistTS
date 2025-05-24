@@ -93,6 +93,10 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
         return new TreeSet<TT>(compare ?? (this.compare as unknown as Comparator<TT>));
     }
 
+    protected override equalsElement(a: T, b: T): boolean {
+        return this.compare(a,b) === 0;
+    }
+
     /**
      * Adds the specified value to the TreeSet if it is not already present.
      * More specifically, the element is added if the TreeSet does not contain an element e such that compare(e, value) === 0.
@@ -496,24 +500,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
      * @returns a new TreeSet representing the insertion of the current set with the provided collections.
      */
     intersect(...collections: Array<Iterable<T>>): TreeSet<T> {
-        let result = new TreeSet<T>(this.compare);
-
-        outer: for (const v1 of this) {
-            for (const collection of collections) {
-                let found = false;
-                for (const v2 of collection) {
-                    if (this.compare(v1, v2) === 0) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    continue outer;
-                }
-            }
-            result = result.add(v1);
-        }
-        return result;
+        return super.intersect(...collections) as TreeSet<T>;
     }
 
     /**

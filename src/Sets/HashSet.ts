@@ -215,24 +215,7 @@ export default class HashSet<T> extends AbstractSet<T> implements Set<T> {
     }
 
     intersect(...collections: Array<Iterable<T>>): HashSet<T> {
-        let result: HashSet<T> = this.empty();
-
-        outer: for (const v1 of this) {
-            for (const collection of collections) {
-                let found = false;
-                for (const v2 of collection) {
-                    if (Utils.equals(v1, v2)) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    continue outer;
-                }
-            }
-            result = result.add(v1);
-        }
-        return result;
+        return super.intersect(...collections) as HashSet<T>;
     }
 
     subtract(...collections: Array<Iterable<T>>): HashSet<T> {
