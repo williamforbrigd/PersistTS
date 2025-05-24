@@ -1789,13 +1789,7 @@ export default class TreeMap<K, V> extends AbstractSortedMap<K, V> implements So
      * @returns a new TreeMap containing all entries from the specified key to the end of the TreeMap.
      */
     rangeFrom(fromKey: K): TreeMap<K, V> {
-        let newTree = new TreeMap<K, V>(this.compare);
-        for (const [k, v] of this) {
-            if (this.compare(k, fromKey) >= 0) {
-                newTree = newTree.set(k, v);
-            }
-        }
-        return newTree;
+        return super.rangeFrom(fromKey) as TreeMap<K, V>;
     }
 
     /**
@@ -1804,13 +1798,7 @@ export default class TreeMap<K, V> extends AbstractSortedMap<K, V> implements So
      * @returns a new TreeMap containing all entries from the start of the TreeMap to the specified key.
      */
     rangeTo(toKey: K): TreeMap<K, V> {
-        let newTree = new TreeMap<K, V>(this.compare);
-        for (const [k, v] of this) {
-            if (this.compare(k, toKey) <= 0) {
-                newTree = newTree.set(k, v);
-            }
-        }
-        return newTree;
+        return super.rangeTo(toKey) as TreeMap<K, V>;
     }
 
     /**
@@ -1821,13 +1809,7 @@ export default class TreeMap<K, V> extends AbstractSortedMap<K, V> implements So
      * @returns - a new TreeMap containing all entries from the specified range.
      */
     rangeFromTo(fromKey: K, toKey: K): TreeMap<K, V> {
-        let newTree = new TreeMap<K, V>(this.compare);
-        for (const [k, v] of this) {
-            if (this.compare(k, fromKey) >= 0 && this.compare(k, toKey) < 0) {
-                newTree = newTree.set(k, v);
-            }
-        }
-        return newTree;
+        return super.rangeFromTo(fromKey, toKey) as TreeMap<K, V>;
     }
     
     /**
@@ -1836,13 +1818,7 @@ export default class TreeMap<K, V> extends AbstractSortedMap<K, V> implements So
      * @returns - a new TreeMap containing all entries from the start of the TreeMap to the specified key.
      */
     removeRangeFrom(fromKey: K): TreeMap<K, V> {
-        let newTree = new TreeMap<K, V>(this.compare);
-        for (const [k, v] of this) {
-            if (this.compare(k, fromKey) < 0) {
-                newTree = newTree.set(k, v);
-            }
-        }
-        return newTree;
+        return super.removeRangeFrom(fromKey) as TreeMap<K, V>;
     }
     /**
      * Removes all entries with keys less than or equal to the given `toKey`.
@@ -1850,13 +1826,7 @@ export default class TreeMap<K, V> extends AbstractSortedMap<K, V> implements So
      * @returns - a new TreeMap containing all entries with keys greater than the `toKey`.
      */ 
     removeRangeTo(toKey: K): TreeMap<K, V> {
-        let newTree = new TreeMap<K, V>(this.compare);
-        for (const [k, v] of this) {
-            if (this.compare(k, toKey) >= 0) {
-                newTree = newTree.set(k, v);
-            }
-        }
-        return newTree;
+        return super.removeRangeTo(toKey) as TreeMap<K, V>;
     }
 
     /**
@@ -1866,12 +1836,6 @@ export default class TreeMap<K, V> extends AbstractSortedMap<K, V> implements So
      * @returns - a new TreeMap containing all entries with keys outside the specified range.
      */
     removeRangeFromTo(fromKey: K, toKey: K): TreeMap<K, V> {
-        let newTree = new TreeMap<K, V>(this.compare);
-        for (const [k, v] of this) {
-            if (!(this.compare(k, fromKey) >= 0 && this.compare(k, toKey) < 0)) {
-                newTree = newTree.set(k, v);
-            }
-        }
-        return newTree;
+        return super.removeRangeFromTo(fromKey, toKey) as TreeMap<K, V>;
     }
 }

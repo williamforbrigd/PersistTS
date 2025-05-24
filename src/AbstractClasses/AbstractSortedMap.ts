@@ -142,14 +142,32 @@ export default abstract class AbstractSortedMap<K, V> extends AbstractMap<K, V> 
      * @param fromKey - Lower bound key.
      * @returns A new SortedMap starting from the specified key.
      */
-    abstract rangeFrom(fromKey: K): SortedMap<K, V>;
+    rangeFrom(fromKey: K): SortedMap<K, V> {
+        const compare = this.getComparator();
+        let newTree = this.createEmpty<K, V>(compare);
+        for (const [k, v] of this) {
+            if (compare(k, fromKey) >= 0) {
+                newTree = newTree.set(k, v) as SortedMap<K, V>;
+            }
+        }
+        return newTree;
+    }
     /**
      * Returns a view of the map with entries having keys less than or equal to toKey.
      *
      * @param toKey - Upper bound key.
      * @returns A new SortedMap up to the specified key.
      */
-    abstract rangeTo(toKey: K): SortedMap<K, V>;
+    rangeTo(toKey: K): SortedMap<K, V> {
+        const compare = this.getComparator();
+        let newTree = this.createEmpty<K, V>(compare);
+        for (const [k, v] of this) {
+            if (compare(k, toKey) <= 0) {
+                newTree = newTree.set(k, v) as SortedMap<K, V>;
+            }
+        }
+        return newTree;
+    }
     /**
      * Returns a view of the map with entries having keys between fromKey and toKey.
      *
@@ -157,7 +175,16 @@ export default abstract class AbstractSortedMap<K, V> extends AbstractMap<K, V> 
      * @param toKey - Upper bound key.
      * @returns A new SortedMap within the specified key range.
      */
-    abstract rangeFromTo(fromKey: K, toKey: K): SortedMap<K, V>;
+    rangeFromTo(fromKey: K, toKey: K): SortedMap<K, V> {
+        const compare = this.getComparator();
+        let newTree = this.createEmpty<K, V>(compare);
+        for (const [k, v] of this) {
+            if (compare(k, fromKey) >= 0 && compare(k, toKey) < 0) {
+                newTree = newTree.set(k, v) as SortedMap<K, V>;
+            }
+        }
+        return newTree;
+    }
 
     // rangeAll(): Collection<[K, V]>;
 
@@ -167,14 +194,32 @@ export default abstract class AbstractSortedMap<K, V> extends AbstractMap<K, V> 
      * @param fromKey - Lower bound key.
      * @returns A new SortedMap without entries from the specified key onward.
      */
-    abstract removeRangeFrom(fromKey: K): SortedMap<K, V>;
+    removeRangeFrom(fromKey: K): SortedMap<K, V> {
+        const compare = this.getComparator();
+        let newTree = this.createEmpty<K, V>(compare);
+        for (const [k, v] of this) {
+            if (compare(k, fromKey) < 0) {
+                newTree = newTree.set(k, v) as SortedMap<K, V>;
+            }
+        }
+        return newTree;
+    }
     /**
      * Removes all entries with keys less than or equal to toKey.
      *
      * @param toKey - Upper bound key.
      * @returns A new SortedMap without entries up to the specified key.
      */
-    abstract removeRangeTo(toKey: K): SortedMap<K, V>;
+    removeRangeTo(toKey: K): SortedMap<K, V> {
+        const compare = this.getComparator();
+        let newTree = this.createEmpty<K, V>(compare);
+        for (const [k, v] of this) {
+            if (compare(k, toKey) >= 0) {
+                newTree = newTree.set(k, v) as SortedMap<K, V>;
+            }
+        }
+        return newTree;
+    }
     /**
      * Removes entries with keys between fromKey and toKey (inclusive).
      *
@@ -182,5 +227,14 @@ export default abstract class AbstractSortedMap<K, V> extends AbstractMap<K, V> 
      * @param toKey - Upper bound key.
      * @returns A new SortedMap without entries in the specified range.
      */
-    abstract removeRangeFromTo(fromKey: K, toKey: K): SortedMap<K, V>;
+    removeRangeFromTo(fromKey: K, toKey: K): SortedMap<K, V> {
+        const compare = this.getComparator();
+        let newTree = this.createEmpty<K, V>(compare);
+        for (const [k, v] of this) {
+            if (!(compare(k, fromKey) >= 0 && compare(k, toKey) < 0)) {
+                newTree = newTree.set(k, v) as SortedMap<K, V>;
+            }
+        }
+        return newTree;
+    }
 }
