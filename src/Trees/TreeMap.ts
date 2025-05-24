@@ -4,8 +4,8 @@ import Map from "../Interfaces/Map";
 import {Comparator} from "../Interfaces/Comparator";
 import SortedMap from "../Interfaces/SortedMap"
 
-import AbstractMap from "../AbstractClasses/AbstractMap";
 import Sorting from "../Sorting/Sorting";
+import AbstractSortedMap from "../AbstractClasses/AbstractSortedMap";
 
 enum Color {
     R, // Red
@@ -29,7 +29,7 @@ enum Color {
  * 
  * @see https://matt.might.net/articles/red-black-delete/
  */
-export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> {
+export default class TreeMap<K, V> extends AbstractSortedMap<K, V> implements SortedMap<K, V> {
     // private static readonly EMPTY = new TreeMap<any, any>(TreeMap.defaultComparator, Color.B, null, null, null);
     private _hashCode: number | null = null; // cache the hashcode which is computed only once
 
@@ -1780,17 +1780,7 @@ export default class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMa
      * @returns a new TreeMap containing only the entries that fall within the specified range.
      */
     cut(cutFunction: (compareToOther: K) => number, fromKey: K, toKey: K): TreeMap<K, V> {
-        const lower = cutFunction(fromKey);
-        const upper = cutFunction(toKey);
-        let newTree = new TreeMap<K, V>(this.compare);
-
-        for (const [k, v] of this) {
-            const cutValue = cutFunction(k);
-            if (cutValue >= lower && cutValue < upper) {
-                newTree = newTree.set(k, v);
-            }
-        }
-        return newTree;
+        return super.cut(cutFunction, fromKey, toKey) as TreeMap<K, V>;
     }
 
     /**
