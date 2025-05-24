@@ -153,7 +153,16 @@ export default abstract class AbstractSortedSet<T> extends AbstractSet<T> implem
      * @param fromValue - Lower bound value.
      * @returns A new SortedSet starting from the specified value.
      */
-    abstract rangeFrom(fromValue: T): SortedSet<T>;
+    rangeFrom(fromValue: T): SortedSet<T> {
+        const compare = this.getComparator();
+        let result = this.createEmpty<T>(compare);
+        for (const value of this) {
+            if (compare(value, fromValue) >= 0) {
+                result = result.add(value) as SortedSet<T>;
+            }
+        }
+        return result;
+    }
 
     /**
      * Returns a view of the set with elements less than or equal to toValue.
@@ -161,7 +170,16 @@ export default abstract class AbstractSortedSet<T> extends AbstractSet<T> implem
      * @param toValue - Upper bound value.
      * @returns A new SortedSet up to the specified value.
      */
-    abstract rangeTo(toValue: T): SortedSet<T>;
+    rangeTo(toValue: T): SortedSet<T> {
+        const compare = this.getComparator();
+        let result = this.createEmpty<T>(compare);
+        for (const value of this) {
+            if (compare(value, toValue) < 0) {
+                result = result.add(value) as SortedSet<T>;
+            }
+        }
+        return result;
+    }
 
     /**
      * Returns a view of the set with elements between fromValue and toValue.
@@ -170,7 +188,16 @@ export default abstract class AbstractSortedSet<T> extends AbstractSet<T> implem
      * @param toValue - Upper bound value.
      * @returns A new SortedSet within the specified value range.
      */
-    abstract rangeFromTo(fromValue: T, toValue: T): SortedSet<T>;
+    rangeFromTo(fromValue: T, toValue: T): SortedSet<T> {
+        const compare = this.getComparator();
+        let result = this.createEmpty<T>(compare);
+        for (const value of this) {
+            if (compare(value, fromValue) >= 0 && compare(value, toValue) < 0) {
+                result = result.add(value) as SortedSet<T>;
+            }
+        }
+        return result;
+    }
     // rangeAll(): Collection<[K, V]>;
 
     /**
@@ -179,7 +206,16 @@ export default abstract class AbstractSortedSet<T> extends AbstractSet<T> implem
      * @param fromValue - Lower bound value.
      * @returns A new SortedSet without elements from the specified value onward.
      */
-    abstract removeRangeFrom(fromValue: T): SortedSet<T>;
+    removeRangeFrom(fromValue: T): SortedSet<T> {
+        const compare = this.getComparator();
+        let result = this.createEmpty<T>(compare);
+        for (const value of this) {
+            if (compare(value, fromValue) < 0) {
+                result = result.add(value) as SortedSet<T>;
+            }
+        }
+        return result;
+    }
 
     /**
      * Removes all elements less than or equal to toValue.
@@ -187,7 +223,16 @@ export default abstract class AbstractSortedSet<T> extends AbstractSet<T> implem
      * @param toValue - Upper bound value.
      * @returns A new SortedSet without elements up to the specified value.
      */
-    abstract removeRangeTo(toValue: T): SortedSet<T>;
+    removeRangeTo(toValue: T): SortedSet<T> {
+        const compare = this.getComparator();
+        let result = this.createEmpty<T>(compare);
+        for (const value of this) {
+            if (compare(value, toValue) >= 0) {
+                result = result.add(value) as SortedSet<T>;
+            }
+        }
+        return result;
+    }
 
     /**
      * Removes elements between fromValue and toValue (inclusive).
@@ -196,5 +241,14 @@ export default abstract class AbstractSortedSet<T> extends AbstractSet<T> implem
      * @param toValue - Upper bound value.
      * @returns A new SortedSet without elements in the specified range.
      */
-    abstract removeRangeFromTo(fromValue: T, toValue: T): SortedSet<T>;
+    removeRangeFromTo(fromValue: T, toValue: T): SortedSet<T> {
+        const compare = this.getComparator();
+        let result = this.createEmpty<T>(compare);
+        for (const value of this) {
+            if (!(compare(value, fromValue) >= 0 && compare(value, toValue) < 0)) {
+                result = result.add(value) as SortedSet<T>;
+            }
+        }
+        return result;
+    }
 }

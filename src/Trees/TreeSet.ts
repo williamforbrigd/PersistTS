@@ -850,13 +850,7 @@ export default class TreeSet<T> extends AbstractSortedSet<T> implements SortedSe
      * @returns a TreeSet starting from the provided value to the maximum value in the set.
      */
     rangeFrom(fromValue: T): TreeSet<T> {
-        let result = new TreeSet<T>(this.compare);
-        for (const value of this) {
-            if (this.compare(value, fromValue) >= 0) {
-                result = result.add(value);
-            }
-        }
-        return result;
+        return super.rangeFrom(fromValue) as TreeSet<T>;
     }
 
     /**
@@ -865,13 +859,7 @@ export default class TreeSet<T> extends AbstractSortedSet<T> implements SortedSe
      * @returns a TreeSet starting from the minimum value in the set to the provided value.
      */
     rangeTo(toValue: T): TreeSet<T> {
-        let result = new TreeSet<T>(this.compare);
-        for (const value of this) {
-            if (this.compare(value, toValue) < 0) {
-                result = result.add(value);
-            }
-        }
-        return result;
+        return super.rangeTo(toValue) as TreeSet<T>;
     }
 
     /**
@@ -881,13 +869,7 @@ export default class TreeSet<T> extends AbstractSortedSet<T> implements SortedSe
      * @returns a TreeSet starting from the provided fromValue to the provided toValue.
      */
     rangeFromTo(fromValue: T, toValue: T): TreeSet<T>  {
-        let result = new TreeSet<T>(this.compare);
-        for (const value of this) {
-            if (this.compare(value, fromValue) >= 0 && this.compare(value, toValue) < 0) {
-                result = result.add(value);
-            }
-        }
-        return result;
+        return super.rangeFromTo(fromValue, toValue) as TreeSet<T>;
     }
 
     /**
@@ -897,13 +879,7 @@ export default class TreeSet<T> extends AbstractSortedSet<T> implements SortedSe
      * @returns a TreeSet where all the elements from the value are removed. 
      */
     removeRangeFrom(fromValue: T): TreeSet<T> {
-        let result = new TreeSet<T>(this.compare);
-        for (const value of this) {
-            if (this.compare(value, fromValue) < 0) {
-                result = result.add(value);
-            }
-        }
-        return result;
+        return super.removeRangeFrom(fromValue) as TreeSet<T>;
     }
 
     /**
@@ -912,13 +888,7 @@ export default class TreeSet<T> extends AbstractSortedSet<T> implements SortedSe
      * @returns a TreeSet where all the elements up to the value are removed.
      */
     removeRangeTo(toValue: T): TreeSet<T> {
-        let result = new TreeSet<T>(this.compare);
-        for (const value of this) {
-            if (this.compare(value, toValue) >= 0) {
-                result = result.add(value);
-            }
-        }
-        return result;
+        return super.removeRangeTo(toValue) as TreeSet<T>;
     }
 
     /**
@@ -929,13 +899,7 @@ export default class TreeSet<T> extends AbstractSortedSet<T> implements SortedSe
      * @returns a TreeSet with all the elements in the range removed.
      */
     removeRangeFromTo(fromValue: T, toValue: T): TreeSet<T> {
-        let result = new TreeSet<T>(this.compare);
-        for (const value of this) {
-            if (!(this.compare(value, fromValue) >= 0 && this.compare(value, toValue) < 0)) {
-                result = result.add(value);
-            }
-        }
-        return result;
+        return super.removeRangeFromTo(fromValue, toValue) as TreeSet<T>;
     }
 
     // Helper methods
