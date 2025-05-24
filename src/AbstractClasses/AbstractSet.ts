@@ -1,3 +1,4 @@
+import { Comparator } from '../Interfaces/Comparator';
 import { Speed } from '../Enums/Speed';
 import Set from '../Interfaces/Set';
 
@@ -8,6 +9,9 @@ export default abstract class AbstractSet<T> implements Set<T> {
     isEmpty(): boolean {
         return this.size() === 0;
     }
+
+    protected abstract createEmpty<TT>(compare?: Comparator<TT>): Set<TT>;
+
     abstract add(value: T): Set<T>;
     addAll(values: Iterable<T>): Set<T> {
         let result: Set<T> = this;
@@ -53,17 +57,88 @@ export default abstract class AbstractSet<T> implements Set<T> {
 
     // HOFs
 
-    abstract every(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): this is Set<T>;
-    abstract every(predicate: (value: T, key: T, set: this) => unknown, thisArg?: unknown): boolean;
+    every(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): this is Set<T>;
+    every(predicate: (value: T, key: T, set: this) => unknown, thisArg?: unknown): boolean;
+    every(
+        predicate: (value: T, key: T, set: this) => unknown,
+        thisArg?: unknown
+    ): unknown {
+        for (const value of this) {
+            if (!predicate.call(thisArg, value, value, this)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-    abstract some(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): boolean;
+    some(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): boolean {
+        for (const value of this) {
+            if (predicate.call(thisArg, value, value, this)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-    abstract forEach(callback: (value: T, key: T, set: this) => void, thisArg?: unknown): void;
-    abstract find(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): T | undefined;
-    abstract reduce(callback: (accumulator: T, value: T, key: T, set: this) => T, initialValue?: T): T;
-    abstract reduce<R>(callback: (accumulator: R, value: T, key: T, set: this) => R, initialValue?: R): R;
-    abstract reduceRight(callback: (accumulator: T, value: T, key: T, set: this) => T, initialValue?: T): T;
-    abstract reduceRight<R>(callback: (accumulator: R, value: T, key: T, set: this) => R, initialValue?: R): R;
+    forEach(callback: (value: T, key: T, set: this) => void, thisArg?: unknown): void {
+        for (const value of this) {
+            callback.call(thisArg, value, value, this);
+        }
+    }
+    find(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): T | undefined {
+        for (const value of this) {
+            if (predicate.call(thisArg, value, value, this)) {
+                return value;
+            }
+        }
+        return undefined;
+    }
+
+    reduce(callback: (accumulator: T, value: T, key: T, set: this) => T, initialValue?: T): T;
+    reduce<R>(callback: (accumulator: R, value: T, key: T, set: this) => R, initialValue?: R): R;
+    reduce<R>(callback: (accumulator: R, value: T, key: T, set: this) => R, initialValue?: R): R {
+        let accumulator = initialValue as R;
+        let initialized = initialValue !== undefined;
+
+        for (const value of this) {
+            if (!initialized) {
+                accumulator = value as unknown as R;
+                initialized = true;
+            } else {
+                accumulator = callback(accumulator, value, value, this);
+            }
+        }
+
+        if (!initialized) {
+            throw new TypeError("Reduce of empty set with no initial value");
+        }
+
+        return accumulator;
+    }
+
+    reduceRight(callback: (accumulator: T, value: T, key: T, set: this) => T, initialValue?: T): T;
+    reduceRight<R>(callback: (accumulator: R, value: T, key: T, set: this) => R, initialValue?: R): R;
+    reduceRight<R>(callback: (accumulator: R, value: T, key: T, set: this) => R, initialValue?: R): R {
+        const reversed = Array.from(this).reverse();
+        let accumulator = initialValue as R;
+        let initialized = initialValue !== undefined;
+
+        for (const value of reversed) {
+            if (!initialized) {
+                accumulator = value as unknown as R;
+                initialized = true;
+            } else {
+                accumulator = callback(accumulator, value, value, this);
+            }
+        }
+
+        if (!initialized) {
+            throw new TypeError("Reduce of empty set with no initial value");
+        }
+
+        return accumulator;
+    }
+        
 
     union<C>(...collections: Array<Iterable<C>>): Set<T | C> {
         let result: Set<T | C> = this;
@@ -74,8 +149,12 @@ export default abstract class AbstractSet<T> implements Set<T> {
         }
         return result;
     }
-    abstract merge<C>(...collections: Array<Iterable<C>>): Set<T | C>;
-    abstract concat<C>(...collections: Array<Iterable<C>>): Set<T | C>;
+    merge<C>(...collections: Array<Iterable<C>>): Set<T | C> {
+        return this.union(...collections);
+    }
+    concat<C>(...collections: Array<Iterable<C>>): Set<T | C> {
+        return this.union(...collections);
+    }
 
     abstract intersect(...collections: Array<Iterable<T>>): Set<T>;
 
@@ -89,24 +168,51 @@ export default abstract class AbstractSet<T> implements Set<T> {
         return result;
     }
 
-    abstract map<M>(
+    map<M>(
         mapper: (value: T, key: T, set: this) => M,
-        thisArg?: unknown
-    ): Set<M>;
+        thisArg?: unknown,
+    ): Set<M> {
+        let result = this.createEmpty<M>();
+        for (const value of this) {
+            result = result.add(mapper.call(thisArg, value, value, this));
+        }
+        return result;
+    }
 
-    abstract flatMap<M>(
+    flatMap<M>(
         mapper: (value: T, key: T, set: this) => Iterable<M>,
         thisArg?: unknown
-    ): Set<M>;
+    ): Set<M> {
+        let result = this.createEmpty<M>();
+        for (const value of this) {
+            const mappedValues = mapper.call(thisArg, value, value, this);
+            for (const mappedValue of mappedValues) {
+                result = result.add(mappedValue);
+            }
+        }
+        return result;
+    }
 
-    abstract filter<F extends T>(
+    filter<F extends T>(
         predicate: (value: T, key: T, set: this) => value is F,
         thisArg?: unknown
     ): Set<F>;
-    abstract filter(
+    filter(
         predicate: (value: T, key: T, set: this) => unknown,
         thisArg?: unknown
     ): Set<T>;
+    filter(
+        predicate: (value: T, key: T, set: this) => unknown,
+        thisArg?: unknown
+    ): Set<any> {
+        let result = this.createEmpty<any>();
+        for (const value of this) {
+            if (predicate.call(thisArg, value, value, this)) {
+                result = result.add(value);
+            }
+        }
+        return result;
+    }
 
 
     abstract partition<F extends T, C>(

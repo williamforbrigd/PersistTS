@@ -8,7 +8,7 @@ import AbstractSet from "../AbstractClasses/AbstractSet";
 export default class HashSet<T> extends AbstractSet<T> implements Set<T> {
     private _hashCode: number|null = null;
 
-    private readonly _map: HashMap<T, undefined>;
+    readonly _map: HashMap<T, undefined>;
 
     constructor(
         _map?: HashMap<T, undefined>,
@@ -41,6 +41,10 @@ export default class HashSet<T> extends AbstractSet<T> implements Set<T> {
 
     empty(): HashSet<T> {
         return new HashSet<T>(this._map.empty());
+    }
+
+    createEmpty<TT>(): HashSet<TT> {
+        return new HashSet<TT>();
     }
 
     add(value: T): HashSet<T> {
@@ -183,13 +187,7 @@ export default class HashSet<T> extends AbstractSet<T> implements Set<T> {
     }
 
     find(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): T | undefined {
-        // return this._map.find((_, key) => predicate.call(thisArg, key, key, this));
-        for (const value of this) {
-            if (predicate.call(thisArg, value, value, this)) {
-                return value;
-            }
-        }
-        return undefined;
+        return super.find(predicate, thisArg);
     }
 
     reduce(callback: (accumulator: T, value: T, key: T, set: this) => T, initialValue?: T): T;
@@ -217,14 +215,12 @@ export default class HashSet<T> extends AbstractSet<T> implements Set<T> {
     }
 
     intersect(...collections: Array<Iterable<T>>): HashSet<T> {
-        // let result = new TreeSet<T>(this.compare);
         let result: HashSet<T> = this.empty();
 
         outer: for (const v1 of this) {
             for (const collection of collections) {
                 let found = false;
                 for (const v2 of collection) {
-                    // if (this.compare(v1, v2) === 0) {
                     if (Utils.equals(v1, v2)) {
                         found = true;
                         break;
@@ -247,29 +243,14 @@ export default class HashSet<T> extends AbstractSet<T> implements Set<T> {
         mapper: (value: T, key: T, set: this) => M,
         thisArg?: unknown,
     ): HashSet<M> {
-        // const comp = compare ?? TreeSet.defaultComparator<M>;
-        let result = new HashSet<M>();
-        // let result = new TreeSet<M>(comp);
-        for (const value of this) {
-            result = result.add(mapper.call(thisArg, value, value, this));
-        }
-        return result;
+        return super.map(mapper, thisArg) as HashSet<M>;
     }
 
     flatMap<M>(
         mapper: (value: T, key: T, set: this) => Iterable<M>,
         thisArg?: unknown,
     ): HashSet<M> {
-        // const comp = compare ?? TreeSet.defaultComparator<M>;
-        // let result = new TreeSet<M>(comp);
-        let result = new HashSet<M>();
-        for (const value of this) {
-            const iterable = mapper.call(thisArg, value, value, this);
-            for (const mappedValue of iterable) {
-                result = result.add(mappedValue);
-            }
-        }
-        return result;
+        return super.flatMap(mapper, thisArg) as HashSet<M>;
     }
 
     filter<F extends T>(
@@ -284,14 +265,7 @@ export default class HashSet<T> extends AbstractSet<T> implements Set<T> {
         predicate: (value: T, key: T, set: this) => unknown,
         thisArg?: unknown
     ): HashSet<any> {
-        // let result = new TreeSet<T>(this.compare);
-        let result: HashSet<T> = this.empty();
-        for (const value of this) {
-            if (predicate.call(thisArg, value, value, this)) {
-                result = result.add(value);
-            }
-        }
-        return result;
+        return super.filter(predicate, thisArg) as HashSet<any>;
     }
 
     partition<F extends T, C>(
@@ -305,11 +279,9 @@ export default class HashSet<T> extends AbstractSet<T> implements Set<T> {
     partition(
         predicate: (value: T, key: T, set: this) => unknown,
         thisArg?: unknown
-    ): [HashSet<T>, HashSet<T>] {
-        // let trueTree = new TreeSet<T>(this.compare);
-        // let falseTree = new TreeSet<T>(this.compare);
-        let trueSet: HashSet<T> = this.empty();
-        let falseSet: HashSet<T> = this.empty();
+    ): [HashSet<any>, HashSet<any>] {
+        let trueSet: HashSet<any> = this.empty();
+        let falseSet: HashSet<any> = this.empty();
         for (const value of this) {
             if (predicate.call(thisArg, value, value, this)) {
                 trueSet = trueSet.add(value);

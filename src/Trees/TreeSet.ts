@@ -3,6 +3,7 @@ import TreeMap from './TreeMap';
 import {Comparator} from '../Interfaces/Comparator';
 import SortedSet from '../Interfaces/SortedSet';
 import { Speed } from '../Enums/Speed';
+import AbstractSet from '../AbstractClasses/AbstractSet';
 
 /**
  * A TreeSet is a sorted set that uses a TreeMap internally to store the elements.
@@ -11,15 +12,16 @@ import { Speed } from '../Enums/Speed';
  * states that the number of black nodes from the root to any leaf node is the same. This is also known as the height (black height) of the tree.
  * A red-black tree should also be a binary search tree, and the tree is ordered according to the comparator provided. 
  */
-export default class TreeSet<T> implements SortedSet<T> {
+export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
     private _hashCode: number | null = null;
-    private readonly tree: TreeMap<T, undefined>;
+    readonly _map: TreeMap<T, undefined>;
 
     constructor(
         private readonly compare: Comparator<T> = TreeSet.defaultComparator<T>,
         tree?: TreeMap<T, undefined>
     ) {
-        this.tree = tree ?? new TreeMap<T, undefined>(compare);
+        super();
+        this._map = tree ?? new TreeMap<T, undefined>(compare);
     }
 
     /**
@@ -28,7 +30,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * TreeMap iterator uses in-order traversal to iterate over the keys.
      */
     *[Symbol.iterator](): IterableIterator<T> {
-        for (const [key] of this.tree) {
+        for (const [key] of this._map) {
             yield key;
         }
     }
@@ -62,7 +64,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns the number of elements in the TreeSet
      */
     size(): number {
-        return this.tree.size();
+        return this._map.size();
     }
 
     /**
@@ -70,7 +72,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns true if the TreeSet is empty, false otherwise.
      */
     isEmpty(): boolean {
-        return this.tree.getRoot() === null;
+        return this._map.getRoot() === null;
     }
 
     /**
@@ -81,6 +83,10 @@ export default class TreeSet<T> implements SortedSet<T> {
         return new TreeSet(this.compare);
     }
 
+    protected createEmpty<TT>(compare?: Comparator<TT>): TreeSet<TT> {
+        return new TreeSet<TT>(compare ?? (this.compare as unknown as Comparator<TT>));
+    }
+
     /**
      * Adds the specified value to the TreeSet if it is not already present.
      * More specifically, the element is added if the TreeSet does not contain an element e such that compare(e, value) === 0.
@@ -89,7 +95,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns a new TreeSet with the value added if the set does not have it.
      */
     add(value: T): TreeSet<T> {
-        return new TreeSet(this.compare, this.tree.set(value, undefined));
+        return new TreeSet(this.compare, this._map.set(value, undefined));
     }
 
     /**
@@ -100,7 +106,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns a new set with the values added if the set does not have them.
      */
     addAll(values: Iterable<T>): TreeSet<T> {
-        let treeSet = new TreeSet(this.compare, this.tree);
+        let treeSet = new TreeSet(this.compare, this._map);
         for (const value of values) {
             treeSet = treeSet.add(value);
         }
@@ -114,7 +120,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns true if the set has the value or false otherwise.
      */
     has(value: T): boolean {
-        return this.tree.has(value);
+        return this._map.has(value);
     }
 
     /**
@@ -140,7 +146,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns a new TreeSet with the value removed if the set has it.
      */
     delete(value: T): TreeSet<T> {
-        return new TreeSet(this.compare, this.tree.delete(value));
+        return new TreeSet(this.compare, this._map.delete(value));
     }
 
     /**
@@ -150,7 +156,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns a new TreeSet with the values removed if the set has them.
      */
     deleteAll(values: Iterable<T>): TreeSet<T> {
-        let treeSet = new TreeSet(this.compare, this.tree);
+        let treeSet = new TreeSet(this.compare, this._map);
         for (const value of values) {
             treeSet = treeSet.delete(value);
         }
@@ -163,7 +169,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns a new TreeSet with all the values removed.
      */
     clear(): TreeSet<T> {
-        return new TreeSet(this.compare, this.tree.clear());
+        return new TreeSet(this.compare, this._map.clear());
     }
 
     /**
@@ -337,7 +343,7 @@ export default class TreeSet<T> implements SortedSet<T> {
         predicate: (value: T, key: T, set: this) => unknown,
         thisArg?: unknown
     ): unknown {
-        return this.tree.every((_, key) => predicate.call(thisArg, key, key, this));
+        return this._map.every((_, key) => predicate.call(thisArg, key, key, this));
     }
 
     /**
@@ -348,7 +354,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns true if some value satisfies the predicate or false otherwise.
      */
     some(predicate: (value: T, key: T, map: this) => boolean, thisArg?: unknown): boolean {
-        return this.tree.some((_, key) => predicate.call(thisArg, key, key, this));
+        return this._map.some((_, key) => predicate.call(thisArg, key, key, this));
     }
 
     /**
@@ -404,7 +410,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns void
      */
     forEach(callback: (value: T, key: T, set: this) => void, thisArg?: unknown): void {
-        return this.tree.forEach((_, key) => callback.call(thisArg, key, key, this));
+        return this._map.forEach((_, key) => callback.call(thisArg, key, key, this));
     }
 
     /**
@@ -435,7 +441,7 @@ export default class TreeSet<T> implements SortedSet<T> {
     reduce(callback: (accumulator: T, value: T, key: T, set: this) => T, initialValue?: T): T;
     reduce<R>(callback: (accumulator: R, value: T, key: T, set: this) => R, initialValue?: R): R;
     reduce<R>(callback: (accumulator: R, value: T, key: T, set: this) => R, initialValue?: R): R {
-        return this.tree.reduce((acc, _, key) => callback(acc, key, key, this), initialValue);
+        return this._map.reduce((acc, _, key) => callback(acc, key, key, this), initialValue);
     }
 
 
@@ -449,7 +455,7 @@ export default class TreeSet<T> implements SortedSet<T> {
     reduceRight(callback: (accumulator: T, value: T, key: T, set: this) => T, initialValue?: T): T;
     reduceRight<R>(callback: (accumulator: R, value: T, key: T, set: this) => R, initialValue?: R): R;
     reduceRight<R>(callback: (accumulator: R, value: T, key: T, set: this) => R, initialValue?: R): R {
-        return this.tree.reduceRight((acc, _, key) => callback(acc, key, key, this), initialValue);
+        return this._map.reduceRight((acc, _, key) => callback(acc, key, key, this), initialValue);
     }
 
     /**
@@ -534,7 +540,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns A new set containing the elements of the current set excluding those found in the provided collections.
      */
     subtract(...collections: Array<Iterable<T>>): TreeSet<T> {
-        let result = new TreeSet<T>(this.compare, this.tree);
+        let result = new TreeSet<T>(this.compare, this._map);
 
         for (const collection of collections) {
             for (const value of collection) {
@@ -714,7 +720,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns the first (lowest) value currently in the set.
      */
     findMin(): T | undefined {
-        const res = this.tree.findMin();
+        const res = this._map.findMin();
         return res ? res[0] : undefined;
     }
 
@@ -729,7 +735,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns the last (highest) value currently in the set.
      */
     findMax(): T | undefined {
-        const res = this.tree.findMax();
+        const res = this._map.findMax();
         return res ? res[0] : undefined;
     }
 
@@ -769,7 +775,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns true and the predecessor if found, false and undefined if not found
      */
     tryPredecessor(value: T): [boolean, T | undefined] {
-        const [found, pair] = this.tree.tryPredecessor(value);
+        const [found, pair] = this._map.tryPredecessor(value);
         return [found, pair?.[0]];
     }
     
@@ -783,7 +789,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns true and the successor if found, false and undefined if not found
      */
     trySuccessor(value: T): [boolean, T | undefined] {
-        const [found, pair] = this.tree.trySuccessor(value);
+        const [found, pair] = this._map.trySuccessor(value);
         return [found, pair?.[0]];
     }
 
@@ -797,7 +803,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns true and the weak predecessor if found, false and undefined if not found
      */
     tryWeakPredecessor(value: T): [boolean, T | undefined] {
-        const [found, pair] = this.tree.tryWeakPredecessor(value);
+        const [found, pair] = this._map.tryWeakPredecessor(value);
         return [found, pair?.[0]];
     }
     
@@ -811,7 +817,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns true and the weak successor if found, false and undefined if not found
      */
     tryWeakSuccessor(value: T): [boolean, T | undefined] {
-        const [found, pair] = this.tree.tryWeakSuccessor(value);
+        const [found, pair] = this._map.tryWeakSuccessor(value);
         return [found, pair?.[0]];
     }
 
@@ -1000,7 +1006,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * Tree is printed using the in-order traversal defined in TreeMap
      */
     printTree(): void {
-        this.tree.printTree();
+        this._map.printTree();
     }
 
     // Methods to check invariants
@@ -1016,7 +1022,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns true if the tree satisfies this BST property or false otherwise.
      */
     isBST(): boolean {
-        return this.tree.isBST();
+        return this._map.isBST();
     }
 
 
@@ -1026,7 +1032,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns true if the red property is satisfied or false otherwise.
      */
     redInvariant(): boolean {
-        return this.tree.redInvariant();
+        return this._map.redInvariant();
     }
 
     /**
@@ -1038,7 +1044,7 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns true if the black height invariant is maintained, or false otherwise.
      */
     public blackBalancedInvariant(): boolean {
-        return this.tree.blackBalancedInvariant();
+        return this._map.blackBalancedInvariant();
       }
 
     /**
@@ -1051,6 +1057,6 @@ export default class TreeSet<T> implements SortedSet<T> {
      * @returns true if the tree is a valid red-black tree, or false otherwise.
      */
     validateRedBlackTree(): boolean {
-        return this.tree.validateRedBlackTree();
+        return this._map.validateRedBlackTree();
     }
 }
