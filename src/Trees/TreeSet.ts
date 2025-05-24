@@ -83,6 +83,12 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
         return new TreeSet(this.compare);
     }
 
+    /**
+     * Method to create an empty TreeSet with the provided comparator.
+     * 
+     * @param compare - optional comparator to be used for the new TreeSet.
+     * @returns A new empty TreeSet with the provided comparator or the same comparator as the current TreeSet.
+     */
     protected createEmpty<TT>(compare?: Comparator<TT>): TreeSet<TT> {
         return new TreeSet<TT>(compare ?? (this.compare as unknown as Comparator<TT>));
     }
@@ -190,7 +196,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
      * @returns an array of all the values in the TreeSet.
      */
     values(): Array<T> {
-        return this.toArray();
+        return Array.from(this);
     }
 
     /**
@@ -199,11 +205,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
      * @returns an array of all the values in the TreeSet.
      */
     toArray(): Array<T> {
-        const arr = [];
-        for (const value of this) {
-            arr.push(value);
-        }
-        return arr;
+        return Array.from(this);
     }
 
     /**
@@ -422,13 +424,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
      * @returns the first element for which the predicate is satisfied or undefined if no element satisfies the predicate.
      */
     find(predicate: (value: T, key: T, set: this) => boolean, thisArg?: unknown): T | undefined {
-        // return this.tree.find((_, key) => predicate.call(thisArg, key, key, this));
-        for (const value of this) {
-            if (predicate.call(thisArg, value, value, this)) {
-                return value;
-            }
-        }
-        return undefined;
+        return super.find(predicate, thisArg);
     }
 
     /**
@@ -466,16 +462,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
      * @returns a new TreeSet containing all the distinct elements from the current set and the provided collections.
      */
     union<C>(...collections: Array<Iterable<C>>): TreeSet<T | C> {
-        let treeSet = new TreeSet<T | C>(this.compare as unknown as (a: T | C, b: T | C) => number);
-        for (const value of this) {
-            treeSet = treeSet.add(value);
-        }
-        for (const collection of collections) {
-            for (const value of collection) {
-                treeSet = treeSet.add(value);
-            }
-        }
-        return treeSet;
+        return super.union(...collections) as TreeSet<T | C>;
     }
     /**
      * Returns a new TreeSet representing the union of the current set with the provided collections.
@@ -540,14 +527,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
      * @returns A new set containing the elements of the current set excluding those found in the provided collections.
      */
     subtract(...collections: Array<Iterable<T>>): TreeSet<T> {
-        let result = new TreeSet<T>(this.compare, this._map);
-
-        for (const collection of collections) {
-            for (const value of collection) {
-                result = result.delete(value);
-            }
-        }
-        return result;
+        return super.subtract(...collections) as TreeSet<T>;
     }
 
     /**
@@ -568,11 +548,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
         compare?: Comparator<M>
       ): TreeSet<M> {
         const comp = compare ?? TreeSet.defaultComparator<M>;
-        let result = new TreeSet<M>(comp);
-        for (const value of this) {
-            result = result.add(mapper.call(thisArg, value, value, this));
-        }
-        return result;
+        return super.map(mapper, thisArg, comp) as TreeSet<M>;
       }
 
     /**
@@ -592,14 +568,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
         compare?: Comparator<M>
     ): TreeSet<M> {
         const comp = compare ?? TreeSet.defaultComparator<M>;
-        let result = new TreeSet<M>(comp);
-        for (const value of this) {
-            const iterable = mapper.call(thisArg, value, value, this);
-            for (const mappedValue of iterable) {
-                result = result.add(mappedValue);
-            }
-        }
-        return result;
+        return super.flatMap(mapper, thisArg, comp) as TreeSet<M>;
     }
 
     /**
@@ -620,13 +589,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
         predicate: (value: T, key: T, set: this) => unknown,
         thisArg?: unknown
     ): TreeSet<any> {
-        let result = new TreeSet<T>(this.compare);
-        for (const value of this) {
-            if (predicate.call(thisArg, value, value, this)) {
-                result = result.add(value);
-            }
-        }
-        return result;
+        return super.filter(predicate, thisArg) as TreeSet<any>;
     }
 
 

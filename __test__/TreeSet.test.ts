@@ -3,7 +3,7 @@ import TreeSet from "../src/Trees/TreeSet";
 import {shuffleArray, createRandomStringArray, createRandomIntArray} from "../src/Utils/Utils";
 
 
-describe("TreeMap", () => {
+describe("TreeSet", () => {
 
     const compare = (a: string, b: string) => a.localeCompare(b)
     const compareReversed = (a: string, b: string) => b.localeCompare(a);

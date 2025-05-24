@@ -171,8 +171,9 @@ export default abstract class AbstractSet<T> implements Set<T> {
     map<M>(
         mapper: (value: T, key: T, set: this) => M,
         thisArg?: unknown,
+        compare?: Comparator<M>
     ): Set<M> {
-        let result = this.createEmpty<M>();
+        let result = this.createEmpty<M>(compare);
         for (const value of this) {
             result = result.add(mapper.call(thisArg, value, value, this));
         }
@@ -181,9 +182,10 @@ export default abstract class AbstractSet<T> implements Set<T> {
 
     flatMap<M>(
         mapper: (value: T, key: T, set: this) => Iterable<M>,
-        thisArg?: unknown
+        thisArg?: unknown,
+        compare?: Comparator<M>
     ): Set<M> {
-        let result = this.createEmpty<M>();
+        let result = this.createEmpty<M>(compare);
         for (const value of this) {
             const mappedValues = mapper.call(thisArg, value, value, this);
             for (const mappedValue of mappedValues) {
