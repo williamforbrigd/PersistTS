@@ -30,6 +30,7 @@ export default abstract class AbstractSet<T> implements Set<T> {
      * @returns a new empty set with the specified comparator.
      */
     protected abstract createEmpty<TT>(compare?: Comparator<TT>): Set<TT>;
+    abstract empty(): Set<T>;
     /**
      * Defines the default equality check for elements in the set.
      * This can be overridden by subclasses to provide custom equality logic.

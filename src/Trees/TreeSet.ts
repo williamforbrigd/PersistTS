@@ -3,7 +3,7 @@ import TreeMap from './TreeMap';
 import {Comparator} from '../Interfaces/Comparator';
 import SortedSet from '../Interfaces/SortedSet';
 import { Speed } from '../Enums/Speed';
-import AbstractSet from '../AbstractClasses/AbstractSet';
+import AbstractSortedSet from '../AbstractClasses/AbstractSortedSet';
 
 /**
  * A TreeSet is a sorted set that uses a TreeMap internally to store the elements.
@@ -12,7 +12,7 @@ import AbstractSet from '../AbstractClasses/AbstractSet';
  * states that the number of black nodes from the root to any leaf node is the same. This is also known as the height (black height) of the tree.
  * A red-black tree should also be a binary search tree, and the tree is ordered according to the comparator provided. 
  */
-export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
+export default class TreeSet<T> extends AbstractSortedSet<T> implements SortedSet<T> {
     private _hashCode: number | null = null;
     readonly _map: TreeMap<T, undefined>;
 
@@ -388,7 +388,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
     sortBy<C>(
         comparatorValueMapper: (value: T, key: T, set: this) => C,
         comparator?: (valueA: C, valueB: C) => number
-    ): TreeSet<T> {
+    ): TreeSet<T | C> {
         // Use the provided comparator or default to natural ordering for C
         const compForC = comparator ?? ((a: C, b: C) => (a < b ? -1 : a > b ? 1 : 0));
     
@@ -401,7 +401,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
             return cmp !== 0 ? cmp : this.compare(a, b);
         };
     
-        let treeSet = new TreeSet<T>(newComparator);
+        let treeSet = new TreeSet<T | C>(newComparator as unknown as Comparator<T | C>);
         for (const value of this) {
             treeSet = treeSet.add(value);
         }
@@ -841,18 +841,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
      * cutFunction(fromValue) and less than cutFunction(toValue).
      */
     cut(cutFunction: (compareToOther: T) => number, fromValue: T, toValue: T): TreeSet<T> {
-        const lower = cutFunction(fromValue);
-        const upper = cutFunction(toValue);
-
-        let result = new TreeSet<T>(this.compare);
-
-        for (const value of this) {
-            const cutValue = cutFunction(value);
-            if (cutValue >= lower && cutValue < upper) {
-                result = result.add(value);
-            }
-        }
-        return result;
+        return super.cut(cutFunction, fromValue, toValue) as TreeSet<T>;
     }
 
     /**
