@@ -353,7 +353,7 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
     }
 
     /**
-     * Checks the some value in the set satisfies the predicate.
+     * Checks that some value in the set satisfies the predicate.
      * Returns true if the predicate returns true for any value in the set or false otherwise. 
      * @param predicate function to be checked against the values in the set.
      * @param thisArg context to be used against the predicate function.
@@ -600,9 +600,9 @@ export default class TreeSet<T> extends AbstractSet<T> implements SortedSet<T> {
     partition(
         predicate: (value: T, key: T, set: this) => unknown,
         thisArg?: unknown
-    ): [TreeSet<T>, TreeSet<T>] {
-        let trueTree = new TreeSet<T>(this.compare);
-        let falseTree = new TreeSet<T>(this.compare);
+    ): [TreeSet<any>, TreeSet<any>] {
+        let trueTree = new TreeSet<any>(this.compare);
+        let falseTree = new TreeSet<any>(this.compare);
         for (const value of this) {
             if (predicate.call(thisArg, value, value, this)) {
                 trueTree = trueTree.add(value);

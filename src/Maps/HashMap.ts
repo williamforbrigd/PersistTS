@@ -589,7 +589,8 @@ class BitmapIndexedNode<K, V> implements INode<K, V> {
  * the bitmap to two words and leave most entries empty. 5 bits strikes a balance betweeen, wasted space and deepness. 
  * It works well also on 64-bit machines, since you have one word per node. 
  *
- * @see Phil Bagwell, "Ideal Hash Trees", EPFL, 2000.
+ * @see Phil Bagwell, "Fast and Space Efficient Trie Searches", EPFL, 2000.
+ * @see Phil Bagwell, "Ideal Hash Trees", EPFL, 2001.
  * @see https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/PersistentHashMap.java
  * @see https://blog.higher-order.net/2009/09/08/understanding-clojures-persistenthashmap-deftwice
  */
