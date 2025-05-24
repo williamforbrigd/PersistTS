@@ -44,6 +44,21 @@ export class Utils {
             return true;
         }
 
+        // shallow object comparison
+        if (typeof a === 'object' && typeof b === 'object') {
+            const aKeys = Object.keys(a);
+            const bKeys = Object.keys(b);
+
+            if (aKeys.length !== bKeys.length) return false;
+
+            for (const key of aKeys) {
+                if (!b.hasOwnProperty(key)) return false;
+                if (!Utils.equals(a[key], b[key])) return false;
+            }
+
+            return true;
+        }
+
         return false;
     }
 }
