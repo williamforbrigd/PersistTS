@@ -6,7 +6,7 @@ PersistTS is inspired by:
 - The C5 Collection Library
 - The Java Collections Framework
 - Scala and Clojure's immutable collections
-- Chris Okasaki's *Purely Functional Data Structures*
+- Chris Okasaki's *Purely Functional Data Structures* and *Red-black trees in a functional setting*
 - Phil Bagwell's *Ideal Hash Trees* and *Fast and Space Efficient Trie Searches*
 
 Currently, it supports the following persistent data structures:
@@ -18,6 +18,16 @@ Currently, it supports the following persistent data structures:
 - `HashMap<K, V>`: Persistent map based on the Hash Array Mapped Trie (HAMT)
 - `HashSet<T>`: Set implementation that is a wrapper around the `HashMap`
 - `Vector<T>`: Represents a sequence of elements based on the Array Mapped Trie (AMT)
+
+Persistent data structures allow you to access previous versions after updates. Each modification returns a new version of the structure without altering the original. The data structures also supports *structural sharing*, a technique that reuses as much of the existing structure as possible to minimize memory and improve performance. 
+
+The tree-based data structures in this library are implemented using persistent red-black trees, which offer logarithmic time complexity for operations such as insertions, deletions, and lookups. A *red-black tree* is a self-balancing binary search tree maintains balance through some invariants: no two consecutive nodes can be red, and every path from the root to a leaf must contain the same number of black nodes. The `TreeMap` is implemented as a persistent red-black tree and the `TreeSet` is a wrapper for the map. 
+
+The hash-based data structures are built upon the **Hash Array Mapped Trie (HAMT)**, which extends the idea of an **Array Mapped Trie (AMT)** with hashing. 
+
+An **Array Mapped Trie (AMT)** is a tree structure that uses fixed-size array at each level (typically 32 slots). Each level of the trie consumes a fixed number of bits (often 5) from an index to determine the next branch. This design enables shallow and wide trees, that can offer near constant time complexity for its operations. The `Vector` is implemented as an AMT. 
+
+An **Hash Array Mapped Trie (HAMT)** is a trie based data structure that also uses hashing to index its keys. The hash is broken into segments to find where to traverse through the trie. PersistTS uses a persistent version of the HAMT, that uses structural sharing where only the modified path is copied during updates. The `HashMap` is implemented as a HAMT, and the `HashSet` is a wrapper for the map. 
 
 ## Goals of the PersistTS library
 The goal of PersistTS is to be a generic persistent library in TypeScript that who lacks some of the data structures that are available in languages such as Java and C#. The design goals of the library are as follows:
