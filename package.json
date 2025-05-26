@@ -1,22 +1,29 @@
 {
     "name": "persist-ts",
-    "version": "1.0.7",
+    "version": "1.1.27",
     "description": "A collection of persistent data structures in TypeScript",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsc",
         "dev": "ts-node src/index.ts",
         "start": "node dist/index.js",
-        "test": "jest"
+        "test": "jest",
+        "clean": "rimraf dist",
+        "build": "npm run clean && tsc"
     },
-    "dependencies": {
-        "immutable": "^5.0.3"
+    "exports": {
+        ".": {
+            "require": "./dist/index.js",
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
     },
     "devDependencies": {
         "@types/jest": "^29.5.14",
+        "immutable": "^5.1.2",
         "jest": "^29.7.0",
         "jest-slow-test-reporter": "^1.0.0",
+        "rimraf": "^6.0.1",
         "ts-jest": "^29.2.5",
         "ts-node": "^10.9.2",
         "typescript": "^5.5.3"
