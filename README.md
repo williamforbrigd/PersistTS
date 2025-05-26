@@ -1,13 +1,17 @@
 # PersistTS
 
+## Overview
 **PersistTS** is a collection library that supports generic algorithms and persistent data structures. It is designed to bring functional, persistent data structures to TypeScript. 
 
 PersistTS is inspired by:
-- The C5 Collection Library
-- The Java Collections Framework
-- Scala and Clojure's immutable collections
-- Chris Okasaki's *Purely Functional Data Structures* and *Red-black trees in a functional setting*
-- Phil Bagwell's *Ideal Hash Trees* and *Fast and Space Efficient Trie Searches*
+- [The C5 Collection Library](https://vipwww.itu.dk/research/c5/)
+- [The Java Collections Framework](https://docs.oracle.com/javase/8/docs/technotes/guides/collections/overview.html)
+- [Clojure's immutable collections](https://clojure.org/reference/data_structures)
+- Chris Okasaki's [*Purely Functional Data Structures*](https://www.cambridge.org/us/universitypress/subjects/computer-science/programming-languages-and-applied-logic/purely-functional-data-structures?format=PB&isbn=9780521663502) and [*Red-black trees in a functional setting*](https://www.cambridge.org/core/journals/journal-of-functional-programming/article/redblack-trees-in-a-functional-setting/62BC5EA75A2C95E3F6EE95AE3DADF0E5)
+- Phil Bagwell's [*Ideal Hash Trees*](https://infoscience.epfl.ch/entities/publication/b892b2ce-7bf0-41d2-b68c-fb44a3c64a33) and [*Fast and Space Efficient Trie Searches*](https://infoscience.epfl.ch/entities/publication/876090b2-8ac7-42f7-8c64-46ac736981e2)
+
+
+## Persistent data structures
 
 Currently, it supports the following persistent data structures:
 
@@ -103,3 +107,13 @@ Finally, the TypeScript code (for example, in \texttt{main.ts}) can be executed 
 ```bash
 ts-node main.ts
 ```
+
+
+## State of completion
+This project provides a solid foundation for persistent data structures in TypeScript. All core data structure - `ArrayList`, `LinkedList`, `TreeMap`, `TreeSet`, `HashMap`, `HashSet`, and `Vector`- have been designed, implemented, and tested for correctness, including their methods, structural properties, and invariants. While testing has been performed solely by the author, the internal coverage provides a strong degree of confidence.
+
+The library demonstrates that persistent data structures can be implemented effectively in an imperative language like TypeScript, with a design for the library that promotes extensibility and code reuse. 
+
+Future improvements could include performance benchmarking, more usage examples, iterative alternatives to reduce stack depth, and explore how lazy evaluation can be used as an optimization technique. 
+
+With further development and validation, this library has the potential to evolve into a mature tool for functional and immutable programming in the TypeScript ecosystem.
