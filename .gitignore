@@ -47,3 +47,6 @@ src/Testing
 
 # Coverage folder
 coverage/
+
+# Out folder for dot files
+out/
