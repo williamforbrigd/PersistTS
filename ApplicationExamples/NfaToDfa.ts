@@ -100,7 +100,7 @@ class NFA {
      * @param transitions NFA's transition relation
      */
     private compositeDfaTransition(s0: number, transitions: TreeMap<number, ArrayList<Transition>>): TreeMap<TreeSet<number>, TreeMap<string, TreeSet<number>>> {
-        const S0 = this.epsilonClose(TreeSet.of(s0), transitions);
+        const S0 = this.epsilonClose(TreeSet.of((a,b) => a-b, s0), transitions);
         const worklist = [S0];
 
         let res = new TreeMap<TreeSet<number>, TreeMap<string, TreeSet<number>>>((a: TreeSet<number>, b: TreeSet<number>) => {
@@ -130,7 +130,7 @@ class NFA {
                                 toState = toState.add(tr.getTarget());
                                 stateTr = stateTr.set(label, toState);
                             } else { // No transitions on this label yet
-                                const toState = TreeSet.of(tr.getTarget());
+                                const toState = TreeSet.of((a,b) => a-b, tr.getTarget());
                                 stateTr = stateTr.set(label, toState);
                             }
                         }
@@ -261,7 +261,7 @@ class NFA {
     public toDfa(): DFA {
         // 1. Construct composite-state DFA
         const compositeDfaTransition = this.compositeDfaTransition(this.startState, this.transitions); 
-        const compositeDfaStart = this.epsilonClose(TreeSet.of(this.startState), this.transitions);
+        const compositeDfaStart = this.epsilonClose(TreeSet.of((a,b) => a-b, this.startState), this.transitions);
         // 2. Replace composite states with simple (int) states
         const compositeDfaStates = compositeDfaTransition.keys();
         const renamer = this.makeRenamer(compositeDfaStates);
