@@ -57,8 +57,9 @@ const vec2 = vec.add(6).add(7).add(8).add(9).add(10);
 console.log(vec.toArray()); // Vector [1, 2, 3, 4, 5]
 console.log(vec2.toArray()); // Vector [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-const treeSet = TreeSet.of<number>(...vec.toArray());
-const treeSet2 = TreeSet.of<number>(3, 4, 5, 6, 7, 8, 9, 10);
+const compare = (a: number, b: number) => a-b;
+const treeSet = TreeSet.of<number>(compare, ...vec.toArray());
+const treeSet2 = TreeSet.of<number>(compare, 3, 4, 5, 6, 7, 8, 9, 10);
 const union = treeSet.union(treeSet2);
 console.log(union.values()); // TreeSet [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
