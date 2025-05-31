@@ -7,6 +7,7 @@ describe("TreeSet", () => {
 
     const compare = (a: string, b: string) => a.localeCompare(b)
     const compareReversed = (a: string, b: string) => b.localeCompare(a);
+    const compareNumber = (a: number, b: number) => a - b;
     let tree: TreeSet<string> = new TreeSet<string>(compare);
     const arr = [50, 40, 30, 10, 20, 30, 100, 0, 45, 55, 25, 15].map((num) => num.toString());
     const arrDistinct = Array.from(new Set(arr));
@@ -72,7 +73,7 @@ describe("TreeSet", () => {
     })
 
     test('static of() method', () => {
-        const tree = TreeSet.of("hello", "world");
+        const tree = TreeSet.of(compare, "hello", "world");
         expect(tree.size()).toBe(2);
         expect(tree.has("hello")).toBeTruthy();
         expect(tree.has("world")).toBeTruthy();
@@ -273,21 +274,21 @@ describe("TreeSet", () => {
     });
 
     test('union(), merge() and concat() produce the same result', () => {
-        const other = TreeSet.of("hello", "world");
+        const other = TreeSet.of(compare, "hello", "world");
         const res = tree.union(other);
         expect(res.size()).toBe(arrDistinct.length + 2);
         expect(res.hasAll(arrDistinct)).toBeTruthy();
         expect(res.has("hello")).toBeTruthy();
         expect(res.has("world")).toBeTruthy();
 
-        const other2 = TreeSet.of("hello", "world");
+        const other2 = TreeSet.of(compare, "hello", "world");
         const res2 = tree.merge(other2);
         expect(res2.size()).toBe(arrDistinct.length + 2);
         expect(res2.hasAll(arrDistinct)).toBeTruthy();
         expect(res2.has("hello")).toBeTruthy();
         expect(res2.has("world")).toBeTruthy();
 
-        const other3 = TreeSet.of("hello", "world");
+        const other3 = TreeSet.of(compare, "hello", "world");
         const res3 = tree.concat(other3);
         expect(res3.size()).toBe(arrDistinct.length + 2);
         expect(res3.hasAll(arrDistinct)).toBeTruthy();
@@ -296,8 +297,8 @@ describe("TreeSet", () => {
     })
 
     test('intersect()', () => {
-        const tree1 = TreeSet.of("1", "2", "3", "4", "5");
-        const tree2 = TreeSet.of("3", "4", "5", "6", "7");
+        const tree1 = TreeSet.of<string>(compare, "1", "2", "3", "4", "5");
+        const tree2 = TreeSet.of<string>(compare, "3", "4", "5", "6", "7");
         const res = tree1.intersect(tree2);
         expect(res.size()).toBe(3);
         expect(res.has("3")).toBeTruthy();
@@ -306,8 +307,8 @@ describe("TreeSet", () => {
     })
 
     test('subtract()', () => {
-        const tree1 = TreeSet.of("1", "2", "3", "4", "5");
-        const tree2 = TreeSet.of("3", "4", "5", "6", "7");
+        const tree1 = TreeSet.of<string>(compare, "1", "2", "3", "4", "5");
+        const tree2 = TreeSet.of<string>(compare, "3", "4", "5", "6", "7");
         const res = tree1.subtract(tree2);
         expect(res.size()).toBe(2);
         expect(res.has("1")).toBeTruthy();
@@ -327,7 +328,7 @@ describe("TreeSet", () => {
     })
 
     test('flatMap() again', () => {
-        const set = TreeSet.of("a", "bb", "cc", "dddd");
+        const set = TreeSet.of<string>(compare, "a", "bb", "cc", "dddd");
         const res = set.flatMap((value) => [value, value.toUpperCase()])
         expect(res.size()).toBe(8);
         expect(res.toArray()).toEqual(['A', 'BB', 'CC', 'DDDD', 'a', 'bb', 'cc', 'dddd']);
@@ -491,7 +492,7 @@ describe("TreeSet", () => {
 
     test('cut()', () => {
         // Test with numbers using identity function
-        const treeNum = TreeSet.of(10, 20, 30, 40, 50);
+        const treeNum = TreeSet.of<number>(compareNumber, 20, 30, 40, 50);
         const res1 = treeNum.cut((x: number) => x, 20, 40);
         expect(res1.toArray()).toEqual([20, 30]);
     
@@ -509,7 +510,7 @@ describe("TreeSet", () => {
     })
 
     test('rangeFrom()', () => {
-        const tree1 = TreeSet.of(10, 20, 30, 40, 50, 60);
+        const tree1 = TreeSet.of<number>(compareNumber, 10, 20, 30, 40, 50, 60);
         const res1 = tree1.rangeFrom(30);
         expect(res1.toArray()).toEqual([30, 40, 50, 60]);
 
@@ -521,7 +522,7 @@ describe("TreeSet", () => {
     })
 
     test('rangeTo()', () => {
-        const tree1 = TreeSet.of(10, 20, 30, 40, 50, 60);
+        const tree1 = TreeSet.of<number>(compareNumber, 10, 20, 30, 40, 50, 60);
         const res1 = tree1.rangeTo(30);
         expect(res1.toArray()).toEqual([10, 20]);
 
@@ -534,7 +535,7 @@ describe("TreeSet", () => {
     })
 
     test('rangeFromTo()', () => {
-        const tree1 = TreeSet.of(10, 20, 30, 40, 50, 60);
+        const tree1 = TreeSet.of<number>(compareNumber, 10, 20, 30, 40, 50, 60);
         const res1 = tree1.rangeFromTo(20, 40);
         expect(res1.toArray()).toEqual([20, 30]);
 
@@ -546,7 +547,7 @@ describe("TreeSet", () => {
     })
 
     test('removeRangeFrom()', () => {
-        const tree1 = TreeSet.of(21, 19, 17, 77, 66, 69, 96);
+        const tree1 = TreeSet.of<number>(compareNumber, 21, 19, 17, 77, 66, 69, 96);
         const res1 = tree1.removeRangeFrom(50);
         expect(res1.toArray()).toEqual([17, 19, 21]);
 
@@ -560,7 +561,7 @@ describe("TreeSet", () => {
     })
 
     test('removeRangeTo()', () => {
-        const tree1 = TreeSet.of(21, 19, 17, 77, 66, 69, 96);
+        const tree1 = TreeSet.of<number>(compareNumber, 21, 19, 17, 77, 66, 69, 96);
         const res1 = tree1.removeRangeTo(50);
         expect(res1.toArray()).toEqual([66, 69, 77, 96]);
 
@@ -574,7 +575,7 @@ describe("TreeSet", () => {
     })
 
     test('removeRangeFromTo()', () => {
-        const tree1 = TreeSet.of(21, 19, 17, 77, 66, 69, 96);
+        const tree1 = TreeSet.of<number>(compareNumber, 21, 19, 17, 77, 66, 69, 96);
         const res1 = tree1.removeRangeFromTo(21, 77);
         expect(res1.toArray()).toEqual([17, 19, 77, 96]);
         

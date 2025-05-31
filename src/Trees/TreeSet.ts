@@ -40,8 +40,8 @@ export default class TreeSet<T> extends AbstractSortedSet<T> implements SortedSe
      * @param values to create the treeset from.
      * @returns a treeset with the defined values.
      */
-    static of<T>(...values: Array<T>): TreeSet<T> {
-        let treeSet = new TreeSet<T>();
+    static of<T>(comparer: Comparator<T>, ...values: Array<T>): TreeSet<T> {
+        let treeSet = new TreeSet<T>(comparer);
         for (const value of values) {
             treeSet = treeSet.add(value);
         }
